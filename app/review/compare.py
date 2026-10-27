@@ -65,28 +65,50 @@ def compare(records_a: list[dict], records_b: list[dict]) -> list[dict[str, Any]
     # ---- name
     na, nb = _values(records_a, lambda r: [_name(r)]), _values(records_b, lambda r: [_name(r)])
 
-    def name_key(v: str) -> str:
-        return alpha_key(v)
+    def parts(records: list[dict]) -> list[dict]:
+        out = []
+        for r in records:
+            n = r.get("name") or {}
+            out.append({"first": alpha_key(n.get("first_name")), "middle": alpha_key(n.get("middle_names")),
+                        "last": alpha_key(n.get("last_name")), "suffix": n.get("suffix")})
+        return out
 
+    pa, pb = parts(records_a), parts(records_b)
     if not na or not nb:
         verdict, note = "missing", None
-    elif _mark_shared(na, nb, name_key):
+    elif _mark_shared(na, nb, alpha_key):
         verdict, note = "match", None
     else:
-        fa = {r["name"].get("first_name") for r in records_a if r.get("name", {}).get("first_name")}
-        fb = {r["name"].get("first_name") for r in records_b if r.get("name", {}).get("first_name")}
-        la = {alpha_key(r["name"].get("last_name")) for r in records_a if r.get("name", {}).get("last_name")}
-        lb = {alpha_key(r["name"].get("last_name")) for r in records_b if r.get("name", {}).get("last_name")}
-        forms_a = set().union(*[first_name_forms(alpha_key(x)) for x in fa]) if fa else set()
-        forms_b = set().union(*[first_name_forms(alpha_key(x)) for x in fb]) if fb else set()
-        first_ok = bool(forms_a & forms_b) or any(damerau(alpha_key(x), alpha_key(y)) <= 1 for x in fa for y in fb)
-        last_ok = bool(la & lb) or any(damerau(x, y) <= 1 for x in la for y in lb)
-        if first_ok and last_ok:
-            verdict, note = "close", "Nickname or spelling difference"
-        elif first_ok:
-            verdict, note = "close", "Same forename, different surname"
+        same_first_last = any(x["first"] and x["first"] == y["first"] and x["last"] and x["last"] == y["last"]
+                              for x in pa for y in pb)
+        if same_first_last:
+            verdict = "close"
+            suffix_one_side = bool({x["suffix"] for x in pa} - {None}) != bool({y["suffix"] for y in pb} - {None})
+            mids_a, mids_b = {x["middle"] for x in pa} - {""}, {y["middle"] for y in pb} - {""}
+            if suffix_one_side:
+                note = "Same name, but only one customer has a Jr/Sr suffix"
+            elif mids_a and mids_b and not mids_a & mids_b:
+                verdict, note = "differs", "Same forename and surname, different middle names"
+            else:
+                note = "Same forename and surname; middle name recorded on one side only"
         else:
-            verdict, note = "differs", None
+            fa = {x["first"] for x in pa if x["first"]}
+            fb = {y["first"] for y in pb if y["first"]}
+            la = {x["last"] for x in pa if x["last"]}
+            lb = {y["last"] for y in pb if y["last"]}
+            forms_a = set().union(*[first_name_forms(x) for x in fa]) if fa else set()
+            forms_b = set().union(*[first_name_forms(y) for y in fb]) if fb else set()
+            first_ok = bool(forms_a & forms_b) or any(damerau(x, y) <= 1 for x in fa for y in fb)
+            initial_ok = any((len(x) == 1 or len(y) == 1) and x[0] == y[0] for x in fa for y in fb)
+            last_ok = bool(la & lb) or any(damerau(x, y) <= 1 for x in la for y in lb)
+            if first_ok and last_ok:
+                verdict, note = "close", "Nickname or spelling difference"
+            elif initial_ok and last_ok:
+                verdict, note = "close", "Initial only on one side"
+            elif first_ok:
+                verdict, note = "close", "Same forename, different surname"
+            else:
+                verdict, note = "differs", None
     rows.append(_row("name", "Name", na, nb, verdict, note))
 
     # ---- suffix (Jr / Sr)

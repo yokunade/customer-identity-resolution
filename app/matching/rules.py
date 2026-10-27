@@ -66,8 +66,10 @@ RULES: tuple[Rule, ...] = (
     _r(60, "EMAIL_NAME", "strong", MI, dob_mode="lenient"),
     _r(70, "MOBILE_NAME", "strong", MI, dob_mode="lenient"),
     _r(100, "INITIAL_DOB_PREMISE_POSTCODE", "strong", FN),
-    _r(110, "SOUNDEX_NAME_DOB_POSTCODE", "strong"),
-    _r(120, "NYSIIS_NAME_DOB_PREMISE_DISTRICT", "strong"),
+    # Phonetic forenames must also be compatible (shared nickname form or one
+    # keystroke apart): otherwise twins like Ella/Ellie or Jack/Jake merge.
+    _r(110, "SOUNDEX_NAME_DOB_POSTCODE", "strong", FN),
+    _r(120, "NYSIIS_NAME_DOB_PREMISE_DISTRICT", "strong", FN),
     _r(125, "EMAIL_FIRST", "strong", MI, dob_mode="lenient"),
     _r(126, "MOBILE_FIRST", "strong", MI, dob_mode="lenient"),
     _r(127, "EMAIL_LAST_INITIAL", "strong", MI | FN, dob_mode="lenient"),

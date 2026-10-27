@@ -309,8 +309,19 @@ function outcomePanel(c, result, fresh) {
   const labels = Object.fromEntries(Object.values(c.reason_options || {}).flat().map((o) => [o.code, o.label]));
   const codes = result ? result.reason_codes || [] : c.reason_codes || [];
   const conf = result ? result.confidence : c.confidence;
+  const answer = result ? result.demo_answer : c.demo_answer;
+  let reveal = null;
+  if (answer) {
+    const truth = answer.decision === "merge" ? "same person" : "different people";
+    reveal = h("div", { class: "demo-answer " + (answer.matches ? "ok" : "miss") },
+      h("p", { class: "demo-answer-head" }, mark(answer.matches ? "match" : "conflict"),
+        answer.matches ? `Matches the known answer: ${truth}.` : `The known answer is ${truth}.`),
+      answer.title ? h("p", { class: "demo-answer-title", text: answer.title }) : null,
+      h("p", { text: answer.explanation || "Synthetic demo data: the generator knows which person each record belongs to." }),
+      h("p", { class: "hint", text: "Demo mode only" }));
+  }
   return h("section", { class: "outcome", "aria-live": "polite" },
-    stamp, h("p", { text: msg }),
+    stamp, h("p", { text: msg }), reveal,
     codes.length ? h("ul", { class: "reason-list" }, codes.map((k) => h("li", { text: labels[k] || k }))) : null,
     conf ? h("p", { class: "hint", text: `Confidence: ${conf}` }) : null,
     !result && c.notes ? h("blockquote", { text: c.notes }) : null,

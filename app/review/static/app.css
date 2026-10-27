@@ -263,3 +263,11 @@ td.muted { color: var(--ink-3); white-space: nowrap; }
 .export-row { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
 .export-links { display: flex; flex-wrap: wrap; gap: .6rem; }
 .select { width: auto; min-height: 42px; }
+
+/* ---------- demo answer reveal */
+.demo-answer { width: 100%; border-radius: var(--r-control); padding: .8rem .9rem; display: grid; gap: .3rem; font-size: var(--step--1); }
+.demo-answer.ok { background: var(--match-soft); }
+.demo-answer.miss { background: var(--conflict-soft); }
+.demo-answer p { color: var(--ink-2); margin: 0; }
+.demo-answer .demo-answer-head { display: flex; align-items: center; gap: .45rem; font-weight: 600; color: var(--ink); font-size: var(--step-0); }
+.demo-answer-title { font-weight: 600; color: var(--ink); }

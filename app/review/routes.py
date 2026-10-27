@@ -110,11 +110,16 @@ def build_router(cookie_secure: bool) -> APIRouter:
         return {"case_id": cases.take_next(conn, user)}
 
     @router.get("/review/api/cases/{case_id}", tags=["review"])
-    def get_case(case_id: int, user: CurrentUser, conn: Conn) -> dict:
+    def get_case(case_id: int, request: Request, user: CurrentUser, conn: Conn) -> dict:
         try:
-            return cases.get_case(conn, user, case_id)
+            case = cases.get_case(conn, user, case_id)
         except cases.CaseError as exc:
             raise case_error(exc) from exc
+        # Never reveal a demo answer before the case is decided.
+        if request.app.state.service.settings.demo_mode and case["status"] != "open":
+            case["demo_answer"] = cases.demo_answer(conn, case_id, case["decision"])
+            conn.rollback()
+        return case
 
     @router.post("/review/api/cases/{case_id}/decision", dependencies=write, tags=["review"])
     def decide(case_id: int, body: DecisionBody, request: Request, user: CurrentUser, conn: Conn) -> dict:

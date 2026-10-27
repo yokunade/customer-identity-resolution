@@ -25,14 +25,17 @@ On first start this:
    surname changes, shared family emails, twins, Jr/Snr…) and resolves every
    one through the real cleansing and matching pipeline, which takes about
    two minutes,
-3. labels every review case with its true answer (the generator knows it),
+3. loads 17 curated scenarios first, so the front of the review queue holds 18
+   realistic hard cases, about half same person and half different people
+   (see below),
+4. labels every review case with its true answer (the generator knows it),
    giving an evaluation set for a future AI reviewer,
-4. creates two reviewer accounts and prints a summary like:
+5. creates two reviewer accounts and prints a summary like:
 
 ```
 Demo ready.
-  20,000 source records resolved to 10,450 customers; 1,019 cases waiting for review.
-  1,019 cases carry synthetic ground-truth labels for AI reviewer evaluation.
+  20,040 source records resolved to 10,492 customers; 1,038 cases waiting for review.
+  The first 18 cases in the queue are curated hard cases; every case has a known answer.
 
   Review app   http://localhost:8000/review
                ana@demo.local (admin) or tom@demo.local, password: review-demo-2026
@@ -44,6 +47,8 @@ Then:
 - **Review cases:** open http://localhost:8000/review, sign in, and take a case.
   The demo sends name + address matches that lack a DOB or personal identifier
   to review (`AUTO_LINK_TIERS=exact,strong,probable`), so the queue has plenty in it.
+  In demo mode (`DEMO_MODE=true`) the app shows the known answer and why
+  **after** you submit each decision, never before.
 - **Try the API:** open http://localhost:8000/docs, click *Authorize*, enter
   `demo-key`, and post a record to `/v1/resolve`, or use the curl example below.
   `/v1/cleanse` shows the cleansing and keys without storing anything.
@@ -62,6 +67,36 @@ Ports, the number of demo records, the reviewer password and every service
 setting can be overridden in a `.env` file (see `.env.example`). The demo
 defaults (key secret, API key, passwords, plain-http cookies) are for a laptop
 only.
+
+### The curated cases
+
+Each one is a short sequence of records loaded through the real engine, so
+the rule, tier and comparison you see are what the engine produced. They come
+first in the queue, alternating between same person and different people:
+
+| # | Case | True answer |
+|---|---|---|
+| 1 | Father and son, Jr/Sr missing | Same person as the son; not the father |
+| 2 | Nickname on a billing record | Same person |
+| 3 | Mother and daughter share a name and a family email | Different people |
+| 4 | Surname misspelt by the call centre | Same person |
+| 5 | Twins at the same address | Different people |
+| 6 | Forename misspelt at checkout | Same person |
+| 7 | Twins with similar-sounding names | Different people |
+| 8 | New record has no postcode | Same person |
+| 9 | Neighbours with the same name | Different people |
+| 10 | Flat number left off | Same person |
+| 11 | Same name, different flats | Different people |
+| 12 | Same property reference, house name abbreviated | Same person |
+| 13 | Son marked Jr; father's record has no suffix | Different people |
+| 14 | Moved house, old address given | Same person |
+| 15 | Couple share a mobile; caller gave only an initial | Different people |
+| 16 | Double-barrelled surname without the hyphen | Same person |
+| 17 | Mother and daughter; the clue is in the email | Different people |
+
+The records are in `benchmark/demo_scenarios.py`. Each case's explanation is
+stored with its label, so the set also works as a hard evaluation set for an
+AI reviewer.
 
 ### Without Docker
 
@@ -220,11 +255,12 @@ export TEST_DATABASE_URL=postgresql://user:pass@localhost:5432/identity_test   #
 pytest
 ```
 
-144 tests: cleansing (names, postcodes, addresses, phones, emails, DOB),
+152 tests: cleansing (names, postcodes, addresses, phones, emails, DOB),
 phonetics, key invariants, vetoes, the decision engine, and end-to-end API
 tests against PostgreSQL including a 10-thread concurrency test, and the
 review workflow (sign-in, exclusive claims, merge and keep-apart effects), and
-the AI reviewer data (snapshots, masking, exports, scoring, demo labels). Database
+the AI reviewer data (snapshots, masking, exports, scoring, demo labels), and
+the curated demo cases (each raises its intended case through the engine). Database
 tests skip if PostgreSQL isn't reachable.
 
 ## 200k benchmark

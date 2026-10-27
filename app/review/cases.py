@@ -228,15 +228,28 @@ def split_for(case_id: int) -> str:
 def record_example(conn: psycopg.Connection, *, case_id: int, snapshot: dict, label_source: str,
                    decision: str, survivor: str | None, reason_codes: list[str] | None = None,
                    confidence: str | None = None, notes: str | None = None, reviewer_id: int | None = None,
-                   seconds_to_decide: int | None = None) -> None:
+                   seconds_to_decide: int | None = None, metadata: dict | None = None) -> None:
     conn.execute(
         "INSERT INTO review_example (case_id, label_source, reviewer_id, schema_version, snapshot, decision,"
-        " survivor, reason_codes, confidence, notes, seconds_to_decide, split)"
-        " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        " survivor, reason_codes, confidence, notes, seconds_to_decide, split, metadata)"
+        " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         " ON CONFLICT (case_id, label_source) DO NOTHING",
         (case_id, label_source, reviewer_id, SNAPSHOT_SCHEMA_VERSION, Jsonb(snapshot), decision, survivor,
-         reason_codes or [], confidence, notes, seconds_to_decide, split_for(case_id)),
+         reason_codes or [], confidence, notes, seconds_to_decide, split_for(case_id), Jsonb(metadata or {})),
     )
+
+
+def demo_answer(conn: psycopg.Connection, case_id: int, decision: str | None) -> dict | None:
+    """The known answer for a synthetic demo case. Only call once the case is decided."""
+    row = conn.execute(
+        "SELECT decision, metadata FROM review_example WHERE case_id = %s AND label_source = 'synthetic_truth'",
+        (case_id,),
+    ).fetchone()
+    if row is None:
+        return None
+    meta = row["metadata"] or {}
+    return {"decision": row["decision"], "matches": decision == row["decision"],
+            "title": meta.get("title"), "explanation": meta.get("explanation")}
 
 
 # ------------------------------------------------------------------ decision
@@ -324,7 +337,11 @@ def decide(conn: psycopg.Connection, settings: Settings, user: User, case_id: in
             for o in others:
                 _reconcile(conn, o)
 
-    return {"case_id": case_id, "status": status, "decision": decision,
+    answer = None
+    if settings.demo_mode:
+        answer = demo_answer(conn, case_id, decision)
+        conn.rollback()
+    return {"case_id": case_id, "status": status, "decision": decision, "demo_answer": answer,
             "survivor_customer_id": str(survivor) if survivor else None,
             "merged_customer_id": str(merged) if merged else None, "source_records_moved": moved}
 

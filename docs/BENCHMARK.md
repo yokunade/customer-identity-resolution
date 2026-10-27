@@ -57,6 +57,29 @@ Tier precision on corrected data: exact 100% (45,575 links), strong 99.99%
 | `exact,strong,probable,possible` (default) | 93 (0.09%) | 93.4% | 0 |
 | `exact,strong,probable` | ~5 (0.005%) | ~85.0% | ~9,500 suggestions, 99.1% correct |
 
+### Round 4: twins with similar names
+
+Building the curated demo cases showed that twins whose names sound alike
+(Ella/Ellie, Jack/Jake, Mia/Maya) were auto-merged by the phonetic rules
+`SOUNDEX_NAME_DOB_POSTCODE` and `NYSIIS_NAME_DOB_PREMISE_DISTRICT`: same
+surname, DOB and address, and a matching Soundex/NYSIIS forename. Both rules
+now also require compatible forenames (a shared nickname form, or at most one
+keystroke apart), so typos like Wiliam/William still link.
+
+On the corrected 200k dataset the cost is small:
+
+| | Round 3 | Round 4 |
+|---|---:|---:|
+| Pairwise precision | 99.82% | 99.82% |
+| Pairwise recall | 91.99% | 91.95% |
+| Links made | 104,876 | 104,828 |
+| Wrong links | 93 | 93 |
+| Twins wrongly linked | 0.25% | 0.12% |
+| Findable forename-typo links missed | 18.0% | 18.8% |
+
+The generator gives twins random names that rarely sound alike, so this
+understates the benefit for real families.
+
 ## Round 2 results
 
 ### Dataset

@@ -49,18 +49,23 @@ def baseline(name: str, item: dict) -> dict:
 def score(items: list[dict], preds: dict[str, dict | None]) -> dict:
     cm = Counter()
     by_tier: dict[str, Counter] = defaultdict(Counter)
+    curated: list[dict] = []
     invalid = survivor_wrong = 0
     for it in items:
         truth = it["expected"]["decision"]
         p = preds.get(it["id"])
         tier = it["metadata"].get("tier") or "?"
+        scen = it["metadata"].get("scenario")
+        got = p["decision"] if p else "invalid"
         if p is None:
             invalid += 1
-            cm[(truth, "invalid")] += 1
-            by_tier[tier][(truth, "invalid")] += 1
+        cm[(truth, got)] += 1
+        by_tier[tier][(truth, got)] += 1
+        if scen:
+            curated.append({"scenario": scen, "id": it["id"], "truth": truth, "predicted": got,
+                            "correct": truth == got})
+        if p is None:
             continue
-        cm[(truth, p["decision"])] += 1
-        by_tier[tier][(truth, p["decision"])] += 1
         if truth == p["decision"] == "merge" and it["expected"].get("survivor") and \
                 p.get("survivor") != it["expected"]["survivor"]:
             survivor_wrong += 1
@@ -80,7 +85,9 @@ def score(items: list[dict], preds: dict[str, dict | None]) -> dict:
         }
 
     return {**rates(cm), "invalid_outputs": invalid, "survivor_disagreements": survivor_wrong,
-            "by_tier": {t: rates(c) for t, c in sorted(by_tier.items())}}
+            "by_tier": {t: rates(c) for t, c in sorted(by_tier.items())},
+            **({"curated_cases": {"correct": sum(c["correct"] for c in curated), "total": len(curated),
+                                  "cases": curated}} if curated else {})}
 
 
 def main() -> None:

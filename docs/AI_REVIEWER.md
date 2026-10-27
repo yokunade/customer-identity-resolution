@@ -21,6 +21,7 @@ When a reviewer submits a decision, the same transaction writes a row to
 | `split` | `train` / `dev` / `test`, assigned from a hash of the case ID (80/10/10). A case never changes split, so a test case can't leak into training later. |
 | `label_source` | `reviewer` for human decisions; `synthetic_truth` for demo ground truth |
 | `schema_version` | Version of the snapshot format (currently 1) |
+| `metadata` | Free-form labels; for curated demo cases `scenario`, `title` and `explanation` |
 
 The decision, reasons and confidence are also kept on the case itself
 (`merge_candidate`) and in the `resolution_event` audit log.
@@ -149,12 +150,16 @@ The scorer leads with:
 It also reports invalid outputs, survivor disagreements and a per-tier
 breakdown.
 
-Baselines on the 1,019 demo cases, which any model has to beat:
+Baselines on the 1,038 demo cases, which any model has to beat:
 
-| Baseline | Accuracy | Wrong merges | Keep-apart recall | Merge recall |
-|---|---:|---:|---:|---:|
-| Always merge | 98.9% | 11 | 0% | 100% |
-| Merge unless the comparison shows a conflict | 99.8% | 2 | 82% | 100% |
+| Baseline | Accuracy | Wrong merges | Keep-apart recall | Merge recall | Curated cases right |
+|---|---:|---:|---:|---:|---:|
+| Always merge | 98.1% | 20 | 0% | 100% | 9 / 18 |
+| Merge unless the comparison shows a conflict | 99.1% | 9 | 55% | 100% | 11 / 18 |
+
+The second baseline looks strong overall but gets only 2 of the 9 curated
+different-people cases right: it can't see twins, neighbours, flatmates, or a
+father and son who left off Jr/Sr. The curated column is the one to watch.
 
 ```bash
 python -m benchmark.score_ai_reviewer --eval eval.jsonl --baseline no_conflict

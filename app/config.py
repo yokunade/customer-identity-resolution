@@ -44,6 +44,8 @@ class Settings:
     # Send the review app's session cookie only over HTTPS. Browsers treat
     # http://localhost as secure, so local development still works.
     review_cookie_secure: bool = True
+    # Demo only: after a decision, show the known answer for synthetic cases.
+    demo_mode: bool = False
     pool_min_size: int = 1
     pool_max_size: int = 10
     log_level: str = "INFO"
@@ -63,6 +65,7 @@ class Settings:
                 t.strip() for t in os.getenv("AUTO_LINK_TIERS", "exact,strong,probable,possible").split(",") if t.strip()
             ),
             review_cookie_secure=_bool("REVIEW_COOKIE_SECURE", Settings.review_cookie_secure),
+            demo_mode=_bool("DEMO_MODE", Settings.demo_mode),
             pool_min_size=_int("DB_POOL_MIN", Settings.pool_min_size),
             pool_max_size=_int("DB_POOL_MAX", Settings.pool_max_size),
             log_level=os.getenv("LOG_LEVEL", Settings.log_level),

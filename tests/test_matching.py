@@ -241,3 +241,23 @@ def test_name_and_postcode_when_premise_detail_differs():
                       address={"line1": "Flat 3, Rose Court", "line2": "106 Lincoln Rd", "postcode": "LS1 0HS"})
     _, b, _, _ = prep(first_name="LEO", last_name="EVANS-RICHARDS", address={"line1": "106 Lincoln Road", "postcode": "LS1 0HS"})
     assert "NAME_POSTCODE" in shared(a, b)
+
+
+@pytest.mark.parametrize("a,b", [("Ella", "Ellie"), ("Jack", "Jake"), ("Mia", "Maya")])
+def test_twins_with_similar_names_are_not_auto_linked(a, b):
+    base = dict(last_name="Grant", date_of_birth="2010-03-04", address={"line1": "5 Twin Street", "postcode": "LS6 1AA"})
+    _, ka, _, pa = prep(first_name=a, **base)
+    _, kb, _, pb = prep(first_name=b, **base)
+    blocked = {"SOUNDEX_NAME_DOB_POSTCODE", "NYSIIS_NAME_DOB_PREMISE_DISTRICT"} & shared(ka, kb)
+    assert blocked, "phonetic keys should still be shared"
+    for rule in blocked:
+        assert "first_name" in veto_reasons(RULES_BY_KEY[rule], pa, pb)
+
+
+def test_one_keystroke_forename_typo_still_links_phonetically():
+    base = dict(last_name="Smyth", date_of_birth="1979-02-14", address={"line1": "12 Acacia Ave", "postcode": "LS6 2AB"})
+    _, ka, _, pa = prep(first_name="William", **base)
+    _, kb, _, pb = prep(first_name="Wiliam", last_name="Smith", date_of_birth="1979-02-14",
+                        address={"line1": "12 Acacia Ave", "postcode": "LS6 2AB"})
+    assert "SOUNDEX_NAME_DOB_POSTCODE" in shared(ka, kb)
+    assert veto_reasons(RULES_BY_KEY["SOUNDEX_NAME_DOB_POSTCODE"], pa, pb) == []

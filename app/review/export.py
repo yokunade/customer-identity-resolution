@@ -53,7 +53,8 @@ def _metadata(ex: dict) -> dict[str, Any]:
     return {"example_id": ex["example_id"], "case_id": ex["case_id"], "split": ex["split"],
             "label_source": ex["label_source"], "rule": snap.get("rule"), "tier": snap.get("tier"),
             "summary": snap.get("summary"), "confidence": ex.get("confidence"),
-            "prompt_version": PROMPT_VERSION, "schema_version": ex["schema_version"]}
+            "prompt_version": PROMPT_VERSION, "schema_version": ex["schema_version"],
+            **({"scenario": ex["metadata"]["scenario"]} if (ex.get("metadata") or {}).get("scenario") else {})}
 
 
 def iter_lines(examples: list[dict], fmt: str, masked: bool) -> Iterator[str]:
