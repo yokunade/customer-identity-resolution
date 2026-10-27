@@ -20,6 +20,7 @@ from psycopg.rows import dict_row
 from app.config import Settings
 from app.db import migrate
 from app.review.auth import create_user
+from app.review.cases import build_case, record_example, snapshot_of
 from app.schemas import InboundCustomer
 from app.service import ResolutionService
 from benchmark.generate import generate
@@ -46,6 +47,7 @@ def main() -> None:
         conn.rollback()
         if existing:
             print(f"Demo data already loaded ({existing:,} records). Skipping.", flush=True)
+            label_cases(conn, generate(n_records, seed=7))
             summary(conn, password)
             return
 
@@ -62,20 +64,57 @@ def main() -> None:
             if i % 2000 == 0 or i == len(rows):
                 rate = i / (time.time() - t0)
                 print(f"  {i:>7,} / {len(rows):,}  ({rate:,.0f} records/s)", flush=True)
+        label_cases(conn, rows)
         summary(conn, password)
+
+
+def label_cases(conn: psycopg.Connection, rows: list[dict]) -> None:
+    """Record the true answer for every open case as a 'synthetic_truth' example.
+
+    The generator knows which real person each record belongs to, so these
+    labels are exact. They form a ready-made evaluation set for an AI reviewer
+    and are kept separate from human decisions (label_source)."""
+    done = conn.execute("SELECT count(*) AS n FROM review_example WHERE label_source = 'synthetic_truth'").fetchone()["n"]
+    conn.rollback()
+    if done:
+        return
+    person = {(r["record"]["source_system"].upper(), r["record"]["source_record_id"]): r["truth"]["person_id"]
+              for r in rows}
+    cases = conn.execute("SELECT case_id FROM merge_candidate WHERE status = 'open' ORDER BY case_id").fetchall()
+    conn.rollback()
+    labelled = {"merge": 0, "keep_apart": 0, "skipped": 0}
+    with conn.transaction():
+        for row in cases:
+            case = build_case(conn, None, row["case_id"])
+            people = []
+            for side in ("customer_a", "customer_b"):
+                people.append({person.get((r["source_system"], r["source_record_id"])) for r in case[side]["records"]})
+            a, b = people
+            if None in a | b or len(a) != 1 or len(b) != 1:
+                labelled["skipped"] += 1  # a customer already mixes people; no single right answer
+                continue
+            decision = "merge" if a == b else "keep_apart"
+            record_example(conn, case_id=row["case_id"], snapshot=snapshot_of(case), label_source="synthetic_truth",
+                           decision=decision, survivor="A" if decision == "merge" else None)
+            labelled[decision] += 1
+    print(f"Labelled {labelled['merge'] + labelled['keep_apart']:,} cases with synthetic ground truth "
+          f"({labelled['merge']:,} same person, {labelled['keep_apart']:,} different people; "
+          f"{labelled['skipped']:,} skipped).", flush=True)
 
 
 def summary(conn: psycopg.Connection, password: str) -> None:
     s = conn.execute(
         "SELECT (SELECT count(*) FROM source_record) AS records,"
         " (SELECT count(*) FROM customer WHERE status = 'active') AS customers,"
-        " (SELECT count(*) FROM merge_candidate WHERE status = 'open') AS cases"
+        " (SELECT count(*) FROM merge_candidate WHERE status = 'open') AS cases,"
+        " (SELECT count(*) FROM review_example WHERE label_source = 'synthetic_truth') AS gold"
     ).fetchone()
     conn.rollback()
     port = os.getenv("API_PORT", "8000")
     print(f"""
 Demo ready.
   {s['records']:,} source records resolved to {s['customers']:,} customers; {s['cases']:,} cases waiting for review.
+  {s['gold']:,} cases carry synthetic ground-truth labels for AI reviewer evaluation.
 
   Review app   http://localhost:{port}/review
                {REVIEWERS[0][0]} (admin) or {REVIEWERS[1][0]}, password: {password}

@@ -90,7 +90,7 @@ def test_claim_is_exclusive_and_held(app_settings, clean_db):
     assert tom.post("/review/api/cases/next", headers=HDR).json()["case_id"] == c2
     assert ana.get("/review/api/stats").json() == {"open": 2, "mine": 1, "decided_today": 0, "team_today": 0}
     # Tom cannot decide Ana's case.
-    r = tom.post(f"/review/api/cases/{c1}/decision", json={"decision": "keep_apart", "notes": "nope"}, headers=HDR)
+    r = tom.post(f"/review/api/cases/{c1}/decision", json={"decision": "keep_apart", "notes": "nope", "reason_codes": ["different_dob"], "confidence": "certain"}, headers=HDR)
     assert r.status_code == 409
 
 
@@ -113,13 +113,24 @@ def test_merge_decision_updates_identity_tables(app_settings, clean_db):
     ana = client_for(app_settings, "ana@example.co.uk")
     cid = ana.post("/review/api/cases/next", headers=HDR).json()["case_id"]
 
-    r = ana.post(f"/review/api/cases/{cid}/decision", json={"decision": "merge", "notes": ""}, headers=HDR)
+    base = {"decision": "merge", "reason_codes": ["same_email"], "confidence": "certain"}
+    r = ana.post(f"/review/api/cases/{cid}/decision", json={**base, "notes": ""}, headers=HDR)
     assert r.status_code == 422 and "note" in r.json()["detail"]
-    r = ana.post(f"/review/api/cases/{cid}/decision", json={"decision": "merge", "notes": "Same person"}, headers=HDR)
+    r = ana.post(f"/review/api/cases/{cid}/decision", json={**base, "notes": "Same person"}, headers=HDR)
     assert r.status_code == 422  # survivor required
+    r = ana.post(f"/review/api/cases/{cid}/decision", headers=HDR,
+                 json={**base, "notes": "Same person", "reason_codes": [], "survivor_customer_id": str(a)})
+    assert r.status_code == 422 and "reason" in r.json()["detail"]
+    r = ana.post(f"/review/api/cases/{cid}/decision", headers=HDR,
+                 json={**base, "notes": "Same person", "reason_codes": ["different_dob"], "survivor_customer_id": str(a)})
+    assert r.status_code == 422  # a keep-apart reason on a merge
+    r = ana.post(f"/review/api/cases/{cid}/decision", headers=HDR,
+                 json={**base, "notes": "Same person", "confidence": None, "survivor_customer_id": str(a)})
+    assert r.status_code == 422 and "confident" in r.json()["detail"]
 
     r = ana.post(f"/review/api/cases/{cid}/decision",
-                 json={"decision": "merge", "notes": "Same name, both emails on one record", "survivor_customer_id": str(a)},
+                 json={"decision": "merge", "notes": "Same name, both emails on one record", "survivor_customer_id": str(a),
+                       "reason_codes": ["same_email", "nickname_or_typo"], "confidence": "likely"},
                  headers=HDR)
     assert r.status_code == 200, r.text
     assert r.json()["survivor_customer_id"] == str(a) and r.json()["source_records_moved"] >= 1
@@ -136,7 +147,8 @@ def test_merge_decision_updates_identity_tables(app_settings, clean_db):
     assert ev["details"]["reviewer"] == "ana@example.co.uk" and ev["details"]["case_id"] == cid
 
     # The decided case can't be decided again, and the customer endpoint follows the merge.
-    r = ana.post(f"/review/api/cases/{cid}/decision", json={"decision": "keep_apart", "notes": "again"}, headers=HDR)
+    r = ana.post(f"/review/api/cases/{cid}/decision", headers=HDR,
+                 json={"decision": "keep_apart", "notes": "again", "reason_codes": ["different_dob"], "confidence": "certain"})
     assert r.status_code == 409
     assert ana.get("/review/api/history").json()[0]["case_id"] == cid
 
@@ -145,8 +157,9 @@ def test_keep_apart_and_pair_not_resuggested(app_settings, clean_db):
     a, b = make_case(clean_db, app_settings, "k")
     tom = client_for(app_settings, "tom@example.co.uk")
     cid = tom.post("/review/api/cases/next", headers=HDR).json()["case_id"]
-    r = tom.post(f"/review/api/cases/{cid}/decision", json={"decision": "keep_apart", "notes": "Different DOBs on file"},
-                 headers=HDR)
+    r = tom.post(f"/review/api/cases/{cid}/decision", headers=HDR,
+                 json={"decision": "keep_apart", "notes": "Different DOBs on file", "reason_codes": ["different_dob"],
+                       "confidence": "certain"})
     assert r.status_code == 200 and r.json()["status"] == "rejected"
     # Another tying record arrives: no new case for the same pair.
     svc = ResolutionService(app_settings)
@@ -197,7 +210,8 @@ def test_merge_makes_overlapping_case_obsolete(app_settings, clean_db):
     while (cid := ana.post("/review/api/cases/next", headers=HDR).json()["case_id"]) is not None:
         case = ana.get(f"/review/api/cases/{cid}").json()
         r = ana.post(f"/review/api/cases/{cid}/decision", headers=HDR, json={
-            "decision": "merge", "notes": "Same person", "survivor_customer_id": case["customer_a"]["customer_id"]})
+            "decision": "merge", "notes": "Same person", "survivor_customer_id": case["customer_a"]["customer_id"],
+            "reason_codes": ["same_email"], "confidence": "likely"})
         assert r.status_code == 200, r.text
         decided += 1
         assert decided < 10

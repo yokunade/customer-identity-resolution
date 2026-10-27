@@ -177,7 +177,7 @@ details.recs[open] summary { border-bottom: 1px solid var(--line); }
 .rec dd { margin: 0; overflow-wrap: anywhere; }
 
 /* ---------- decision rail */
-.rail { position: sticky; top: 76px; display: grid; gap: 1rem; }
+.rail { position: sticky; top: 76px; display: grid; gap: 1rem; max-height: calc(100vh - 92px); overflow-y: auto; overscroll-behavior: contain; border-radius: var(--r-sheet); }
 .decide { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-sheet); padding: 1.25rem; display: grid; gap: 1.1rem; }
 .decide h2 { font-size: var(--step-1); font-weight: 600; }
 .choices { display: grid; gap: .6rem; border: 0; margin: 0; padding: 0; }
@@ -241,3 +241,25 @@ td.muted { color: var(--ink-3); white-space: nowrap; }
   .cmp .hd-lbl { display: none; }
   .cmp .row-note { grid-column: 1 / -1; }
 }
+
+/* ---------- reasons, confidence, training export */
+.reasons, .segmented-wrap { border: 0; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+.chip { position: relative; cursor: pointer; }
+.chip input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.chip span { display: inline-block; padding: .3rem .65rem; border: 1px solid var(--line-strong); border-radius: 999px; font-size: var(--step--1); color: var(--ink-2); background: var(--sheet); }
+.chip input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
+.chip input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: 2px; }
+.segmented { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line-strong); border-radius: var(--r-control); overflow: hidden; }
+.segmented label { position: relative; cursor: pointer; }
+.segmented label + label { border-left: 1px solid var(--line-strong); }
+.segmented input { position: absolute; opacity: 0; inset: 0; cursor: pointer; }
+.segmented span { display: block; text-align: center; padding: .5rem .25rem; font-size: var(--step--1); font-weight: 600; color: var(--ink-2); }
+.segmented input:checked + span { background: var(--accent-soft); color: var(--accent); }
+.segmented input:focus-visible + span { outline: 2px solid var(--focus); outline-offset: -2px; }
+.reason-list { margin: 0; padding-left: 1.1rem; color: var(--ink-2); }
+.training { margin-top: 2rem; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-sheet); padding: 1.25rem; display: grid; gap: .75rem; }
+.training h2 { font-size: var(--step-1); font-weight: 600; }
+.export-row { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; }
+.export-links { display: flex; flex-wrap: wrap; gap: .6rem; }
+.select { width: auto; min-height: 42px; }

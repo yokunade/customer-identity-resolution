@@ -1,7 +1,7 @@
-.PHONY: demo up down reset logs seed users test bench help
+.PHONY: demo up down reset logs seed users test bench ai-export help
 
 help:            ## Show this help
-	@grep -E '^[a-z]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-8s %s\n", $$1, $$2}'
+	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  make %-8s %s\n", $$1, $$2}'
 
 demo:            ## Build and start everything, load demo data, then follow the seed log
 	docker compose up --build -d
@@ -25,6 +25,13 @@ seed:            ## Re-run the demo loader (skips if data exists)
 
 users:           ## List reviewer accounts
 	docker compose exec api python -m app.review.users list
+
+ai-export:       ## Export AI reviewer data from the demo (masked) into ./exports
+	mkdir -p exports
+	docker compose exec -T api python -m app.review.export --format chat --source all --split train > exports/train.jsonl
+	docker compose exec -T api python -m app.review.export --format eval --source all --split test > exports/test.jsonl
+	docker compose exec -T api python -m app.review.export --format prompt --source all --shots 6 > exports/prompt.md
+	python -m benchmark.score_ai_reviewer --eval exports/test.jsonl --baseline no_conflict
 
 test:            ## Run the test suite (needs TEST_DATABASE_URL pointing at a throwaway database)
 	pytest

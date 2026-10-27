@@ -13,15 +13,18 @@ Workflow
 
 from __future__ import annotations
 
+import hashlib
 from typing import Any
 from uuid import UUID
 
 import psycopg
+from psycopg.types.json import Jsonb
 
 from app.config import Settings
 from app.matching.keys import MATCH_KEYS
 from app.matching.rules import RULES_BY_KEY
 from app.repository import Repository
+from app.review import reasons
 from app.review.auth import User
 from app.review.compare import compare, summarise
 from app.schemas import MergeRequest
@@ -143,6 +146,14 @@ def _customer(conn: psycopg.Connection, cid: UUID) -> dict:
 
 
 def get_case(conn: psycopg.Connection, user: User, case_id: int) -> dict[str, Any]:
+    try:
+        return build_case(conn, user, case_id)
+    finally:
+        conn.rollback()
+
+
+def build_case(conn: psycopg.Connection, user: User | None, case_id: int) -> dict[str, Any]:
+    """The case as a reviewer sees it. Read-only; leaves any transaction open."""
     case = conn.execute(
         "SELECT m.*, cu.display_name AS claimed_by_name, du.display_name AS decided_by_name,"
         " (m.claimed_at + make_interval(mins => %s)) AS claim_expires_at"
@@ -152,7 +163,6 @@ def get_case(conn: psycopg.Connection, user: User, case_id: int) -> dict[str, An
         " WHERE m.case_id = %s", (CLAIM_MINUTES, case_id),
     ).fetchone()
     if case is None:
-        conn.rollback()
         raise CaseError(404, "Case not found.")
     a, b = _customer(conn, case["customer_a"]), _customer(conn, case["customer_b"])
     # Older customer first: it is the default survivor.
@@ -167,11 +177,10 @@ def get_case(conn: psycopg.Connection, user: User, case_id: int) -> dict[str, An
         if t:
             trigger = {"record_id": t["record_id"], "source": f'{t["source_system"]} {t["source_record_id"]}',
                        "customer_id": str(t["customer_id"]), "received_at": t["received_at"].isoformat()}
-    conn.rollback()
 
     rows = compare(a.pop("_cleansed"), b.pop("_cleansed"))
     rule = RULES_BY_KEY.get(case["rule"])
-    held_by_me = case["status"] == "open" and case["claimed_by"] == user.user_id
+    held_by_me = user is not None and case["status"] == "open" and case["claimed_by"] == user.user_id
     return {
         "case_id": case["case_id"],
         "status": case["status"],
@@ -187,6 +196,9 @@ def get_case(conn: psycopg.Connection, user: User, case_id: int) -> dict[str, An
         "decided_by": case["decided_by_name"],
         "decided_at": case["decided_at"].isoformat() if case["decided_at"] else None,
         "notes": case["notes"],
+        "reason_codes": case["reason_codes"] or [],
+        "confidence": case["confidence"],
+        "reason_options": reasons.options(),
         "survivor_customer_id": str(case["survivor_customer_id"]) if case["survivor_customer_id"] else None,
         "customer_a": a,
         "customer_b": b,
@@ -195,14 +207,53 @@ def get_case(conn: psycopg.Connection, user: User, case_id: int) -> dict[str, An
     }
 
 
+# ------------------------------------------------------------------ training examples
+
+SNAPSHOT_SCHEMA_VERSION = 1
+SNAPSHOT_FIELDS = ("case_id", "created_at", "rule", "rule_description", "tier", "trigger",
+                   "customer_a", "customer_b", "comparison", "summary")
+
+
+def snapshot_of(case: dict[str, Any]) -> dict[str, Any]:
+    """The inputs of a case, without workflow state, for a training example."""
+    return {k: case[k] for k in SNAPSHOT_FIELDS}
+
+
+def split_for(case_id: int) -> str:
+    """Stable 80/10/10 train/dev/test assignment, so a case never changes split."""
+    bucket = int.from_bytes(hashlib.sha256(f"case:{case_id}".encode()).digest()[:4], "big") % 100
+    return "train" if bucket < 80 else "dev" if bucket < 90 else "test"
+
+
+def record_example(conn: psycopg.Connection, *, case_id: int, snapshot: dict, label_source: str,
+                   decision: str, survivor: str | None, reason_codes: list[str] | None = None,
+                   confidence: str | None = None, notes: str | None = None, reviewer_id: int | None = None,
+                   seconds_to_decide: int | None = None) -> None:
+    conn.execute(
+        "INSERT INTO review_example (case_id, label_source, reviewer_id, schema_version, snapshot, decision,"
+        " survivor, reason_codes, confidence, notes, seconds_to_decide, split)"
+        " VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+        " ON CONFLICT (case_id, label_source) DO NOTHING",
+        (case_id, label_source, reviewer_id, SNAPSHOT_SCHEMA_VERSION, Jsonb(snapshot), decision, survivor,
+         reason_codes or [], confidence, notes, seconds_to_decide, split_for(case_id)),
+    )
+
+
 # ------------------------------------------------------------------ decision
 
 
 def decide(conn: psycopg.Connection, settings: Settings, user: User, case_id: int, *, decision: str,
-           notes: str, survivor_customer_id: UUID | None) -> dict[str, Any]:
+           notes: str, survivor_customer_id: UUID | None, reason_codes: list[str] | None = None,
+           confidence: str | None = None) -> dict[str, Any]:
     notes = (notes or "").strip()
     if decision not in ("merge", "keep_apart"):
         raise CaseError(422, "Choose merge or keep apart.")
+    try:
+        codes = reasons.validate(decision, reason_codes or [])
+    except ValueError as exc:
+        raise CaseError(422, str(exc)) from exc
+    if confidence not in reasons.CONFIDENCE:
+        raise CaseError(422, "Say how confident you are.")
     if len(notes) < MIN_NOTES:
         raise CaseError(422, "Add a note explaining the decision.")
 
@@ -220,6 +271,11 @@ def decide(conn: psycopg.Connection, settings: Settings, user: User, case_id: in
             raise CaseError(409, "These customers have already been merged by another decision.")
         case = conn.execute("SELECT * FROM merge_candidate WHERE case_id = %s", (case_id,)).fetchone()
         pair = {case["customer_a"], case["customer_b"]}
+        # Capture what the reviewer saw before a merge moves the records.
+        presented = build_case(conn, user, case_id)
+        snapshot = snapshot_of(presented)
+        seconds = conn.execute("SELECT extract(epoch FROM now() - %s)::int AS s",
+                               (case["claimed_at"],)).fetchone()["s"]
 
         survivor = merged = None
         moved = 0
@@ -241,13 +297,21 @@ def decide(conn: psycopg.Connection, settings: Settings, user: User, case_id: in
 
         conn.execute(
             "UPDATE merge_candidate SET status = %s, decision = %s, notes = %s, decided_by = %s,"
-            " decided_at = now(), survivor_customer_id = %s, claimed_by = NULL WHERE case_id = %s",
-            (status, decision, notes, user.user_id, survivor, case_id),
+            " decided_at = now(), survivor_customer_id = %s, claimed_by = NULL, reason_codes = %s,"
+            " confidence = %s WHERE case_id = %s",
+            (status, decision, notes, user.user_id, survivor, codes, confidence, case_id),
         )
+        letter = None
+        if survivor is not None:
+            letter = "A" if str(survivor) == presented["customer_a"]["customer_id"] else "B"
+        record_example(conn, case_id=case_id, snapshot=snapshot, label_source="reviewer", decision=decision,
+                       survivor=letter, reason_codes=codes, confidence=confidence, notes=notes,
+                       reviewer_id=user.user_id, seconds_to_decide=seconds)
         Repository(conn).log_event(
             record_id=None, customer_id=survivor or case["customer_a"],
             outcome="review_merge" if decision == "merge" else "review_keep_apart", rule=case["rule"],
-            details={"case_id": case_id, "reviewer": user.email, "notes": notes,
+            details={"case_id": case_id, "reviewer": user.email, "notes": notes, "reason_codes": codes,
+                     "confidence": confidence,
                      "customer_a": str(case["customer_a"]), "customer_b": str(case["customer_b"]),
                      "merged_customer_id": str(merged) if merged else None, "records_moved": moved},
         )
@@ -267,7 +331,7 @@ def decide(conn: psycopg.Connection, settings: Settings, user: User, case_id: in
 
 def history(conn: psycopg.Connection, user: User, everyone: bool = False, limit: int = 100) -> list[dict]:
     rows = conn.execute(
-        "SELECT m.case_id, m.rule, m.decision, m.notes, m.decided_at, m.survivor_customer_id,"
+        "SELECT m.case_id, m.rule, m.decision, m.notes, m.decided_at, m.survivor_customer_id, m.reason_codes,"
         " m.customer_a, m.customer_b, u.display_name AS decided_by"
         " FROM merge_candidate m JOIN review_user u ON u.user_id = m.decided_by"
         " WHERE m.decided_by IS NOT NULL AND (%s OR m.decided_by = %s)"

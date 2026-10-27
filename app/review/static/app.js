@@ -306,8 +306,13 @@ function outcomePanel(c, result, fresh) {
   } else {
     msg = `Decided by ${c.decided_by} on ${fmtDateTime(c.decided_at)}.`;
   }
+  const labels = Object.fromEntries(Object.values(c.reason_options || {}).flat().map((o) => [o.code, o.label]));
+  const codes = result ? result.reason_codes || [] : c.reason_codes || [];
+  const conf = result ? result.confidence : c.confidence;
   return h("section", { class: "outcome", "aria-live": "polite" },
     stamp, h("p", { text: msg }),
+    codes.length ? h("ul", { class: "reason-list" }, codes.map((k) => h("li", { text: labels[k] || k }))) : null,
+    conf ? h("p", { class: "hint", text: `Confidence: ${conf}` }) : null,
     !result && c.notes ? h("blockquote", { text: c.notes }) : null,
     h("div", { class: "actions" },
       h("button", { class: "btn btn-primary", onclick: takeNext, text: "Take next case" }),
@@ -333,16 +338,38 @@ function decisionForm(c, onDone) {
       h("input", { type: "radio", name: "survivor", value: c.customer_b.customer_id, onchange: (e) => { survivor = e.target.value; } }),
       h("b", { text: "Customer B" }), h("small", { text: `Since ${fmtDate(c.customer_b.created_at)}.` })));
 
+  const picked = new Set();
+  let confidence = null;
+  const reasonBox = h("fieldset", { class: "reasons", hidden: true },
+    h("legend", { class: "label", text: "What decided it?" }));
+  const reasonChips = h("div", { class: "chips" });
+  reasonBox.append(reasonChips, h("span", { class: "hint", text: "Pick every reason that applies." }));
+
+  function renderReasons() {
+    picked.clear();
+    reasonChips.replaceChildren(...((c.reason_options || {})[decision] || []).map((o) =>
+      h("label", { class: "chip" },
+        h("input", { type: "checkbox", value: o.code, onchange: (e) => { e.target.checked ? picked.add(o.code) : picked.delete(o.code); refresh(); } }),
+        h("span", { text: o.label }))));
+  }
+
+  const confBox = h("fieldset", { class: "segmented-wrap", hidden: true },
+    h("legend", { class: "label", text: "How sure are you?" }),
+    h("div", { class: "segmented" }, [["certain", "Certain"], ["likely", "Likely"], ["unsure", "Unsure"]].map(([v, t]) =>
+      h("label", {}, h("input", { type: "radio", name: "confidence", value: v, onchange: () => { confidence = v; refresh(); } }), h("span", { text: t })))));
+
   function refresh() {
     survivorBox.hidden = decision !== "merge";
+    reasonBox.hidden = !decision;
+    confBox.hidden = !decision;
     warn.hidden = decision !== "merge" || !conflicts.length;
     submit.textContent = decision === "merge" ? "Merge customers" : decision === "keep_apart" ? "Keep apart" : "Choose a decision";
-    submit.disabled = !decision || notes.value.trim().length < 3;
+    submit.disabled = !decision || !picked.size || !confidence || notes.value.trim().length < 3;
   }
   notes.addEventListener("input", refresh);
 
   const choice = (value, title, sub) => h("label", { class: "choice" },
-    h("input", { type: "radio", name: "decision", value, onchange: () => { decision = value; refresh(); } }),
+    h("input", { type: "radio", name: "decision", value, onchange: () => { decision = value; renderReasons(); refresh(); } }),
     h("b", { text: title }), h("small", { text: sub }));
 
   const form = h("form", {
@@ -355,9 +382,10 @@ function decisionForm(c, onDone) {
       try {
         const result = await api(`/cases/${c.case_id}/decision`, {
           method: "POST",
-          body: { decision, notes: notes.value, survivor_customer_id: decision === "merge" ? survivor : null },
+          body: { decision, notes: notes.value, survivor_customer_id: decision === "merge" ? survivor : null,
+                  reason_codes: [...picked], confidence },
         });
-        onDone(result);
+        onDone({ ...result, reason_codes: [...picked], confidence });
       } catch (ex) {
         err.textContent = ex.message;
         err.hidden = false;
@@ -373,8 +401,10 @@ function decisionForm(c, onDone) {
       choice("keep_apart", "Different people", "Keep both customers. This pair won't be suggested again.")),
     warn,
     survivorBox,
+    reasonBox,
+    confBox,
     h("div", { class: "field" }, h("label", { for: "notes", text: "Notes" }), notes,
-      h("span", { class: "hint", text: "Required. Saved with the decision for audit." })),
+      h("span", { class: "hint", text: "Required. Saved for audit and to teach the future AI reviewer." })),
     err, submit,
     h("p", { class: "kbd", text: "Ctrl + Enter to submit" }),
   );
@@ -449,7 +479,33 @@ async function viewHistory() {
         h("td", { class: "notes", text: r.notes }))))))
     : h("p", { class: "queue-empty", text: "No decisions yet. Take a case from the queue to start." });
 
-  show(h("div", { class: "page-head" }, h("h1", { text: everyone ? "All decisions" : "Your decisions" }), toggle), body);
+  const panel = state.user && state.user.role === "admin" ? await trainingPanel() : null;
+  show(h("div", { class: "page-head" }, h("h1", { text: everyone ? "All decisions" : "Your decisions" }), toggle), body, panel);
+}
+
+async function trainingPanel() {
+  let summary = {};
+  try { summary = await api("/examples/summary"); } catch { return null; }
+  const count = (src) => Object.values(summary[src] || {}).reduce((a, b) => a + b, 0);
+  const splits = (src) => ["train", "dev", "test"].map((k) => `${(summary[src] || {})[k] || 0} ${k}`).join(", ");
+  let source = "reviewer";
+  const links = h("div", { class: "export-links" });
+  function renderLinks() {
+    const q = (fmt, extra = "") => `/review/api/examples/export?format=${fmt}&source=${source}&pii=masked${extra}`;
+    links.replaceChildren(
+      h("a", { class: "btn", href: q("chat"), download: "", text: "Chat examples" }),
+      h("a", { class: "btn", href: q("eval", "&split=test"), download: "", text: "Eval set (test split)" }),
+      h("a", { class: "btn", href: q("prompt", "&shots=6"), download: "", text: "Few-shot prompt" }));
+  }
+  renderLinks();
+  const sourceSel = h("select", { class: "input select", "aria-label": "Labels to export", onchange: (e) => { source = e.target.value; renderLinks(); } },
+    h("option", { value: "reviewer", text: `Reviewer decisions (${count("reviewer")})` }),
+    h("option", { value: "synthetic_truth", text: `Synthetic ground truth (${count("synthetic_truth")})` }),
+    h("option", { value: "all", text: "Both" }));
+  return h("section", { class: "training", "aria-labelledby": "training-h" },
+    h("h2", { id: "training-h", text: "AI reviewer training data" }),
+    h("p", { class: "hint", text: `Every decision is saved as a labelled example with a snapshot of the case as it was shown. Reviewer examples: ${splits("reviewer")}. Exports mask names, emails, phones, addresses and dates of birth.` }),
+    h("div", { class: "export-row" }, sourceSel, links));
 }
 
 /* ------------------------------------------------------------------ router */

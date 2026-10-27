@@ -12,6 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
 from app.review import auth, cases
+from app.review import export as review_export
 from app.review.auth import LoginThrottle, User
 
 STATIC = Path(__file__).parent / "static"
@@ -28,6 +29,8 @@ class DecisionBody(BaseModel):
     decision: Literal["merge", "keep_apart"]
     notes: str = Field(max_length=4000)
     survivor_customer_id: UUID | None = None
+    reason_codes: list[str] = Field(default_factory=list, max_length=20)
+    confidence: Literal["certain", "likely", "unsure"] | None = None
 
 
 def build_router(cookie_secure: bool) -> APIRouter:
@@ -118,7 +121,8 @@ def build_router(cookie_secure: bool) -> APIRouter:
         try:
             return cases.decide(conn, request.app.state.service.settings, user, case_id,
                                 decision=body.decision, notes=body.notes,
-                                survivor_customer_id=body.survivor_customer_id)
+                                survivor_customer_id=body.survivor_customer_id,
+                                reason_codes=body.reason_codes, confidence=body.confidence)
         except cases.CaseError as exc:
             raise case_error(exc) from exc
 
@@ -133,5 +137,40 @@ def build_router(cookie_secure: bool) -> APIRouter:
     @router.get("/review/api/history", tags=["review"])
     def get_history(user: CurrentUser, conn: Conn, everyone: bool = False) -> list[dict]:
         return cases.history(conn, user, everyone=everyone and user.is_admin)
+
+    # ------------------------------------------------------------------ training data (admins)
+    def require_admin(user: CurrentUser) -> User:
+        if not user.is_admin:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Only admins can export training data.")
+        return user
+
+    Admin = Annotated[User, Depends(require_admin)]
+
+    @router.get("/review/api/examples/summary", tags=["review"])
+    def examples_summary(user: Admin, conn: Conn) -> dict:
+        rows = conn.execute(
+            "SELECT label_source, split, count(*) AS n FROM review_example GROUP BY 1, 2 ORDER BY 1, 2"
+        ).fetchall()
+        conn.rollback()
+        out: dict = {}
+        for r in rows:
+            out.setdefault(r["label_source"], {})[r["split"]] = r["n"]
+        return out
+
+    @router.get("/review/api/examples/export", tags=["review"])
+    def examples_export(user: Admin, conn: Conn,
+                        format: Literal["chat", "eval", "raw", "prompt"] = "chat",
+                        split: Literal["train", "dev", "test", "all"] = "all",
+                        source: Literal["reviewer", "synthetic_truth", "all"] = "reviewer",
+                        pii: Literal["masked", "full"] = "masked", shots: int = 6) -> Response:
+        try:
+            text = review_export.export(conn, format, split=split, source=source, masked=pii == "masked",
+                                        shots=max(1, min(shots, 20)))
+        except ValueError as exc:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
+        ext = "md" if format == "prompt" else "jsonl"
+        name = f"review-{format}-{source}-{split}-{pii}.{ext}"
+        return Response(text, media_type="text/markdown" if ext == "md" else "application/x-ndjson",
+                        headers={"Content-Disposition": f'attachment; filename="{name}"', "Cache-Control": "no-store"})
 
     return router

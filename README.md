@@ -25,11 +25,14 @@ On first start this:
    surname changes, shared family emails, twins, Jr/Snr…) and resolves every
    one through the real cleansing and matching pipeline, which takes about
    two minutes,
-3. creates two reviewer accounts and prints a summary like:
+3. labels every review case with its true answer (the generator knows it),
+   giving an evaluation set for a future AI reviewer,
+4. creates two reviewer accounts and prints a summary like:
 
 ```
 Demo ready.
   20,000 source records resolved to 10,450 customers; 1,019 cases waiting for review.
+  1,019 cases carry synthetic ground-truth labels for AI reviewer evaluation.
 
   Review app   http://localhost:8000/review
                ana@demo.local (admin) or tom@demo.local, password: review-demo-2026
@@ -168,14 +171,17 @@ in tiers left out of `AUTO_LINK_TIERS`.
    conflict, missing), values held by both are underlined, and the record
    that raised the case is identified.
 4. **Decide.** *Same person* (choose which customer ID to keep; the older one is
-   the default) or *Different people*. A note is required.
+   the default) or *Different people*, with at least one reason ("same date
+   of birth", "different generations (Jr/Sr)"…), a confidence level and a note.
 5. **Submit.** In one transaction:
    - Merge: source records move to the kept customer, the other customer is
      marked merged and redirects to it, other open cases naming it are repointed
      (or closed if nothing is left to decide).
    - Keep apart: the pair is recorded as rejected and never suggested again.
-   - Both write the reviewer, time and note to `merge_candidate` and an event to
-     `resolution_event`.
+   - Both write the reviewer, time, reasons and note to `merge_candidate` and an
+     event to `resolution_event`.
+   - Both save a labelled training example for a future AI reviewer, with a
+     snapshot of the case as shown (see [docs/AI_REVIEWER.md](docs/AI_REVIEWER.md)).
 
 Security: scrypt password hashes, revocable server-side sessions in an
 HttpOnly, SameSite=Strict cookie, a custom-header check on every change
@@ -190,6 +196,22 @@ HttpOnly, SameSite=Strict cookie, a custom-header check on every change
 | POST | `/review/api/cases/{id}/decision` | `{decision: merge \| keep_apart, notes, survivor_customer_id}` |
 | POST | `/review/api/cases/{id}/release` | Return a case to the queue |
 | GET | `/review/api/history` | Your decisions (`?everyone=true` for admins) |
+| GET | `/review/api/examples/summary`, `/examples/export` | Training data counts and downloads (admins) |
+
+## AI reviewer data
+
+Each decision becomes a labelled example: the case snapshot, decision, reason
+codes, confidence, notes, time taken and a fixed train/dev/test split. The demo
+also labels every queue case with synthetic ground truth for evaluation.
+
+```bash
+python -m app.review.export --format chat --split train --out train.jsonl   # PII masked by default
+python -m app.review.export --format prompt --shots 6 --out prompt.md
+python -m benchmark.score_ai_reviewer --eval test.jsonl --predictions predictions.jsonl
+```
+
+Details, the prompt format, PII masking and baselines:
+[docs/AI_REVIEWER.md](docs/AI_REVIEWER.md).
 
 ## Tests
 
@@ -198,10 +220,11 @@ export TEST_DATABASE_URL=postgresql://user:pass@localhost:5432/identity_test   #
 pytest
 ```
 
-137 tests: cleansing (names, postcodes, addresses, phones, emails, DOB),
+144 tests: cleansing (names, postcodes, addresses, phones, emails, DOB),
 phonetics, key invariants, vetoes, the decision engine, and end-to-end API
 tests against PostgreSQL including a 10-thread concurrency test, and the
-review workflow (sign-in, exclusive claims, merge and keep-apart effects). Database
+review workflow (sign-in, exclusive claims, merge and keep-apart effects), and
+the AI reviewer data (snapshots, masking, exports, scoring, demo labels). Database
 tests skip if PostgreSQL isn't reachable.
 
 ## 200k benchmark
@@ -236,6 +259,7 @@ benchmark/           synthetic data generator, demo loader, parallel loader, eva
 tests/
 docs/MATCHING.md     cleansing rules, key catalogue, rule hierarchy
 docs/BENCHMARK.md    200k benchmark results
+docs/AI_REVIEWER.md  training data for a future AI reviewer
 docker-compose.yml   local demo stack
 Makefile             demo shortcuts
 .github/workflows/   CI: tests against PostgreSQL
