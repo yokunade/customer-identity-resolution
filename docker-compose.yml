@@ -1,0 +1,65 @@
+# Local demo: PostgreSQL, the API with its review app, and a one-off job that
+# loads synthetic customers through the real matching pipeline.
+#
+#   docker compose up --build
+#   open http://localhost:8000/review
+#
+# Every setting has a demo default; override any of them in a .env file.
+# The defaults are for a laptop demo only, not for production.
+
+name: identity-resolution
+
+x-app-env: &app-env
+  DATABASE_URL: postgresql://identity:identity@db:5432/identity
+  KEY_SECRET: ${KEY_SECRET:-demo-only-key-secret-change-me}
+  API_KEYS: ${API_KEYS:-demo-key}
+  # Name + address matches without DOB or a personal identifier go to review,
+  # so the demo queue has cases in it.
+  AUTO_LINK_TIERS: ${AUTO_LINK_TIERS:-exact,strong,probable}
+  # The demo is served over plain http; set true behind HTTPS.
+  REVIEW_COOKIE_SECURE: ${REVIEW_COOKIE_SECURE:-false}
+  LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  API_PORT: ${API_PORT:-8000}
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: identity
+      POSTGRES_PASSWORD: identity
+      POSTGRES_DB: identity
+    ports: ["127.0.0.1:${DB_PORT:-5433}:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U identity -d identity"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  api:
+    build: .
+    image: identity-resolution:local
+    environment: *app-env
+    ports: ["127.0.0.1:${API_PORT:-8000}:8000"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  seed:
+    build: .
+    image: identity-resolution:local
+    command: ["python", "-m", "benchmark.seed_demo"]
+    environment:
+      <<: *app-env
+      DEMO_RECORDS: ${DEMO_RECORDS:-20000}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-review-demo-2026}
+    depends_on:
+      db:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    restart: "no"
+
+volumes:
+  pgdata:

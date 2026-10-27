@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Identity review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/review/static/app.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='12' cy='16' r='8' fill='none' stroke='%232A3D9E' stroke-width='3'/%3E%3Ccircle cx='20' cy='16' r='8' fill='none' stroke='%232A3D9E' stroke-width='3'/%3E%3C/svg%3E">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+  <header class="bar" id="bar" hidden>
+    <a class="brand" href="#/queue" aria-label="Identity review, queue">
+      <svg class="brand-mark" viewBox="0 0 32 20" aria-hidden="true"><circle cx="10" cy="10" r="7.5"/><circle cx="22" cy="10" r="7.5"/></svg>
+      <span>Identity review</span>
+    </a>
+    <nav class="nav" aria-label="Main">
+      <a href="#/queue" data-nav="queue">Queue</a>
+      <a href="#/history" data-nav="history">History</a>
+    </nav>
+    <div class="who">
+      <span id="who-name"></span>
+      <button type="button" class="link" id="signout">Sign out</button>
+    </div>
+  </header>
+  <main id="main" tabindex="-1"></main>
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+  <script src="/review/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+[project]
+name = "customer-identity-resolution"
+version = "0.1.0"
+description = "UK customer data cleansing and deterministic identity resolution service"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
