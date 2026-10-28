@@ -32,14 +32,20 @@ def reset(db: str) -> None:
 
 
 def worker(idx: int, n_workers: int, data_path: str, db: str, out_dir: str, secret: str, tiers: str,
-           progress) -> None:
+           progress, start: int = 0, end: int | None = None, durable: bool = True) -> None:
+    """Resolve lines [start, end) of the dataset whose index modulo n_workers is idx."""
     svc = ResolutionService(Settings(database_url=db, key_secret=secret,
                                      auto_link_tiers=frozenset(tiers.split(","))))
     out = open(os.path.join(out_dir, f"results_{idx}.jsonl"), "w")
     with psycopg.connect(db, row_factory=dict_row) as conn:
+        if not durable:
+            conn.execute("SET synchronous_commit = off")
+            conn.commit()
         with open(data_path) as f:
             for i, line in enumerate(f):
-                if i % n_workers != idx:
+                if end is not None and i >= end:
+                    break
+                if i < start or i % n_workers != idx:
                     continue
                 row = json.loads(line)
                 t0 = time.perf_counter()
@@ -52,7 +58,7 @@ def worker(idx: int, n_workers: int, data_path: str, db: str, out_dir: str, secr
                         "matched_record_ids": r.match.matched_record_ids if r.match else [],
                         "competing": [str(x) for x in r.match.competing_customer_ids] if r.match else [],
                         "pool": r.candidates_considered, "skipped": r.skipped_blocks,
-                        "ms": (time.perf_counter() - t0) * 1000,
+                        "ms": (time.perf_counter() - t0) * 1000, "match_ms": r.matching_ms, "t": time.time(),
                     }
                 except Exception as exc:  # keep going; count errors
                     conn.rollback()

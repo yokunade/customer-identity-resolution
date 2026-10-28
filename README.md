@@ -121,6 +121,7 @@ All `/v1` endpoints require `X-API-Key` when `API_KEYS` is set.
 | POST | `/v1/resolve/batch` | Up to `MAX_BATCH_SIZE` records, each in its own transaction |
 | POST | `/v1/cleanse` | Dry run: cleansed record, quality issues and key counts; stores nothing |
 | GET | `/v1/customers/{id}` | Customer and linked source records (follows merges) |
+| GET | `/v1/customers?email=` / `?mobile=` / `?postcode=` | Customers holding that value; the input is cleansed first, so formatting differences still match. Optional `limit` (default 20, max 100) |
 | GET | `/v1/source-records/{system}/{id}` | Customer ID for a source record |
 | POST | `/v1/customers/merge` | Merge two customers |
 | GET | `/health`, `/ready` | Liveness / database readiness |
@@ -143,7 +144,7 @@ curl -s localhost:8000/v1/resolve -H 'X-API-Key: demo-key' -H 'Content-Type: app
 ```jsonc
 {
   "customer_id": "79532f8d-d251-4a4a-b570-f4ff98ec1e92",
-  "outcome": "matched",                     // matched | new_customer | existing_source_record
+  "outcome": "matched",                     // matched | new_customer | existing_source_record | relinked
   "record_id": 2,
   "match": {"rule": "EMAIL_NAME_DOB", "tier": "exact", "priority": 10,
             "matched_record_ids": [1], "auto_linked": true,
@@ -168,7 +169,11 @@ else you have: name parts or `full_name`, `title`, `suffix`, `gender`,
 Unknown fields are kept in the stored raw record.
 
 Re-sending the same `source_system` + `source_record_id` updates that record
-and its keys and returns the same customer (links are sticky).
+and its keys and returns the same customer (links are sticky). The exception is
+a record that is its customer's only one: it is matched again, so a corrected
+typo can join the right customer. If it auto-links, its old customer is merged
+into the new one (the old ID keeps resolving) and the outcome is `relinked`.
+A pair a reviewer kept apart is never re-linked.
 
 ## Configuration
 
@@ -194,8 +199,8 @@ in tiers left out of `AUTO_LINK_TIERS`.
 1. **Sign in.** Accounts are created from the command line:
 
    ```bash
-   python -m app.review.users add --email ana@example.co.uk --name "Ana Silva" --admin
-   python -m app.review.users list | disable --email … | password --email …
+   docker compose exec api python -m app.review.users add --email you@example.com --name "Your Name" --admin
+   docker compose exec api python -m app.review.users password --email ana@demo.local
    ```
 
 2. **Take next case.** Cases are handed out oldest first. A claimed case is
@@ -226,6 +231,7 @@ HttpOnly, SameSite=Strict cookie, a custom-header check on every change
 |---|---|---|
 | POST | `/review/api/login`, `/logout` | Sign in / out |
 | GET | `/review/api/me`, `/stats` | Current user; queue counts |
+| GET | `/review/api/overview` | Team-wide counts, outstanding cases by tier, and the next 50 cases |
 | POST | `/review/api/cases/next` | Claim (or resume) a case |
 | GET | `/review/api/cases/{id}` | Case with side-by-side comparison |
 | POST | `/review/api/cases/{id}/decision` | `{decision: merge \| keep_apart, notes, survivor_customer_id}` |
@@ -278,6 +284,14 @@ python -m benchmark.evaluate --data data.jsonl --results results/ --db postgresq
 
 `benchmark.run` wipes the target database first.
 
+To time resolution against a database that already holds millions of
+customers (seed 2.5m records, then measure 2.5m more), see "Scale benchmark"
+in [docs/BENCHMARK.md](docs/BENCHMARK.md):
+
+```bash
+docker compose --profile bench run --rm bench --records 5000000 --seed-records 2500000 --workers 12
+```
+
 ## Layout
 
 ```
@@ -303,7 +317,7 @@ Makefile             demo shortcuts
 
 ## Suggested next steps
 
-- Re-link policy for updated source records that now match a different customer.
+- Re-link policy for updated source records with other records on their customer that now match a different customer.
 - Re-key job for rule changes or `KEY_SECRET` rotation.
 - Consolidated golden record and link reasons on `GET /v1/customers/{id}`.
 - Royal Mail PAF / AddressBase lookup to fill UPRNs and validate premises.

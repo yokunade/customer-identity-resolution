@@ -53,12 +53,13 @@ def migrate(conn: psycopg.Connection) -> list[str]:
     """Apply any SQL files in app/migrations that have not been applied yet."""
     applied: list[str] = []
     with conn.transaction():
+        # Serialise concurrent start-ups. This must come before the CREATE TABLE:
+        # IF NOT EXISTS is not race-safe, so two workers can both try to create it.
+        conn.execute("SELECT pg_advisory_xact_lock(727274)")
         conn.execute(
             "CREATE TABLE IF NOT EXISTS schema_migrations ("
             " version text PRIMARY KEY, applied_at timestamptz NOT NULL DEFAULT now())"
         )
-        # Serialise concurrent start-ups.
-        conn.execute("SELECT pg_advisory_xact_lock(727274)")
         done = {r["version"] if isinstance(r, dict) else r[0]
                 for r in conn.execute("SELECT version FROM schema_migrations").fetchall()}
         for path in sorted(MIGRATIONS_DIR.glob("*.sql")):

@@ -10,7 +10,7 @@ from typing import Annotated, Iterator
 from uuid import UUID
 
 import psycopg
-from fastapi import Depends, FastAPI, Header, HTTPException, Request, status
+from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 
 from app.config import Settings, get_settings
 from app.db import Database, migrate
@@ -20,14 +20,14 @@ from app.schemas import (
     BatchResponse,
     CleanseResponse,
     CustomerResponse,
+    CustomerSearchResponse,
     InboundCustomer,
     MergeRequest,
     MergeResponse,
     ResolveResponse,
     SourceLookupResponse,
-    SourceRecordSummary,
 )
-from app.service import MergeError, ResolutionService
+from app.service import MergeError, ResolutionService, SearchError
 
 log = logging.getLogger("identity")
 
@@ -115,19 +115,33 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def cleanse_only(record: InboundCustomer, svc: Service) -> CleanseResponse:
         return svc.dry_run(record)
 
+    @app.get("/v1/customers", response_model=CustomerSearchResponse, dependencies=auth, tags=["customers"],
+             summary="Find customers by email, mobile or postcode (exactly one)")
+    def search_customers(
+        conn: Conn, svc: Service,
+        email: Annotated[str | None, Query()] = None,
+        mobile: Annotated[str | None, Query(description="Matches the number on any phone field")] = None,
+        postcode: Annotated[str | None, Query(description="UK postcode; includes previous addresses")] = None,
+        limit: Annotated[int, Query(ge=1, le=100)] = 20,
+    ) -> CustomerSearchResponse:
+        given = {k: v for k, v in (("email", email), ("mobile", mobile), ("postcode", postcode)) if v and v.strip()}
+        if len(given) != 1:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "give exactly one of email, mobile, postcode")
+        [(field, value)] = given.items()
+        try:
+            return svc.search_customers(conn, field, value, limit)
+        except SearchError as exc:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, f"{field}: {exc}") from exc
+        finally:
+            conn.rollback()
+
     @app.get("/v1/customers/{customer_id}", response_model=CustomerResponse, dependencies=auth, tags=["customers"])
-    def get_customer(customer_id: UUID, conn: Conn) -> CustomerResponse:
-        repo = Repository(conn)
-        if repo.get_customer(customer_id) is None:
-            raise HTTPException(status.HTTP_404_NOT_FOUND, "customer not found")
-        survivor_id = repo.survivor(customer_id)
-        cust = repo.get_customer(survivor_id)
-        records = repo.customer_records(survivor_id)
+    def get_customer(customer_id: UUID, conn: Conn, svc: Service) -> CustomerResponse:
+        cust = svc.get_customer(conn, customer_id)
         conn.rollback()
-        return CustomerResponse(
-            customer_id=survivor_id, requested_customer_id=customer_id, status=cust["status"],
-            created_at=cust["created_at"], source_records=[SourceRecordSummary(**r) for r in records],
-        )
+        if cust is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "customer not found")
+        return cust
 
     @app.get("/v1/source-records/{source_system}/{source_record_id}", response_model=SourceLookupResponse,
              dependencies=auth, tags=["customers"], summary="Look up the customer ID for a source record")

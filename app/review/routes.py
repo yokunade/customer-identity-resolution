@@ -105,6 +105,10 @@ def build_router(cookie_secure: bool) -> APIRouter:
     def get_stats(user: CurrentUser, conn: Conn) -> dict:
         return cases.stats(conn, user)
 
+    @router.get("/review/api/overview", tags=["review"])
+    def get_overview(user: CurrentUser, conn: Conn) -> dict:
+        return cases.overview(conn)
+
     @router.post("/review/api/cases/next", dependencies=write, tags=["review"])
     def take_next(user: CurrentUser, conn: Conn) -> dict:
         return {"case_id": cases.take_next(conn, user)}

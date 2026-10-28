@@ -36,6 +36,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import random
 import string
 from collections import defaultdict
@@ -181,7 +182,7 @@ class Person:
 
 
 class World:
-    def __init__(self, seed: int) -> None:
+    def __init__(self, seed: int, postcode_units: int | None = None, large_buildings: bool = False) -> None:
         self.rng = random.Random(seed)
         # Separate stream for re-drawing a colliding forename, so the fix for
         # same-named siblings leaves every other generated attribute unchanged.
@@ -196,6 +197,75 @@ class World:
         self.people: list[Person] = []
         self._postcode_streets: list = []
         self._next_household = 0
+        # Dense mode (for multi-million runs): a fixed set of postcode units, each
+        # on one street with house numbers handed out in order, so a postcode
+        # holds several customers as it would for a large UK customer base.
+        # Off by default, which keeps smaller datasets identical to earlier runs.
+        self._units: dict[str, list[list]] | None = None
+        if postcode_units:
+            self._units = self._build_units(postcode_units, random.Random(seed * 104729 + 3))
+        self._large_buildings = large_buildings
+        self._towers: list[list] = []  # [unit, building name, number, flats issued, capacity]
+
+    def _build_units(self, n: int, urng: random.Random) -> dict[str, list[list]]:
+        total = sum(d for _, d in AREAS.values())
+        units: dict[str, list[list]] = {}
+        seen: set[str] = set()
+        for area, (town, districts) in AREAS.items():
+            units[area] = []
+            for _ in range(max(1, round(n * districts / total))):
+                while True:
+                    pc = (f"{area}{urng.randint(1, districts)} {urng.randint(0, 9)}"
+                          f"{urng.choice(INWARD_LETTERS)}{urng.choice(INWARD_LETTERS)}")
+                    if pc not in seen and parse_postcode(pc):
+                        break
+                seen.add(pc)
+                street = f"{urng.choice(STREETS)} {urng.choice(DESCRIPTORS)}"
+                units[area].append([pc, town, street, urng.randint(1, 120)])  # last: next house number
+        return units
+
+    def _unit(self, area: str | None) -> list:
+        area = area or self.rng.choice(list(AREAS))
+        return self.rng.choice(self._units[area])  # type: ignore[index]
+
+    def _dense_dwelling(self, area: str | None) -> Dwelling:
+        if self._large_buildings:
+            # Towers and student halls: one postcode and building number, hundreds of flats.
+            if self._towers and self.rng.random() < 0.04:
+                t = self._towers[self.rng.randrange(len(self._towers))]
+                return self._tower_flat(t)
+            if self.rng.random() < 0.0015:
+                unit = self._unit(area)
+                t = [unit, f"{self.rng.choice(BUILDINGS)}", str(unit[3]), 0, self.rng.randint(80, 600)]
+                unit[3] += 2
+                self._towers.append(t)
+                return self._tower_flat(t)
+        unit = self._unit(area)
+        pc, town, street = unit[0], unit[1], unit[2]
+        if self.rng.random() < 0.1:  # corner plots and side streets share the postcode
+            street = f"{self.rng.choice(STREETS)} {self.rng.choice(DESCRIPTORS)}"
+        locality = self.rng.choice(LOCALITIES) if self.rng.random() < 0.15 else None
+        number: str | None = str(unit[3])
+        unit[3] += 2  # one side of the street
+        sub = name = None
+        r = self.rng.random()
+        if r < 0.15:  # a converted house or small block of flats
+            sub = f"Flat {self.rng.randint(1, 8)}"
+            name = self.rng.choice(BUILDINGS) if self.rng.random() < 0.3 else None
+        elif r < 0.20:
+            name, number = self.rng.choice(HOUSE_NAMES), None
+        d = Dwelling(len(self.dwellings), sub, name, number, street, locality, town, pc, self.uprn())
+        self.dwellings.append(d)
+        return d
+
+    def _tower_flat(self, t: list) -> Dwelling:
+        unit, name, number = t[0], t[1], t[2]
+        t[3] += 1
+        if t[3] >= t[4]:
+            self._towers.remove(t)
+        d = Dwelling(len(self.dwellings), f"Flat {t[3]}", name, number, unit[2], None, unit[1], unit[0], self.uprn())
+        self.dwellings.append(d)
+        return d
 
     # ---------------------------------------------------------------- primitives
     def male(self) -> str:
@@ -217,6 +287,9 @@ class World:
         return d if d not in (dt.date(1970, 1, 1), dt.date(2000, 1, 1)) else d + dt.timedelta(days=1)
 
     def postcode(self, area: str | None = None) -> tuple[str, str]:
+        if self._units is not None:
+            unit = self._unit(area)
+            return unit[0], unit[1]
         while True:
             area = area or self.rng.choice(list(AREAS))
             town, n = AREAS[area]
@@ -233,6 +306,8 @@ class World:
                 return u
 
     def new_dwelling(self, area: str | None = None) -> Dwelling:
+        if self._units is not None:
+            return self._dense_dwelling(area)
         pc, town = self.postcode(area)
         street = f"{self.rng.choice(STREETS)} {self.rng.choice(DESCRIPTORS)}"
         locality = self.rng.choice(LOCALITIES) if self.rng.random() < 0.15 else None
@@ -280,7 +355,13 @@ class World:
             if e not in self.used_emails:
                 self.used_emails.add(e)
                 return e
-        raise RuntimeError("email space exhausted")
+        # Common names run out of patterns in multi-million populations; a
+        # sequence number always works (smaller datasets never get here).
+        while True:
+            e = f"{f}.{l}.{len(self.used_emails)}@{domain}"
+            if e not in self.used_emails:
+                self.used_emails.add(e)
+                return e
 
     def mobile_number(self) -> str:
         while True:
@@ -697,9 +778,7 @@ class Renderer:
                                          "tags": sorted(set(tags))}}
 
 
-def generate(n_records: int, seed: int) -> list[dict]:
-    w = World(seed)
-    r = Renderer(w)
+def _plan(w: World, n_records: int) -> list[tuple[Person, int]]:
     rng = w.rng
     plan: list[tuple[Person, int]] = []
     total = 0
@@ -716,12 +795,57 @@ def generate(n_records: int, seed: int) -> list[dict]:
                 m = rng.choices([1, 2, 3], [50, 35, 15])[0]
                 plan.append((q, m))
                 total += m
+    return plan
+
+
+def generate(n_records: int, seed: int) -> list[dict]:
+    w = World(seed)
+    r = Renderer(w)
+    plan = _plan(w, n_records)
     out: list[dict] = []
     for p, n in plan:
         for k in range(n):
             out.append(r.record(p, k, n, w.people[-5000:] if len(w.people) > 10 else []))
-    rng.shuffle(out)
+    w.rng.shuffle(out)
     return out[:n_records]
+
+
+# Records per generated person in the 200k dataset; sizes the dense postcode set.
+RECORDS_PER_PERSON = 2.28
+
+
+def generate_to_file(n_records: int, seed: int, path: str, people_per_postcode: float | None = None,
+                     large_buildings: bool = False, buckets: int = 64) -> int:
+    """Like generate(), but streams to disk so millions of records fit in memory:
+    records are dealt to random bucket files, each bucket is shuffled, and the
+    buckets are concatenated, which is a uniform shuffle of the whole set.
+    Returns the number of distinct people written."""
+    units = round(n_records / RECORDS_PER_PERSON / people_per_postcode) if people_per_postcode else None
+    w = World(seed, postcode_units=units, large_buildings=large_buildings)
+    r = Renderer(w)
+    plan = _plan(w, n_records)
+    others = w.people[-5000:]
+    tmp = [open(f"{path}.part{i}", "w") for i in range(buckets)]
+    for p, n in plan:
+        for k in range(n):
+            tmp[w.rng.randrange(buckets)].write(json.dumps(r.record(p, k, n, others)) + "\n")
+    for f in tmp:
+        f.close()
+    written = 0
+    people: set[int] = set()
+    with open(path, "w") as out:
+        for i in range(buckets):
+            with open(f"{path}.part{i}") as f:
+                lines = f.readlines()
+            w.rng.shuffle(lines)
+            for line in lines:
+                if written == n_records:
+                    break
+                out.write(line)
+                people.add(json.loads(line)["truth"]["person_id"])
+                written += 1
+            os.remove(f"{path}.part{i}")
+    return len(people)
 
 
 def main() -> None:
@@ -729,7 +853,17 @@ def main() -> None:
     ap.add_argument("--records", type=int, default=200_000)
     ap.add_argument("--seed", type=int, default=7)
     ap.add_argument("--out", required=True)
+    ap.add_argument("--people-per-postcode", type=float, default=None,
+                    help="Dense addresses: about this many generated people per postcode unit "
+                         "(UK average is ~17 residents per postcode; a 6m-customer base is ~3.5).")
+    ap.add_argument("--large-buildings", action="store_true",
+                    help="Put ~4%% of dwellings in towers and halls of 80-600 flats sharing one postcode.")
+    ap.add_argument("--stream", action="store_true", help="Stream to disk (needed for millions of records).")
     args = ap.parse_args()
+    if args.stream or args.people_per_postcode or args.large_buildings:
+        n = generate_to_file(args.records, args.seed, args.out, args.people_per_postcode, args.large_buildings)
+        print(f"wrote {args.records} records for {n} people to {args.out}")
+        return
     data = generate(args.records, args.seed)
     with open(args.out, "w") as f:
         for row in data:

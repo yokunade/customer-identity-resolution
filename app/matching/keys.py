@@ -1,5 +1,8 @@
 """Deterministic match keys and blocking keys.
 
+Blocking keys are HMAC'd and stored (blocking_key) to find candidates. Match
+keys are compared in memory against those candidates and never stored.
+
 A *component* is a named set of normalised strings taken from a cleansed
 record (e.g. ``first_forms`` = {"bill", "william"}). A *key* is an ordered
 list of components; its values are the cartesian product of the component
@@ -16,6 +19,8 @@ from __future__ import annotations
 import hashlib
 import hmac
 import itertools
+import math
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 
 from app.cleansing.address import premise_keys
@@ -113,6 +118,7 @@ MATCH_KEYS: dict[str, KeyDef] = {k.name: k for k in [
     KeyDef("NAME_DOB_PREMISE_POSTCODE", ("first_forms", "last_key", "dob", "premise_postcode"), "Forename + surname + DOB + dwelling"),
     KeyDef("NAME_DOB_PREMISE_STREET", ("first_forms", "last_key", "dob", "premise_street"), "Forename + surname + DOB + dwelling by street and town"),
     KeyDef("NAME_DOB_POSTCODE", ("first_forms", "last_key", "dob", "postcode"), "Forename + surname + DOB + postcode"),
+    KeyDef("EMAIL_MOBILE_LAST_DOB", ("email", "mobile", "last_key", "dob"), "Email + mobile + surname + DOB (forename may be scrambled)"),
     KeyDef("EMAIL_MOBILE_FIRST", ("email", "mobile", "first_forms"), "Email + mobile + forename"),
     KeyDef("EMAIL_NAME", ("email", "first_forms", "last_key"), "Email + forename + surname"),
     KeyDef("MOBILE_NAME", ("mobile", "first_forms", "last_key"), "Mobile + forename + surname"),
@@ -174,18 +180,26 @@ def _digest(secret: bytes, key_type: str, values: tuple[str, ...]) -> bytes:
     return hmac.new(secret, material, hashlib.sha256).digest()[:KEY_BYTES]
 
 
+def _combos(comps: Mapping[str, Iterable[str]], d: KeyDef) -> set[tuple[str, ...]] | None:
+    value_sets = [sorted(comps.get(c, ())) for c in d.components]
+    if not all(value_sets):
+        return None
+    return set(itertools.islice(itertools.product(*value_sets), MAX_VALUES_PER_KEY))
+
+
 def build_keys(comps: Components, defs: dict[str, KeyDef], secret: str) -> KeySet:
     sec = secret.encode()
     out: KeySet = {}
     for d in defs.values():
-        value_sets = [sorted(comps.get(c, ())) for c in d.components]
-        if not all(value_sets):
-            continue
-        vals = set()
-        for combo in itertools.islice(itertools.product(*value_sets), MAX_VALUES_PER_KEY):
-            vals.add(_digest(sec, d.name, combo))
-        out[d.name] = vals
+        combos = _combos(comps, d)
+        if combos is not None:
+            out[d.name] = {_digest(sec, d.name, combo) for combo in combos}
     return out
+
+
+def key_counts(comps: Components, defs: dict[str, KeyDef]) -> dict[str, int]:
+    """Values generated per key type (what build_keys would store)."""
+    return {d.name: len(c) for d in defs.values() if (c := _combos(comps, d)) is not None}
 
 
 def build_match_keys(comps: Components, secret: str) -> KeySet:
@@ -194,6 +208,47 @@ def build_match_keys(comps: Components, secret: str) -> KeySet:
 
 def build_blocking_keys(comps: Components, secret: str) -> KeySet:
     return build_keys(comps, BLOCKING_KEYS, secret)
+
+
+# --------------------------------------------------------------------------- shared match keys
+#
+# Match keys are never stored. A candidate only ever needs comparing with the
+# inbound record after blocking has found it, so its match-key components are
+# kept on its source record and the shared keys are worked out here. Two
+# records share a key exactly when build_match_keys would have given them a
+# common value: the same truncated combinations, compared before hashing.
+
+MATCH_COMPONENTS: tuple[str, ...] = tuple(sorted({c for d in MATCH_KEYS.values() for c in d.components}))
+
+
+def stored_components(comps: Components) -> dict[str, list[str]]:
+    """The match-key components to keep with a record (JSON-friendly)."""
+    return {c: sorted(comps[c]) for c in MATCH_COMPONENTS if comps.get(c)}
+
+
+def shared_match_keys(a: Mapping[str, Iterable[str]], b: Mapping[str, Iterable[str]]) -> set[str]:
+    sa = {c: frozenset(v) for c, v in a.items()}
+    sb = {c: frozenset(v) for c, v in b.items()}
+    out: set[str] = set()
+    for d in MATCH_KEYS.values():
+        va = [sa.get(c, frozenset()) for c in d.components]
+        vb = [sb.get(c, frozenset()) for c in d.components]
+        if not all(va) or not all(vb):
+            continue
+        if math.prod(map(len, va)) <= MAX_VALUES_PER_KEY and math.prod(map(len, vb)) <= MAX_VALUES_PER_KEY:
+            # Neither side truncated: a common combination exists iff every component overlaps.
+            if all(x & y for x, y in zip(va, vb)):
+                out.add(d.name)
+        elif _combos(sa, d) & _combos(sb, d):  # type: ignore[operator]
+            out.add(d.name)
+    return out
+
+
+def blocking_key_value(key_type: str, value: str, secret: str) -> bytes:
+    """The stored value of a single-component blocking key, for direct lookups."""
+    if len(BLOCKING_KEYS[key_type].components) != 1:
+        raise ValueError(f"{key_type} has more than one component")
+    return _digest(secret.encode(), key_type, (value,))
 
 
 # --------------------------------------------------------------------------- veto profile

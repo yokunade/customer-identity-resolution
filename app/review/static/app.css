@@ -68,6 +68,7 @@ a { color: var(--accent); }
 .link { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 
 main { padding: clamp(1.25rem, 4vw, 2.5rem) clamp(1rem, 3vw, 2rem) 4rem; max-width: 1280px; margin: 0 auto; outline: none; }
+main:focus-visible { outline: none; } /* focused by script on each view change, not by the user */
 
 /* ---------- buttons and fields */
 .btn {
@@ -102,14 +103,43 @@ textarea { resize: vertical; min-height: 7rem; line-height: 1.45; }
 .signin form { display: grid; gap: 1rem; background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-sheet); padding: 1.5rem; }
 
 /* ---------- queue */
-.queue { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: start; }
-.queue-lede { font-size: var(--step-3); line-height: 1.12; font-weight: 500; letter-spacing: -0.025em; max-width: 18ch; }
-.queue-lede strong { font-weight: 700; }
-.queue-actions { display: flex; flex-wrap: wrap; gap: .75rem; margin-top: 1.75rem; }
-.queue-facts { display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: .25rem 2.5rem; margin-top: 2.25rem; padding-top: 1.25rem; border-top: 1px solid var(--line); }
-.queue-facts dt { color: var(--ink-3); font-size: var(--step--1); }
-.queue-facts dd { margin: 0; font-size: var(--step-1); font-weight: 600; grid-row: 1; }
+.queue-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem 2rem; }
+.queue-title { font-size: var(--step-2); font-weight: 600; letter-spacing: -0.015em; }
+.queue-sub { color: var(--ink-2); margin-top: .2rem; }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+.tile { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-sheet); padding: 1rem 1.25rem; display: grid; gap: .15rem; align-content: start; }
+.tile dt { color: var(--ink-3); font-size: var(--step--1); font-weight: 600; }
+.tile dd { margin: 0; }
+.tile-value { font-size: var(--step-3); line-height: 1.1; font-weight: 600; letter-spacing: -0.02em; }
+.tile-sub { color: var(--ink-3); font-size: var(--step--1); }
+.queue { display: grid; grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem); gap: 1.5rem; align-items: start; }
+.queue-side { display: grid; gap: 1.5rem; }
+.panel { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-sheet); overflow: hidden; }
+.panel > h2, .panel-head { padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); }
+.panel h2 { font-size: var(--step-0); font-weight: 600; }
+.panel-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .25rem 1rem; }
+.panel-head h2 { padding: 0; border: 0; }
+.panel-empty { padding: 1rem 1.25rem; color: var(--ink-3); }
 .queue-empty { margin-top: 1rem; color: var(--ink-2); max-width: 52ch; }
+.table-scroll { overflow-x: auto; }
+.queue-table th, .queue-table td { padding: .65rem 1rem; }
+.queue-table td.num { font-weight: 600; }
+.queue-table td.names { min-width: 10rem; }
+.queue-table td.names div { display: grid; line-height: 1.35; }
+.queue-table td.names .vs { color: var(--ink-3); font-size: var(--step--1); }
+.queue-table td.wrap { white-space: normal; min-width: 12rem; font-size: var(--step--1); }
+.queue-table .held { color: var(--accent); font-weight: 600; }
+.tag-tier { background: var(--sheet-2); color: var(--ink-2); border: 1px solid var(--line); text-transform: capitalize; }
+.tiers { width: 100%; }
+.tiers th, .tiers td { padding: .55rem 1.25rem; border-bottom: 1px solid var(--line); background: none; font-size: var(--step--1); vertical-align: middle; }
+.tiers tr:last-child th, .tiers tr:last-child td { border-bottom: 0; }
+.tiers tbody tr { cursor: default; }
+.tiers tbody tr:hover td { background: none; }
+.tiers th { color: var(--ink-2); width: 6rem; }
+.tiers .tier-n { text-align: right; font-weight: 600; width: 3.5rem; padding-right: .5rem; }
+.tiers .tier-bar { padding-left: .5rem; }
+.tiers .tier-bar span { display: block; height: 8px; min-width: 4px; border-radius: 0 4px 4px 0; background: var(--accent); }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .recent { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--r-sheet); }
 .recent h2 { font-size: var(--step-0); font-weight: 600; padding: 1rem 1.25rem; border-bottom: 1px solid var(--line); }
 .recent ol { list-style: none; margin: 0; padding: 0; }
@@ -228,11 +258,12 @@ td.muted { color: var(--ink-3); white-space: nowrap; }
 /* ---------- narrow screens */
 @media (max-width: 1080px) {
   .case { grid-template-columns: minmax(0, 1fr); }
+  .queue { grid-template-columns: minmax(0, 1fr); }
   .rail { position: static; }
 }
 @media (max-width: 760px) {
-  .queue { grid-template-columns: 1fr; }
-  .queue-facts { grid-template-columns: repeat(3, 1fr); gap: .25rem 1rem; }
+  .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tile-value { font-size: var(--step-2); }
   .records { grid-template-columns: 1fr; }
   .bar { gap: 1rem; }
   .brand span { display: none; }

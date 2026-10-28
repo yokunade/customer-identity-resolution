@@ -222,3 +222,34 @@ def test_merge_makes_overlapping_case_obsolete(app_settings, clean_db):
         statuses = {r["status"] for r in conn.execute("SELECT status FROM merge_candidate").fetchall()}
     assert "open" not in statuses
     assert active <= 2
+
+
+def test_overview_counts_and_queue_order(app_settings, clean_db):
+    make_case(clean_db, app_settings, "o")
+    make_case(clean_db, app_settings, "p")
+    make_case(clean_db, app_settings, "q")
+    ana, tom = client_for(app_settings, "ana@example.co.uk"), client_for(app_settings, "tom@example.co.uk")
+    assert tom.get("/review/api/overview").status_code == 200  # every reviewer, not just admins
+
+    done = ana.post("/review/api/cases/next", headers=HDR).json()["case_id"]
+    ana.post(f"/review/api/cases/{done}/decision", headers=HDR,
+             json={"decision": "keep_apart", "notes": "Different people", "reason_codes": ["different_dob"],
+                   "confidence": "certain"})
+    held = tom.post("/review/api/cases/next", headers=HDR).json()["case_id"]
+
+    ov = ana.get("/review/api/overview").json()
+    assert (ov["waiting"], ov["in_progress"], ov["merged"], ov["kept_apart"]) == (1, 1, 0, 1)
+    assert ov["open_by_tier"] == {"exact": 0, "strong": 2, "probable": 0, "possible": 0}
+    assert ov["oldest_open_at"]
+    # Same order as take_next; the held case shows who has it.
+    assert [r["case_id"] for r in ov["queue"]] == sorted(r["case_id"] for r in ov["queue"])
+    first = ov["queue"][0]
+    assert first["case_id"] == held and first["held_by"] == "Tom Reed" and first["held_until"]
+    assert ov["queue"][1]["held_by"] is None
+    assert first["names"] == ["Chris Hallp", "Chris Hallp"] and first["tier"] == "strong"
+    assert first["records"] == 3
+
+
+def test_overview_requires_sign_in(app_settings):
+    with TestClient(create_app(app_settings), base_url="https://testserver") as c:
+        assert c.get("/review/api/overview").status_code == 401

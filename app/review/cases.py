@@ -59,6 +59,73 @@ def stats(conn: psycopg.Connection, user: User) -> dict[str, int]:
     return dict(row)
 
 
+TIER_ORDER = ("exact", "strong", "probable", "possible")
+
+
+def overview(conn: psycopg.Connection, limit: int = 50) -> dict[str, Any]:
+    """Team-wide queue state and the next cases in the order take_next serves them."""
+    live = "m.claimed_by IS NOT NULL AND m.claimed_at > now() - make_interval(mins => %(m)s)"
+    counts = conn.execute(
+        "SELECT"
+        f" count(*) FILTER (WHERE m.status = 'open' AND NOT ({live})) AS waiting,"
+        f" count(*) FILTER (WHERE m.status = 'open' AND {live}) AS in_progress,"
+        " count(*) FILTER (WHERE m.decision = 'merge') AS merged,"
+        " count(*) FILTER (WHERE m.decision = 'keep_apart') AS kept_apart,"
+        # Settled without a reviewer: merged via the API or a relink, or overtaken by another merge.
+        " count(*) FILTER (WHERE m.status <> 'open' AND m.decision IS NULL) AS resolved_elsewhere,"
+        " min(m.created_at) FILTER (WHERE m.status = 'open') AS oldest_open_at"
+        " FROM merge_candidate m",
+        {"m": CLAIM_MINUTES},
+    ).fetchone()
+    by_rule = conn.execute(
+        "SELECT rule, count(*) AS n FROM merge_candidate WHERE status = 'open' GROUP BY rule"
+    ).fetchall()
+    tiers = dict.fromkeys(TIER_ORDER, 0)
+    for r in by_rule:
+        rule = RULES_BY_KEY.get(r["rule"])
+        tiers[rule.tier if rule else "possible"] += r["n"]
+
+    rows = conn.execute(
+        "SELECT m.case_id, m.created_at, m.rule,"
+        f" CASE WHEN {live} THEN u.display_name END AS held_by,"
+        " (m.claimed_at + make_interval(mins => %(m)s)) AS held_until,"
+        " na.name AS name_a, nb.name AS name_b, na.records AS records_a, nb.records AS records_b"
+        " FROM merge_candidate m"
+        " LEFT JOIN review_user u ON u.user_id = m.claimed_by"
+        " CROSS JOIN LATERAL (" + _NAME_SQL.format(col="m.customer_a") + ") na"
+        " CROSS JOIN LATERAL (" + _NAME_SQL.format(col="m.customer_b") + ") nb"
+        " WHERE m.status = 'open' ORDER BY m.created_at, m.case_id LIMIT %(n)s",
+        {"m": CLAIM_MINUTES, "n": limit},
+    ).fetchall()
+    conn.rollback()
+
+    queue = []
+    for r in rows:
+        rule = RULES_BY_KEY.get(r["rule"])
+        queue.append({
+            "case_id": r["case_id"],
+            "created_at": r["created_at"].isoformat(),
+            "rule": r["rule"],
+            "rule_description": MATCH_KEYS[r["rule"]].description if r["rule"] in MATCH_KEYS else r["rule"],
+            "tier": rule.tier if rule else None,
+            "names": [r["name_a"], r["name_b"]],
+            "records": (r["records_a"] or 0) + (r["records_b"] or 0),
+            "held_by": r["held_by"],
+            "held_until": r["held_until"].isoformat() if r["held_by"] else None,
+        })
+    oldest = counts.pop("oldest_open_at")
+    return {**counts, "oldest_open_at": oldest.isoformat() if oldest else None,
+            "open_by_tier": tiers, "queue": queue}
+
+
+# The customer's name from its oldest record, and how many records it has.
+_NAME_SQL = (
+    "SELECT (SELECT concat_ws(' ', sr.cleansed->'name'->>'first_name', sr.cleansed->'name'->>'last_name')"
+    "        FROM source_record sr WHERE sr.customer_id = {col} ORDER BY sr.record_id LIMIT 1) AS name,"
+    " (SELECT count(*) FROM source_record sr WHERE sr.customer_id = {col}) AS records"
+)
+
+
 def _reconcile(conn: psycopg.Connection, case: dict) -> str:
     """Bring a case up to date with merges made since it was raised.
     Returns 'ok', or 'obsolete' if there is nothing left to decide."""

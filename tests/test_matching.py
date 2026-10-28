@@ -261,3 +261,80 @@ def test_one_keystroke_forename_typo_still_links_phonetically():
                         address={"line1": "12 Acacia Ave", "postcode": "LS6 2AB"})
     assert "SOUNDEX_NAME_DOB_POSTCODE" in shared(ka, kb)
     assert veto_reasons(RULES_BY_KEY["SOUNDEX_NAME_DOB_POSTCODE"], pa, pb) == []
+
+
+# ------------------------------------------------------------------ email + mobile + surname + DOB
+OKUNADE = dict(last_name="Okunade", date_of_birth="29/05/1981", email="yokunade@gmail.com", mobile_phone="07801966508")
+
+
+@pytest.mark.parametrize("typed", ["Yime", "Y"])
+def test_scrambled_or_initial_forename_links_when_everything_else_agrees(typed):
+    _, ka, _, pa = prep(first_name="Yemi", **OKUNADE)
+    _, kb, _, pb = prep(first_name=typed, **OKUNADE)
+    assert "EMAIL_MOBILE_LAST_DOB" in shared(ka, kb)
+    assert veto_reasons(RULES_BY_KEY["EMAIL_MOBILE_LAST_DOB"], pb, pa) == []
+    c = uuid.uuid4()
+    d = decide(pb, [cand(1, c, shared(ka, kb), pa)])
+    assert d.customer_id == c and d.rule.key == "EMAIL_MOBILE_LAST_DOB"
+
+
+@pytest.mark.parametrize("a,b", [("Ella", "Ellie"), ("Jack", "Jake"), ("Mia", "Maya"), ("Sarah", "Simon")])
+def test_twins_on_a_parents_email_and_mobile_stay_apart(a, b):
+    base = dict(last_name="Grant", date_of_birth="2010-03-04", email="grant.family@gmail.com",
+                mobile_phone="07723 861742")
+    _, ka, _, pa = prep(first_name=a, **base)
+    _, kb, _, pb = prep(first_name=b, **base)
+    assert "EMAIL_MOBILE_LAST_DOB" in shared(ka, kb)
+    assert "first_name" in veto_reasons(RULES_BY_KEY["EMAIL_MOBILE_LAST_DOB"], pa, pb)
+    assert decide(pb, [cand(1, uuid.uuid4(), shared(ka, kb), pa)]).customer_id is None
+
+
+# ------------------------------------------------------------------ in-memory shared keys == stored hashed keys
+from app.matching.keys import shared_match_keys, stored_components  # noqa: E402
+
+
+def _hashed_shared(ca, cb):
+    a, b = build_match_keys(ca, SECRET), build_match_keys(cb, SECRET)
+    return {k for k in a if k in b and a[k] & b[k]}
+
+
+def test_in_memory_shared_keys_equal_hashed_keys_on_generated_pairs():
+    from collections import defaultdict
+
+    from benchmark.generate import generate
+
+    comps = []
+    for row in generate(4000, seed=11):
+        c, _ = cleanse(InboundCustomer(**row["record"]), TODAY)
+        comps.append(extract_components(c))
+    blocks = defaultdict(list)
+    for i, cp in enumerate(comps):
+        for ktype, vals in build_blocking_keys(cp, SECRET).items():
+            for v in vals:
+                blocks[(ktype, v)].append(i)
+    pairs = {(a, b) for ids in blocks.values() for a in ids for b in ids if a < b}
+    assert len(pairs) > 2000
+    hits = 0
+    for a, b in pairs:
+        expected = _hashed_shared(comps[a], comps[b])
+        # Compared as stored: components round-trip through JSON lists.
+        assert shared_match_keys(comps[a], stored_components(comps[b])) == expected
+        hits += bool(expected)
+    assert hits > 500
+
+
+def test_in_memory_shared_keys_respect_the_64_value_cap():
+    # 8 forename forms x 10 dwellings = 80 combinations, truncated to 64 when hashed.
+    forms = frozenset(f"name{i}" for i in range(8))
+    many = frozenset(f"{n}@LS11AA" for n in range(10))
+    a = {"first_forms": forms, "last_key": frozenset({"smith"}), "premise_postcode": many}
+    for prem in (f"{n}@LS11AA" for n in range(10)):  # some fall outside the 64 that are kept
+        for form in ("name0", "name7"):
+            b = {"first_forms": frozenset({form}), "last_key": frozenset({"smith"}),
+                 "premise_postcode": frozenset({prem})}
+            assert shared_match_keys(a, b) == _hashed_shared(a, b)
+    # The cap really bites: name7 combinations fall outside the 64 kept, name0 ones don't.
+    b7 = {"first_forms": frozenset({"name7"}), "last_key": frozenset({"smith"}), "premise_postcode": frozenset({"0@LS11AA"})}
+    b0 = {**b7, "first_forms": frozenset({"name0"})}
+    assert "NAME_PREMISE_POSTCODE" not in shared_match_keys(a, b7)
+    assert "NAME_PREMISE_POSTCODE" in shared_match_keys(a, b0)

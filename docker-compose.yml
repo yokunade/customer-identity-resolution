@@ -63,5 +63,61 @@ services:
         condition: service_healthy
     restart: "no"
 
+  # ---- scale benchmark (docs/BENCHMARK.md): only started with --profile bench.
+  # Its own PostgreSQL, tuned for a ~30 GB machine, so the demo database is untouched.
+  bench-db:
+    profiles: ["bench"]
+    image: postgres:16
+    environment:
+      POSTGRES_USER: identity
+      POSTGRES_PASSWORD: identity
+      POSTGRES_DB: identity_bench
+    command:
+      - postgres
+      - -c
+      - shared_buffers=${BENCH_SHARED_BUFFERS:-6GB}
+      - -c
+      - effective_cache_size=${BENCH_EFFECTIVE_CACHE:-16GB}
+      - -c
+      - maintenance_work_mem=1GB
+      - -c
+      - work_mem=16MB
+      - -c
+      - max_wal_size=8GB
+      - -c
+      - checkpoint_timeout=15min
+      - -c
+      - wal_compression=on
+      - -c
+      - random_page_cost=1.1
+      - -c
+      - max_connections=60
+    shm_size: 1g
+    ports: ["127.0.0.1:${BENCH_DB_PORT:-5434}:5432"]
+    volumes: [benchpg:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U identity -d identity_bench"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  bench:
+    profiles: ["bench"]
+    build: .
+    image: identity-resolution:local
+    user: root  # writes to the named data volume
+    entrypoint: ["python", "-m", "benchmark.scale", "--db", "postgresql://identity:identity@bench-db:5432/identity_bench",
+                 "--dir", "/data", "--report-dir", "/reports"]
+    command: []
+    volumes:
+      - benchfiles:/data
+      - ./benchmark/results/scale:/reports
+    depends_on:
+      bench-db:
+        condition: service_healthy
+    restart: "no"
+
 volumes:
   pgdata:
+  benchpg:
+  benchfiles:

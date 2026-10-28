@@ -184,39 +184,104 @@ function decisionTag(d) {
   return h("span", { class: `tag tag-${d}`, text: d === "merge" ? "Merged" : "Kept apart" });
 }
 
+const fmtNum = (n) => n.toLocaleString("en-GB");
+
+function fmtAge(iso) {
+  if (!iso) return "";
+  const mins = Math.max(0, Math.round((Date.now() - new Date(iso)) / 60000));
+  if (mins < 60) return mins <= 1 ? "just now" : `${mins} min`;
+  const hrs = Math.round(mins / 60);
+  if (hrs < 48) return plural(hrs, "hour");
+  return plural(Math.round(hrs / 24), "day");
+}
+
+function tile(label, value, sub) {
+  return h("div", { class: "tile" },
+    h("dt", { text: label }), h("dd", { class: "tile-value", text: value }),
+    sub ? h("dd", { class: "tile-sub", text: sub }) : null);
+}
+
+const TIERS = ["exact", "strong", "probable", "possible"];
+
+function tierBreakdown(byTier) {
+  const total = TIERS.reduce((a, t) => a + (byTier[t] || 0), 0);
+  const max = Math.max(1, ...TIERS.map((t) => byTier[t] || 0));
+  return h("section", { class: "panel", "aria-labelledby": "tiers-h" },
+    h("h2", { id: "tiers-h", text: "Outstanding by match tier" }),
+    total === 0
+      ? h("p", { class: "panel-empty", text: "Nothing outstanding." })
+      : h("table", { class: "tiers" },
+        h("thead", { class: "sr-only" }, h("tr", {}, h("th", { text: "Tier" }), h("th", { text: "Cases" }), h("th", { text: "Share" }))),
+        h("tbody", {}, TIERS.map((t) => {
+          const n = byTier[t] || 0;
+          return h("tr", { title: `${fmtNum(n)} ${t} (${Math.round((100 * n) / total)}%)` },
+            h("th", { scope: "row", text: t[0].toUpperCase() + t.slice(1) }),
+            h("td", { class: "tier-n", text: fmtNum(n) }),
+            h("td", { class: "tier-bar" }, h("span", { style: `width:${(100 * n) / max}%`, hidden: n === 0 })));
+        }))));
+}
+
+function queueTable(rows, total) {
+  const head = h("div", { class: "panel-head" },
+    h("h2", { id: "next-h", text: total > rows.length ? `Next ${rows.length} of ${fmtNum(total)}` : "Outstanding cases" }),
+    h("span", { class: "hint", text: "In the order Take next serves them" }));
+  if (!rows.length) {
+    return h("section", { class: "panel", "aria-labelledby": "next-h" }, head,
+      h("p", { class: "panel-empty", text: "New cases appear when an incoming record matches two customers equally well, or when a match falls in a tier that is set to go to review." }));
+  }
+  const open = (id) => () => (location.hash = `#/case/${id}`);
+  return h("section", { class: "panel", "aria-labelledby": "next-h" }, head,
+    h("div", { class: "table-scroll" }, h("table", { class: "queue-table" },
+      h("thead", {}, h("tr", {}, ["Case", "Customers", "Matched on", "Tier", "Waiting", "Status"].map((t) => h("th", { text: t })))),
+      h("tbody", {}, rows.map((r) => h("tr", { tabindex: 0, onclick: open(r.case_id), onkeydown: (e) => { if (e.key === "Enter") open(r.case_id)(); } },
+        h("td", { class: "num", text: r.case_id }),
+        h("td", { class: "names" }, h("div", {}, h("span", { text: r.names[0] || "Unnamed" }), h("span", { class: "vs", text: "and" }), h("span", { text: r.names[1] || "Unnamed" }))),
+        h("td", { class: "muted wrap", text: r.rule_description }),
+        h("td", {}, r.tier ? h("span", { class: `tag tag-tier`, text: r.tier }) : null),
+        h("td", { class: "muted", title: fmtDateTime(r.created_at), text: fmtAge(r.created_at) }),
+        h("td", { class: "muted" }, r.held_by
+          ? h("span", { class: "held", text: r.held_by === state.user.display_name ? "Held by you" : `Held by ${r.held_by}` })
+          : "Waiting"))))))
+  );
+}
+
 async function viewQueue() {
   setNav("queue");
   show(h("p", { class: "loading", text: "Loading the queue" }));
-  const [st, recent] = await Promise.all([api("/stats"), api("/history")]);
-
-  const lede = st.open === 0
-    ? h("h1", { class: "queue-lede", text: "No cases are waiting." })
-    : h("h1", { class: "queue-lede" }, h("strong", { text: st.open.toLocaleString("en-GB") }),
-      st.open === 1 ? " case is waiting for review." : " cases are waiting for review.");
+  const [st, ov, recent] = await Promise.all([api("/stats"), api("/overview"), api("/history")]);
+  const outstanding = ov.waiting + ov.in_progress;
+  const complete = ov.merged + ov.kept_apart;
 
   const action = st.mine > 0
     ? h("button", { class: "btn btn-primary btn-lg", onclick: takeNext, text: "Continue your case" })
-    : h("button", { class: "btn btn-primary btn-lg", onclick: takeNext, disabled: st.open === 0, text: "Take next case" });
+    : h("button", { class: "btn btn-primary btn-lg", onclick: takeNext, disabled: ov.waiting === 0, text: "Take next case" });
 
-  const facts = h("dl", { class: "queue-facts" },
-    h("dt", { text: "Held by you" }), h("dd", { text: st.mine }),
-    h("dt", { text: "You decided today" }), h("dd", { text: st.decided_today }),
-    h("dt", { text: "Team decided today" }), h("dd", { text: st.team_today }),
+  const head = h("div", { class: "queue-head" },
+    h("div", {},
+      h("h1", { class: "queue-title", text: "Review queue" }),
+      h("p", { class: "queue-sub", text: outstanding === 0 ? "No cases are waiting."
+        : `${fmtNum(outstanding)} ${outstanding === 1 ? "case" : "cases"} outstanding, the oldest raised ${fmtAge(ov.oldest_open_at)} ago.` })),
+    action);
+
+  const tiles = h("dl", { class: "tiles" },
+    tile("Waiting", fmtNum(ov.waiting), "Not yet taken"),
+    tile("In progress", fmtNum(ov.in_progress), st.mine ? `${fmtNum(st.mine)} held by you` : "Held by a reviewer"),
+    tile("Complete", fmtNum(complete), `${fmtNum(ov.merged)} merged, ${fmtNum(ov.kept_apart)} kept apart`),
+    tile("Decided today", fmtNum(st.team_today), `${fmtNum(st.decided_today)} by you`),
+    ov.resolved_elsewhere ? tile("Resolved elsewhere", fmtNum(ov.resolved_elsewhere), "Merged outside review") : null,
   );
-
-  const left = h("section", {}, lede,
-    st.open === 0 ? h("p", { class: "queue-empty", text: "New cases appear when an incoming record matches two customers equally well, or when a match falls in a tier that is set to go to review." }) : null,
-    h("div", { class: "queue-actions" }, action), facts);
 
   const items = recent.slice(0, 6).map((r) =>
     h("li", {}, h("a", { href: `#/case/${r.case_id}` },
       decisionTag(r.decision), h("span", { text: `Case ${r.case_id}` }), h("span", { class: "when", text: fmtDateTime(r.decided_at) }),
       h("span", { class: "note", text: r.notes }))));
-  const right = h("section", { class: "recent", "aria-labelledby": "recent-h" },
+  const recentPanel = h("section", { class: "recent", "aria-labelledby": "recent-h" },
     h("h2", { id: "recent-h", text: "Your recent decisions" }),
     items.length ? h("ol", {}, items) : h("p", { class: "recent-empty", text: "Decisions you make will be listed here." }));
 
-  show(h("div", { class: "queue" }, left, right));
+  show(head, tiles, h("div", { class: "queue" },
+    queueTable(ov.queue, outstanding),
+    h("div", { class: "queue-side" }, tierBreakdown(ov.open_by_tier), recentPanel)));
 }
 
 /* ------------------------------------------------------------------ case */

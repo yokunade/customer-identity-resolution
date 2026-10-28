@@ -18,7 +18,7 @@ from typing import Literal
 from app.matching.keys import MATCH_KEYS
 
 Tier = Literal["exact", "strong", "probable", "possible"]
-Veto = Literal["dob", "gender", "generation", "middle_initial", "first_name", "postcode"]
+Veto = Literal["dob", "gender", "generation", "middle_initial", "first_name", "first_name_letters", "postcode"]
 DobMode = Literal["exact", "lenient"]
 
 DEFAULT_VETOES: frozenset[str] = frozenset({"dob", "gender", "generation"})
@@ -51,6 +51,9 @@ def _r(priority: int, key: str, tier: Tier, extra: set[str] | None = None, **kw)
 
 MI = {"middle_initial"}
 FN = {"first_name"}
+# Like FN, but also accepts the same letters in a different order (Yime/Yemi).
+# Only for rules where so much else agrees that a scrambled forename is a typo.
+FL = {"first_name_letters"}
 PC = {"postcode"}
 
 RULES: tuple[Rule, ...] = (
@@ -62,6 +65,8 @@ RULES: tuple[Rule, ...] = (
     _r(45, "NAME_DOB_PREMISE_STREET", "exact", PC),
     _r(50, "NAME_DOB_POSTCODE", "exact"),
     # Strong: a personal identifier (email / mobile) or DOB, plus name or name variants.
+    # Email, mobile, surname and DOB all agree: only a forename typo can differ.
+    _r(52, "EMAIL_MOBILE_LAST_DOB", "strong", MI | FL),
     _r(55, "EMAIL_MOBILE_FIRST", "strong", MI, dob_mode="lenient"),
     _r(60, "EMAIL_NAME", "strong", MI, dob_mode="lenient"),
     _r(70, "MOBILE_NAME", "strong", MI, dob_mode="lenient"),
@@ -117,6 +122,8 @@ def veto_reasons(rule: Rule, a: dict, b: dict) -> list[str]:
         out.append("middle_initial")
     if "first_name" in rule.vetoes and first_names_conflict(a, b):
         out.append("first_name")
+    if "first_name_letters" in rule.vetoes and first_names_conflict(a, b) and not _same_letters(a, b):
+        out.append("first_name")
     if "postcode" in rule.vetoes and a.get("postcodes") and b.get("postcodes") \
             and not set(a["postcodes"]) & set(b["postcodes"]):
         out.append("postcode")  # same street name in a different part of town
@@ -169,3 +176,10 @@ def first_names_conflict(a: dict, b: dict) -> bool:
         return True
     ia, ib = a.get("first_initial"), b.get("first_initial")
     return bool(ia and ib and ia != ib)
+
+
+def _same_letters(a: dict, b: dict) -> bool:
+    """Same initial and the same letters in another order: a typing slip, not
+    a different name. Twins' names (Ella/Ellie, Jack/Jake) don't pass."""
+    ka, kb = a.get("first_key") or "", b.get("first_key") or ""
+    return bool(ka and kb) and ka[0] == kb[0] and sorted(ka) == sorted(kb)

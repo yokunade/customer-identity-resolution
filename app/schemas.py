@@ -135,7 +135,9 @@ class CleansedRecord(BaseModel):
 # --------------------------------------------------------------------------- responses
 
 
-Outcome = Literal["matched", "new_customer", "existing_source_record"]
+# relinked: a re-sent source record that was its customer's only record matched
+# another customer, so its old customer was merged into that one.
+Outcome = Literal["matched", "new_customer", "existing_source_record", "relinked"]
 
 
 class MatchDetail(BaseModel):
@@ -168,6 +170,7 @@ class ResolveResponse(BaseModel):
     data_quality: list[Issue] = Field(default_factory=list)
     cleansed: CleansedRecord
     processing_ms: float
+    matching_ms: float = Field(default=0.0, description="Part of processing_ms spent finding and scoring candidates.")
 
 
 class CleanseResponse(BaseModel):
@@ -196,6 +199,13 @@ class CustomerResponse(BaseModel):
     status: str
     created_at: dt.datetime
     source_records: list[SourceRecordSummary]
+
+
+class CustomerSearchResponse(BaseModel):
+    searched_by: Literal["email", "mobile", "postcode"]
+    normalised_value: str = Field(description="The value after cleansing, as it was matched.")
+    customers: list[CustomerResponse]
+    truncated: bool = Field(description="More customers matched than the limit allowed.")
 
 
 class SourceLookupResponse(BaseModel):

@@ -6,11 +6,11 @@
 inbound record
   └─ cleanse (UK standards)                  app/cleansing/
        └─ extract components                 app/matching/keys.py
-            ├─ match keys   (29 types, HMAC'd)
-            └─ blocking keys (7 types, HMAC'd)
+            ├─ match keys   (30 types, compared in memory, never stored)
+            └─ blocking keys (7 types, HMAC'd and stored)
                  └─ advisory-lock every blocking key        app/service.py
                       └─ candidate pool  = records sharing a blocking key
-                           └─ shared match keys per candidate
+                           └─ shared match keys per candidate, from its stored components
                                 └─ rules, strongest first, with vetoes   app/matching/rules.py
                                      └─ link to winning customer, or create one
 ```
@@ -57,6 +57,7 @@ address still matches records held at that address.
 | 40 | `NAME_DOB_PREMISE_POSTCODE` | exact | first_forms + last_key + dob + premise_postcode | dob, generation |
 | 45 | `NAME_DOB_PREMISE_STREET` | exact | first_forms + last_key + dob + premise_street | dob, generation, postcode |
 | 50 | `NAME_DOB_POSTCODE` | exact | first_forms + last_key + dob + postcode | dob, generation |
+| 52 | `EMAIL_MOBILE_LAST_DOB` | strong | email + mobile + last_key + dob | dob, first_name (letters), gender, generation, middle_initial |
 | 55 | `EMAIL_MOBILE_FIRST` | strong | email + mobile + first_forms | dob (lenient), gender, generation, middle_initial |
 | 60 | `EMAIL_NAME` | strong | email + first_forms + last_key | dob (lenient), gender, generation, middle_initial |
 | 70 | `MOBILE_NAME` | strong | mobile + first_forms + last_key | dob (lenient), gender, generation, middle_initial |
@@ -87,7 +88,10 @@ used only where an email or mobile and a name already agree, a DOB with a
 single wrong field (e.g. the year keyed one off) is also tolerated. Forenames
 conflict only if they share no nickname form and are more than one keystroke
 apart (two for names of 8+ letters). Sounding alike is not enough: John, Jenny,
-Jean and Jim share a Soundex code. Where a record has no gender or gendered
+Jean and Jim share a Soundex code. `first_name (letters)` also accepts the same
+letters in another order with the same initial (Yime/Yemi), and is used only
+where email, mobile, surname and DOB all agree; twins registered on a parent's
+email and mobile (Ella/Ellie, Jack/Jake) still conflict. Where a record has no gender or gendered
 title, gender is inferred from a list of common UK forenames (unisex names
 excluded) so the gender veto can still separate John and Jenny. `postcode`
 vetoes a street-based match when both records have postcodes and none agree, so
@@ -148,10 +152,20 @@ one place a match can be missed; monitor it.
 1. Add a `KeyDef` to `MATCH_KEYS` (and a component in `extract_components` if needed).
 2. Add a `Rule` to `RULES` with a unique priority.
 3. Run the tests. If the coverage test fails, add a blocking key that covers it.
-4. Back-fill keys for existing records (re-post them, or write a re-key job).
+4. Nothing to back-fill for a new match key: shared keys are worked out from
+   each candidate's stored components (`source_record.match_components`) at
+   match time. A new *component* or *blocking key* does need existing records
+   re-posted or re-keyed.
 
 ## Privacy
 
-Key values are `HMAC-SHA256(KEY_SECRET, type ‖ values)` truncated to 16
-bytes, so the key tables hold no readable PII. Raw and cleansed records are
+Blocking key values are `HMAC-SHA256(KEY_SECRET, type ‖ values)` truncated
+to 16 bytes, so `blocking_key` holds no readable PII. Match keys are not
+stored: until migration 005 they were (`match_key`, ~20 rows per record and
+over half the database), but they are only ever compared against the few
+candidates blocking finds, so they are now worked out in memory from the
+candidate's components. That is identical to comparing the hashes (same
+combinations, same 64-value cap; proved in `tests/test_matching.py` and on
+the 200k benchmark). The components sit on `source_record` next to the
+cleansed record they come from. Raw and cleansed records are
 stored in `source_record` for audit and re-keying.

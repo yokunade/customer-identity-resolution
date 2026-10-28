@@ -3,14 +3,12 @@
 from __future__ import annotations
 
 import uuid
-from collections import defaultdict
 from typing import Any, Iterable
 from uuid import UUID
 
 import psycopg
 from psycopg.types.json import Jsonb
 
-from app.matching.engine import Candidate
 from app.matching.keys import KeySet
 
 
@@ -47,23 +45,23 @@ class Repository:
         ).fetchone()
 
     def insert_source_record(self, *, source_system: str, source_record_id: str, customer_id: UUID,
-                             raw: dict, cleansed: dict, profile: dict, issues: list[dict]) -> int:
+                             raw: dict, cleansed: dict, profile: dict, components: dict, issues: list[dict]) -> int:
         row = self.conn.execute(
             "INSERT INTO source_record (source_system, source_record_id, customer_id, raw, cleansed,"
-            " match_profile, data_quality) VALUES (%s, %s, %s, %s, %s, %s, %s) RETURNING record_id",
+            " match_profile, match_components, data_quality) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)"
+            " RETURNING record_id",
             (source_system, source_record_id, customer_id, Jsonb(raw), Jsonb(cleansed), Jsonb(profile),
-             Jsonb(issues)),
+             Jsonb(components), Jsonb(issues)),
         ).fetchone()
         return row["record_id"]
 
     def update_source_record(self, record_id: int, *, raw: dict, cleansed: dict, profile: dict,
-                             issues: list[dict]) -> None:
+                             components: dict, issues: list[dict]) -> None:
         self.conn.execute(
-            "UPDATE source_record SET raw = %s, cleansed = %s, match_profile = %s, data_quality = %s,"
-            " updated_at = now() WHERE record_id = %s",
-            (Jsonb(raw), Jsonb(cleansed), Jsonb(profile), Jsonb(issues), record_id),
+            "UPDATE source_record SET raw = %s, cleansed = %s, match_profile = %s, match_components = %s,"
+            " data_quality = %s, updated_at = now() WHERE record_id = %s",
+            (Jsonb(raw), Jsonb(cleansed), Jsonb(profile), Jsonb(components), Jsonb(issues), record_id),
         )
-        self.conn.execute("DELETE FROM match_key WHERE record_id = %s", (record_id,))
         self.conn.execute("DELETE FROM blocking_key WHERE record_id = %s", (record_id,))
 
     def get_source_lookup(self, source_system: str, source_record_id: str) -> dict | None:
@@ -74,17 +72,16 @@ class Repository:
         return row
 
     # ------------------------------------------------------------------ keys
-    def insert_keys(self, record_id: int, match_keys: KeySet, blocking_keys: KeySet) -> None:
-        for table, keys in (("match_key", match_keys), ("blocking_key", blocking_keys)):
-            types, values = _pairs(keys)
-            if not types:
-                continue
-            self.conn.execute(
-                f"INSERT INTO {table} (record_id, key_type, key_value)"
-                " SELECT %s, t, v FROM unnest(%s::text[], %s::bytea[]) AS u(t, v)"
-                " ON CONFLICT DO NOTHING",
-                (record_id, types, values),
-            )
+    def insert_blocking_keys(self, record_id: int, blocking_keys: KeySet) -> None:
+        types, values = _pairs(blocking_keys)
+        if not types:
+            return
+        self.conn.execute(
+            "INSERT INTO blocking_key (record_id, key_type, key_value)"
+            " SELECT %s, t, v FROM unnest(%s::text[], %s::bytea[]) AS u(t, v)"
+            " ON CONFLICT DO NOTHING",
+            (record_id, types, values),
+        )
 
     def block_sizes(self, blocking_keys: KeySet) -> dict[tuple[str, bytes], int]:
         types, values = _pairs(blocking_keys)
@@ -111,42 +108,28 @@ class Repository:
         ).fetchall()
         return [r["record_id"] for r in rows]
 
-    def shared_match_keys(self, record_ids: list[int], match_keys: KeySet) -> dict[int, set[str]]:
-        """For each pooled record, which match key types it shares with the inbound record."""
-        types, values = _pairs(match_keys)
-        if not record_ids or not types:
-            return {}
-        rows = self.conn.execute(
-            "SELECT DISTINCT m.record_id, m.key_type FROM match_key m"
-            " JOIN unnest(%s::text[], %s::bytea[]) AS q(t, v) ON m.key_type = q.t AND m.key_value = q.v"
-            " WHERE m.record_id = ANY(%s)",
-            (types, values, record_ids),
-        ).fetchall()
-        out: dict[int, set[str]] = defaultdict(set)
-        for r in rows:
-            out[r["record_id"]].add(r["key_type"])
-        return dict(out)
-
-    def load_candidates(self, shared: dict[int, set[str]]) -> list[Candidate]:
-        if not shared:
+    def load_candidates(self, record_ids: list[int]) -> list[dict]:
+        """Pooled records with their surviving customer and match-key components.
+        cleansed is returned only for rows written before components were stored."""
+        if not record_ids:
             return []
-        rows = self.conn.execute(
+        return self.conn.execute(
             "WITH RECURSIVE chain AS ("
-            "  SELECT sr.record_id, sr.match_profile, c.customer_id, c.merged_into, c.created_at, 0 AS depth"
+            "  SELECT sr.record_id, c.customer_id, c.merged_into, c.created_at, 0 AS depth"
             "  FROM source_record sr JOIN customer c ON c.customer_id = sr.customer_id"
             "  WHERE sr.record_id = ANY(%s)"
             "  UNION ALL"
-            "  SELECT ch.record_id, ch.match_profile, c.customer_id, c.merged_into, c.created_at, ch.depth + 1"
+            "  SELECT ch.record_id, c.customer_id, c.merged_into, c.created_at, ch.depth + 1"
             "  FROM chain ch JOIN customer c ON c.customer_id = ch.merged_into"
             "  WHERE ch.depth < 20"
-            ") SELECT DISTINCT ON (record_id) record_id, match_profile, customer_id, created_at"
-            "  FROM chain WHERE merged_into IS NULL ORDER BY record_id, depth DESC",
-            (list(shared),),
+            "), live AS ("
+            "  SELECT DISTINCT ON (record_id) record_id, customer_id, created_at"
+            "  FROM chain WHERE merged_into IS NULL ORDER BY record_id, depth DESC"
+            ") SELECT l.record_id, l.customer_id, l.created_at, sr.match_profile, sr.match_components,"
+            "  CASE WHEN sr.match_components IS NULL THEN sr.cleansed END AS cleansed"
+            "  FROM live l JOIN source_record sr ON sr.record_id = l.record_id ORDER BY l.record_id",
+            (record_ids,),
         ).fetchall()
-        return [
-            Candidate(r["record_id"], r["customer_id"], shared[r["record_id"]], r["match_profile"], r["created_at"])
-            for r in rows
-        ]
 
     # ------------------------------------------------------------------ customers
     def create_customer(self) -> UUID:
@@ -174,6 +157,31 @@ class Repository:
             "SELECT customer_id, status, merged_into, created_at FROM customer WHERE customer_id = %s",
             (customer_id,),
         ).fetchone()
+
+    def customers_by_blocking_key(self, key_type: str, key_value: bytes, limit: int) -> list[UUID]:
+        """Customers holding a record with this blocking key, oldest record first."""
+        rows = self.conn.execute(
+            "SELECT sr.customer_id FROM blocking_key b JOIN source_record sr ON sr.record_id = b.record_id"
+            " WHERE b.key_type = %s AND b.key_value = %s"
+            " GROUP BY sr.customer_id ORDER BY min(sr.record_id) LIMIT %s",
+            (key_type, key_value, limit),
+        ).fetchall()
+        return [r["customer_id"] for r in rows]
+
+    def record_count(self, customer_id: UUID) -> int:
+        return self.conn.execute(
+            "SELECT count(*) AS n FROM source_record WHERE customer_id = %s", (customer_id,)
+        ).fetchone()["n"]
+
+    def pair_rejected(self, a: UUID, b: UUID | None) -> bool:
+        """A reviewer decided these two customers are different people."""
+        if b is None:
+            return False
+        a, b = sorted([a, b], key=str)
+        return self.conn.execute(
+            "SELECT 1 FROM merge_candidate WHERE customer_a = %s AND customer_b = %s AND status = 'rejected'",
+            (a, b),
+        ).fetchone() is not None
 
     def customer_records(self, customer_id: UUID) -> list[dict]:
         return self.conn.execute(

@@ -30,7 +30,7 @@ def clean_db(db_url):
 
     with psycopg.connect(db_url, row_factory=dict_row) as conn:
         migrate(conn)
-        conn.execute("TRUNCATE customer, source_record, match_key, blocking_key, resolution_event,"
+        conn.execute("TRUNCATE customer, source_record, blocking_key, resolution_event,"
                      " merge_candidate RESTART IDENTITY CASCADE")
         conn.commit()
     return db_url

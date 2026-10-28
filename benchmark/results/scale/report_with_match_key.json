@@ -1,0 +1,654 @@
+{
+ "records": 5000000,
+ "seed_records": 2500000,
+ "workers": 12,
+ "people_per_postcode": 3.5,
+ "large_buildings": true,
+ "seed": {
+  "phase": "seed",
+  "records": 2500000,
+  "workers": 12,
+  "durable_commits": false,
+  "elapsed_s": 1406.7,
+  "throughput_rps": 1777.2
+ },
+ "db_after_seed": {
+  "database_size": "18 GB",
+  "settings": {
+   "effective_cache_size": "20971528kB",
+   "max_wal_size": "8192MB",
+   "random_page_cost": "1.1",
+   "shared_buffers": "7864328kB",
+   "synchronous_commit": "on",
+   "work_mem": "16384kB"
+  },
+  "rows": {
+   "customer": 1659279,
+   "source_record": 2500000,
+   "match_key": 50339414,
+   "blocking_key": 12025204,
+   "merge_candidate": 422
+  },
+  "tables": [
+   {
+    "table": "match_key",
+    "data": "3708 MB",
+    "indexes": "6910 MB",
+    "total": "10 GB"
+   },
+   {
+    "table": "source_record",
+    "data": "4167 MB",
+    "indexes": "251 MB",
+    "total": "4418 MB"
+   },
+   {
+    "table": "blocking_key",
+    "data": "827 MB",
+    "indexes": "1223 MB",
+    "total": "2049 MB"
+   },
+   {
+    "table": "resolution_event",
+    "data": "808 MB",
+    "indexes": "184 MB",
+    "total": "993 MB"
+   },
+   {
+    "table": "customer",
+    "data": "112 MB",
+    "indexes": "68 MB",
+    "total": "180 MB"
+   },
+   {
+    "table": "merge_candidate",
+    "data": "320 kB",
+    "indexes": "120 kB",
+    "total": "440 kB"
+   },
+   {
+    "table": "schema_migrations",
+    "data": "48 kB",
+    "indexes": "16 kB",
+    "total": "64 kB"
+   },
+   {
+    "table": "review_example",
+    "data": "8192 bytes",
+    "indexes": "24 kB",
+    "total": "32 kB"
+   }
+  ],
+  "indexes": [
+   {
+    "index": "match_key_pkey",
+    "size": "3718 MB"
+   },
+   {
+    "index": "ix_match_key_lookup",
+    "size": "3193 MB"
+   },
+   {
+    "index": "blocking_key_pkey",
+    "size": "719 MB"
+   },
+   {
+    "index": "ix_blocking_key_lookup",
+    "size": "504 MB"
+   },
+   {
+    "index": "uq_source_record",
+    "size": "121 MB"
+   },
+   {
+    "index": "ix_resolution_event_customer",
+    "size": "77 MB"
+   },
+   {
+    "index": "ix_source_record_customer",
+    "size": "77 MB"
+   },
+   {
+    "index": "customer_pkey",
+    "size": "68 MB"
+   }
+  ],
+  "largest_blocks": {
+   "B_DOB_LAST_NYSIIS": [
+    23,
+    23,
+    22,
+    21,
+    21
+   ],
+   "B_DOB_LAST_SOUNDEX": [
+    24,
+    23,
+    22,
+    21,
+    21
+   ],
+   "B_EMAIL": [
+    12,
+    11,
+    11,
+    11,
+    11
+   ],
+   "B_PHONE": [
+    9,
+    9,
+    9,
+    8,
+    8
+   ],
+   "B_POSTCODE": [
+    396,
+    365,
+    346,
+    324,
+    322
+   ],
+   "B_PREMISE_STREET": [
+    37,
+    30,
+    30,
+    29,
+    26
+   ],
+   "B_UPRN": [
+    8,
+    6,
+    6,
+    6,
+    6
+   ]
+  }
+ },
+ "cache_hit_pct": {
+  "database": 98.18,
+  "match_key_pkey": 100.0,
+  "ix_match_key_lookup": 96.11,
+  "ix_blocking_key_lookup": 99.13
+ },
+ "db_after_measure": {
+  "database_size": "35 GB",
+  "settings": {
+   "effective_cache_size": "20971528kB",
+   "max_wal_size": "8192MB",
+   "random_page_cost": "1.1",
+   "shared_buffers": "7864328kB",
+   "synchronous_commit": "on",
+   "work_mem": "16384kB"
+  },
+  "rows": {
+   "customer": 2380112,
+   "source_record": 5000000,
+   "match_key": 100679009,
+   "blocking_key": 24052392,
+   "merge_candidate": 2867
+  },
+  "tables": [
+   {
+    "table": "match_key",
+    "data": "7415 MB",
+    "indexes": "13 GB",
+    "total": "20 GB"
+   },
+   {
+    "table": "source_record",
+    "data": "8335 MB",
+    "indexes": "487 MB",
+    "total": "8822 MB"
+   },
+   {
+    "table": "blocking_key",
+    "data": "1653 MB",
+    "indexes": "2241 MB",
+    "total": "3894 MB"
+   },
+   {
+    "table": "resolution_event",
+    "data": "1963 MB",
+    "indexes": "352 MB",
+    "total": "2315 MB"
+   },
+   {
+    "table": "customer",
+    "data": "162 MB",
+    "indexes": "90 MB",
+    "total": "253 MB"
+   },
+   {
+    "table": "merge_candidate",
+    "data": "504 kB",
+    "indexes": "416 kB",
+    "total": "920 kB"
+   },
+   {
+    "table": "schema_migrations",
+    "data": "48 kB",
+    "indexes": "16 kB",
+    "total": "64 kB"
+   },
+   {
+    "table": "review_example",
+    "data": "8192 bytes",
+    "indexes": "24 kB",
+    "total": "32 kB"
+   }
+  ],
+  "indexes": [
+   {
+    "index": "match_key_pkey",
+    "size": "7447 MB"
+   },
+   {
+    "index": "ix_match_key_lookup",
+    "size": "5594 MB"
+   },
+   {
+    "index": "blocking_key_pkey",
+    "size": "1437 MB"
+   },
+   {
+    "index": "ix_blocking_key_lookup",
+    "size": "803 MB"
+   },
+   {
+    "index": "uq_source_record",
+    "size": "241 MB"
+   },
+   {
+    "index": "ix_source_record_customer",
+    "size": "138 MB"
+   },
+   {
+    "index": "ix_resolution_event_customer",
+    "size": "138 MB"
+   },
+   {
+    "index": "source_record_pkey",
+    "size": "107 MB"
+   }
+  ],
+  "largest_blocks": {
+   "B_DOB_LAST_NYSIIS": [
+    40,
+    39,
+    37,
+    37,
+    36
+   ],
+   "B_DOB_LAST_SOUNDEX": [
+    40,
+    39,
+    38,
+    37,
+    37
+   ],
+   "B_EMAIL": [
+    20,
+    20,
+    20,
+    19,
+    19
+   ],
+   "B_PHONE": [
+    14,
+    14,
+    14,
+    12,
+    12
+   ],
+   "B_POSTCODE": [
+    747,
+    720,
+    711,
+    640,
+    624
+   ],
+   "B_PREMISE_STREET": [
+    71,
+    55,
+    54,
+    52,
+    49
+   ],
+   "B_UPRN": [
+    10,
+    9,
+    8,
+    8,
+    8
+   ]
+  }
+ },
+ "measure": {
+  "phase": "measure",
+  "records": 2500000,
+  "workers": 12,
+  "durable_commits": true,
+  "elapsed_s": 3027.5,
+  "throughput_rps": 825.8
+ },
+ "analysis": {
+  "phases": {
+   "seed": {
+    "phase": "seed",
+    "records": 2500000,
+    "workers": 12,
+    "durable_commits": false,
+    "elapsed_s": 1406.7,
+    "throughput_rps": 1777.2,
+    "errors": 0,
+    "latency_ms": {
+     "p50": 6.6,
+     "p95": 9.82,
+     "p99": 13.36,
+     "max": 11414.24
+    },
+    "finding_candidates_ms": {
+     "p50": 1.69,
+     "p95": 3.15,
+     "p99": 4.57
+    },
+    "candidate_pool": {
+     "p50": 3,
+     "p95": 15,
+     "p99": 67,
+     "max": 507
+    },
+    "records_with_skipped_blocks": 0,
+    "skipped_blocks_by_key": {},
+    "outcomes": {
+     "new_customer": 1659279,
+     "matched": 840721
+    },
+    "links_by_tier": {
+     "strong": 412239,
+     "possible": 89443,
+     "exact": 334166,
+     "probable": 4873
+    },
+    "accuracy_at_arrival": {
+     "first_records": 1584637,
+     "links": 840721,
+     "missed_links": 74642,
+     "wrong_links": 1735,
+     "wrong_link_rate_pct": 0.206,
+     "missed_link_rate_pct": 8.154
+    }
+   },
+   "measure": {
+    "phase": "measure",
+    "records": 2500000,
+    "workers": 12,
+    "durable_commits": true,
+    "elapsed_s": 3027.5,
+    "throughput_rps": 825.8,
+    "errors": 0,
+    "latency_ms": {
+     "p50": 10.05,
+     "p95": 34.33,
+     "p99": 67.36,
+     "max": 72810.14
+    },
+    "finding_candidates_ms": {
+     "p50": 2.84,
+     "p95": 6.38,
+     "p99": 34.1
+    },
+    "candidate_pool": {
+     "p50": 10,
+     "p95": 36,
+     "p99": 190,
+     "max": 939
+    },
+    "records_with_skipped_blocks": 0,
+    "skipped_blocks_by_key": {},
+    "outcomes": {
+     "matched": 1779167,
+     "new_customer": 720833
+    },
+    "links_by_tier": {
+     "exact": 800298,
+     "strong": 818589,
+     "possible": 151885,
+     "probable": 8395
+    },
+    "accuracy_at_arrival": {
+     "links": 1779167,
+     "first_records": 606936,
+     "missed_links": 113897,
+     "wrong_links": 2157,
+     "wrong_link_rate_pct": 0.121,
+     "missed_link_rate_pct": 6.017
+    }
+   }
+  },
+  "curve": [
+   {
+    "arrivals": "0-250,000",
+    "phase": "seed",
+    "rec_per_s": 2003.0,
+    "p50_ms": 5.99,
+    "p95_ms": 8.52,
+    "p99_ms": 10.07,
+    "find_p50_ms": 0.91,
+    "find_p95_ms": 2.07,
+    "pool_p95": 2
+   },
+   {
+    "arrivals": "250,000-500,000",
+    "phase": "seed",
+    "rec_per_s": 1836.4,
+    "p50_ms": 6.42,
+    "p95_ms": 9.57,
+    "p99_ms": 11.82,
+    "find_p50_ms": 1.36,
+    "find_p95_ms": 2.63,
+    "pool_p95": 5
+   },
+   {
+    "arrivals": "500,000-750,000",
+    "phase": "seed",
+    "rec_per_s": 1776.4,
+    "p50_ms": 6.49,
+    "p95_ms": 9.41,
+    "p99_ms": 11.28,
+    "find_p50_ms": 1.52,
+    "find_p95_ms": 2.69,
+    "pool_p95": 7
+   },
+   {
+    "arrivals": "750,000-1,000,000",
+    "phase": "seed",
+    "rec_per_s": 1743.2,
+    "p50_ms": 6.55,
+    "p95_ms": 9.41,
+    "p99_ms": 11.49,
+    "find_p50_ms": 1.63,
+    "find_p95_ms": 2.78,
+    "pool_p95": 10
+   },
+   {
+    "arrivals": "1,000,000-1,250,000",
+    "phase": "seed",
+    "rec_per_s": 1767.8,
+    "p50_ms": 6.48,
+    "p95_ms": 8.97,
+    "p99_ms": 10.53,
+    "find_p50_ms": 1.71,
+    "find_p95_ms": 2.88,
+    "pool_p95": 12
+   },
+   {
+    "arrivals": "1,250,000-1,500,000",
+    "phase": "seed",
+    "rec_per_s": 1675.4,
+    "p50_ms": 6.6,
+    "p95_ms": 9.5,
+    "p99_ms": 12.29,
+    "find_p50_ms": 1.8,
+    "find_p95_ms": 3.1,
+    "pool_p95": 14
+   },
+   {
+    "arrivals": "1,500,000-1,750,000",
+    "phase": "seed",
+    "rec_per_s": 1422.5,
+    "p50_ms": 6.91,
+    "p95_ms": 10.7,
+    "p99_ms": 13.85,
+    "find_p50_ms": 1.95,
+    "find_p95_ms": 3.58,
+    "pool_p95": 16
+   },
+   {
+    "arrivals": "1,750,000-2,000,000",
+    "phase": "seed",
+    "rec_per_s": 1443.9,
+    "p50_ms": 6.98,
+    "p95_ms": 11.36,
+    "p99_ms": 23.51,
+    "find_p50_ms": 2.02,
+    "find_p95_ms": 3.89,
+    "pool_p95": 18
+   },
+   {
+    "arrivals": "2,000,000-2,250,000",
+    "phase": "seed",
+    "rec_per_s": 1453.1,
+    "p50_ms": 6.86,
+    "p95_ms": 10.41,
+    "p99_ms": 17.11,
+    "find_p50_ms": 2.03,
+    "find_p95_ms": 3.38,
+    "pool_p95": 21
+   },
+   {
+    "arrivals": "2,250,000-2,500,000",
+    "phase": "seed",
+    "rec_per_s": 1431.5,
+    "p50_ms": 6.89,
+    "p95_ms": 10.54,
+    "p99_ms": 17.3,
+    "find_p50_ms": 2.09,
+    "find_p95_ms": 3.48,
+    "pool_p95": 23
+   },
+   {
+    "arrivals": "2,500,000-2,750,000",
+    "phase": "measure",
+    "rec_per_s": 1062.7,
+    "p50_ms": 9.17,
+    "p95_ms": 26.91,
+    "p99_ms": 55.54,
+    "find_p50_ms": 2.29,
+    "find_p95_ms": 3.67,
+    "pool_p95": 25
+   },
+   {
+    "arrivals": "2,750,000-3,000,000",
+    "phase": "measure",
+    "rec_per_s": 967.4,
+    "p50_ms": 9.38,
+    "p95_ms": 30.13,
+    "p99_ms": 57.57,
+    "find_p50_ms": 2.43,
+    "find_p95_ms": 4.33,
+    "pool_p95": 27
+   },
+   {
+    "arrivals": "3,000,000-3,250,000",
+    "phase": "measure",
+    "rec_per_s": 963.8,
+    "p50_ms": 9.32,
+    "p95_ms": 30.91,
+    "p99_ms": 54.53,
+    "find_p50_ms": 2.5,
+    "find_p95_ms": 4.54,
+    "pool_p95": 29
+   },
+   {
+    "arrivals": "3,250,000-3,500,000",
+    "phase": "measure",
+    "rec_per_s": 846.0,
+    "p50_ms": 9.76,
+    "p95_ms": 33.63,
+    "p99_ms": 55.98,
+    "find_p50_ms": 2.62,
+    "find_p95_ms": 4.87,
+    "pool_p95": 32
+   },
+   {
+    "arrivals": "3,500,000-3,750,000",
+    "phase": "measure",
+    "rec_per_s": 832.8,
+    "p50_ms": 9.65,
+    "p95_ms": 31.5,
+    "p99_ms": 59.67,
+    "find_p50_ms": 2.69,
+    "find_p95_ms": 4.91,
+    "pool_p95": 34
+   },
+   {
+    "arrivals": "3,750,000-4,000,000",
+    "phase": "measure",
+    "rec_per_s": 644.2,
+    "p50_ms": 10.31,
+    "p95_ms": 35.11,
+    "p99_ms": 97.77,
+    "find_p50_ms": 3.02,
+    "find_p95_ms": 8.9,
+    "pool_p95": 36
+   },
+   {
+    "arrivals": "4,000,000-4,250,000",
+    "phase": "measure",
+    "rec_per_s": 682.4,
+    "p50_ms": 11.03,
+    "p95_ms": 46.36,
+    "p99_ms": 110.85,
+    "find_p50_ms": 3.48,
+    "find_p95_ms": 19.46,
+    "pool_p95": 38
+   },
+   {
+    "arrivals": "4,250,000-4,500,000",
+    "phase": "measure",
+    "rec_per_s": 745.5,
+    "p50_ms": 10.61,
+    "p95_ms": 32.28,
+    "p99_ms": 63.68,
+    "find_p50_ms": 3.31,
+    "find_p95_ms": 6.71,
+    "pool_p95": 40
+   },
+   {
+    "arrivals": "4,500,000-4,750,000",
+    "phase": "measure",
+    "rec_per_s": 736.7,
+    "p50_ms": 10.89,
+    "p95_ms": 37.4,
+    "p99_ms": 95.55,
+    "find_p50_ms": 3.39,
+    "find_p95_ms": 7.58,
+    "pool_p95": 42
+   },
+   {
+    "arrivals": "4,750,000-5,000,000",
+    "phase": "measure",
+    "rec_per_s": 656.0,
+    "p50_ms": 11.16,
+    "p95_ms": 39.23,
+    "p99_ms": 115.46,
+    "find_p50_ms": 3.57,
+    "find_p95_ms": 7.85,
+    "pool_p95": 45
+   }
+  ],
+  "people": 2194837
+ }
+}

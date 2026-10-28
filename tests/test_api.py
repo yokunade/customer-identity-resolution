@@ -175,3 +175,69 @@ def test_tier_outside_auto_link_goes_to_review(clean_db):
     assert b.match.tier == "possible" and b.match.auto_linked is False
     assert b.match.suggested_customer_id == a.customer_id
     assert rows == [{"rule": "NAME_PREMISE_POSTCODE", "status": "open"}]
+
+
+def test_search_customers_by_email_mobile_postcode(client):
+    william = post(client, WILLIAM)
+    post(client, {"source_system": "crm", "source_record_id": "N", "first_name": "Nina", "last_name": "Okafor",
+                  "email": "nina@outlook.com", "address": {"line1": "14 Acacia Ave", "postcode": "LS6 2AB"}})
+
+    # Inputs are cleansed like inbound records, so formatting differences still find the customer.
+    r = client.get("/v1/customers", params={"email": "Bill.Smith+news@GoogleMail.com"}).json()
+    assert r["normalised_value"] == "billsmith@gmail.com"
+    assert [c["customer_id"] for c in r["customers"]] == [william["customer_id"]]
+    assert r["customers"][0]["source_records"][0]["source_record_id"] == "C-1"
+
+    r = client.get("/v1/customers", params={"mobile": "+44 (0)7712 345678"}).json()
+    assert r["normalised_value"] == "+447712345678"
+    assert [c["customer_id"] for c in r["customers"]] == [william["customer_id"]]
+
+    r = client.get("/v1/customers", params={"postcode": "ls62ab"}).json()
+    assert r["normalised_value"] == "LS6 2AB" and len(r["customers"]) == 2 and not r["truncated"]
+
+    r = client.get("/v1/customers", params={"postcode": "LS6 2AB", "limit": 1}).json()
+    assert len(r["customers"]) == 1 and r["truncated"]
+
+    r = client.get("/v1/customers", params={"email": "someone.else@gmail.com"})
+    assert r.status_code == 200 and r.json()["customers"] == []
+
+
+def test_search_customers_rejects_bad_queries(client):
+    assert client.get("/v1/customers").status_code == 422
+    assert client.get("/v1/customers", params={"email": "a@b.com", "postcode": "LS6 2AB"}).status_code == 422
+    assert client.get("/v1/customers", params={"postcode": "NOT A PC"}).status_code == 422
+    assert client.get("/v1/customers", params={"email": "info@acme.co.uk"}).status_code == 422
+    assert client.get("/v1/customers", params={"mobile": "12"}).status_code == 422
+    assert client.get("/v1/customers", params={"email": "a@b.com"}, headers={"X-API-Key": "x"}).status_code == 401
+
+
+YEMI = {"source_system": "crm", "source_record_id": "Y-1", "first_name": "Yemi", "last_name": "Okunade",
+        "date_of_birth": "29/05/1981", "email": "yokunade@gmail.com"}
+
+
+def test_corrected_resend_of_a_lone_record_relinks(client):
+    first = post(client, YEMI)
+    typo = post(client, {**YEMI, "source_record_id": "Y-2", "first_name": "Yime"})
+    assert typo["outcome"] == "new_customer"  # Yime/Yemi conflict without a mobile to vouch for it
+
+    fixed = post(client, {**YEMI, "source_record_id": "Y-2"})
+    assert fixed["outcome"] == "relinked" and fixed["customer_id"] == first["customer_id"]
+    # The stranded customer ID now follows the merge.
+    old = client.get(f"/v1/customers/{typo['customer_id']}").json()
+    assert old["customer_id"] == first["customer_id"] and len(old["source_records"]) == 2
+
+    # Records with company keep their link on resend.
+    again = post(client, {**YEMI, "source_record_id": "Y-2", "first_name": "Yime"})
+    assert again["outcome"] == "existing_source_record" and again["customer_id"] == first["customer_id"]
+
+
+def test_relink_respects_a_keep_apart_decision(client, clean_db):
+    first = post(client, YEMI)
+    typo = post(client, {**YEMI, "source_record_id": "Y-2", "first_name": "Yime"})
+    a, b = sorted([first["customer_id"], typo["customer_id"]])
+    with psycopg.connect(clean_db) as conn:
+        conn.execute("INSERT INTO merge_candidate (customer_a, customer_b, rule, status)"
+                     " VALUES (%s, %s, 'EMAIL_NAME_DOB', 'rejected')", (a, b))
+    fixed = post(client, {**YEMI, "source_record_id": "Y-2"})
+    assert fixed["outcome"] == "existing_source_record" and fixed["customer_id"] == typo["customer_id"]
+    assert fixed["match"]["auto_linked"] is False

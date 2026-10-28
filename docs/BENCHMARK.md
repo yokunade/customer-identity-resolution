@@ -199,3 +199,64 @@ python -m benchmark.generate --records 200000 --seed 7 --out data.jsonl
 python -m benchmark.run --data data.jsonl --db postgresql://.../identity_bench --workers 3 --out results/
 python -m benchmark.evaluate --data data.jsonl --results results/ --db postgresql://.../identity_bench --out report.json
 ```
+
+## Scale benchmark: seed, then measure
+
+`benchmark/scale.py` answers a different question from the 200k run: how fast
+is resolution when the database already holds millions of customers? It seeds
+the database with the first half of a dataset, then times the second half
+arriving against it.
+
+```bash
+docker compose --profile bench run --rm bench --records 5000000 --seed-records 2500000 --workers 12
+```
+
+This runs in its own PostgreSQL (`bench-db`, port 5434, tuned for a ~30 GB
+machine: `shared_buffers=6GB`, `effective_cache_size=16GB`; override with
+`BENCH_SHARED_BUFFERS` / `BENCH_EFFECTIVE_CACHE`), so the demo database is not
+touched. The report goes to `benchmark/results/scale/report.md` and
+`report.json`; the dataset and per-record results stay in the `benchfiles`
+volume.
+
+**Data.** Same generator, people and corruption as the 200k run, with two
+additions that matter at scale and are off by default (so the 200k dataset is
+unchanged):
+
+- `--people-per-postcode 3.5`: addresses come from a fixed set of postcode
+  units, each on one street with house numbers in sequence. A 6m-customer base
+  across the UK's ~1.7m postcodes is about 3.5 customers per postcode. Without
+  this, random postcodes leave nearly every postcode with one customer, and
+  lookups look faster than they will be.
+- `--large-buildings`: about 4% of dwellings are flats in towers and halls of
+  80–600 flats sharing one postcode, which produces the large postcode blocks
+  real data has.
+
+**Phases.** Seed uses asynchronous commits (it is setup). The database is then
+vacuumed, analysed and checkpointed. Measure uses durable commits
+(`--async-measure` to compare with the 200k run). `--phase generate|seed|measure|report`
+runs one step; measure needs a freshly seeded database.
+
+**Report.** For each phase: throughput, latency p50/p95/p99, time spent
+finding and scoring candidates (`matching_ms`), candidate pool sizes, records
+whose blocks were skipped for size, and accuracy at arrival (wrong links, and
+new customers created for a person already stored). Then latency by window of
+250k arrivals as the database grows, the cache hit ratio of the key-lookup
+indexes during measure, table and index sizes, and the largest blocks.
+
+**Resources** for 5m records: generation ~3 minutes and ~3.5 GB; database
+about 36 GB plus up to 8 GB of WAL; dataset ~2 GB. Free it afterwards by
+removing only the benchmark containers and volumes:
+
+```bash
+docker compose --profile bench rm -sf bench-db bench
+docker rm -f scale-bench    # if it was started with run --name
+docker volume rm identity-resolution_benchpg identity-resolution_benchfiles
+```
+
+Do **not** use `docker compose --profile bench down -v`: `down -v` removes
+every named volume in the project, including `pgdata`, which deletes the demo
+database and its review decisions.
+
+The pairwise and cluster scoring in `benchmark.evaluate` holds the whole
+dataset in memory and is not used at this scale; accuracy here is judged at
+arrival only.
