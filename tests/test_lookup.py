@@ -199,3 +199,18 @@ def test_customer_view_follows_a_merge_and_lists_open_cases(settings):
     assert v["customer_id"] == str(a.customer_id) and v["requested_customer_id"] == str(b.customer_id)
     assert v["merged_from"] == [str(b.customer_id)]
     assert mo.get("/review/api/customers/00000000-0000-0000-0000-000000000000").status_code == 404
+
+
+def test_recent_lookups_are_the_users_own_newest_first(settings):
+    first = resolve(settings, **SARAH)
+    mo = signed_in(settings)
+    mo.get("/review/api/lookup", params={"q": "sarah.jones86@gmail.com"})
+    mo.get("/review/api/lookup", params={"q": "nobody.here@gmail.com", "reason": "Complaint"})
+    mo.get(f"/review/api/customers/{first.customer_id}")
+    recent = mo.get("/review/api/lookup/recent").json()
+    assert [(r["search_type"], r["search_value"], r["customers"], r["reason"]) for r in recent] == [
+        ("email", "nobodyhere@gmail.com", 0, "Complaint"),
+        ("email", "sarahjones86@gmail.com", 1, None)]
+    assert recent[1]["customer_id"] == str(first.customer_id) and recent[1]["name"] == "Sarah Jones"
+    assert len(access_log(settings)) == 3  # reading your own history is not a lookup
+    assert signed_in(settings, "tom@example.co.uk").get("/review/api/lookup/recent").status_code == 403

@@ -13,6 +13,13 @@ because they run automatically on start-up.
   logged to `lookup_access`; `LOOKUP_MAX_PER_HOUR` limits each manager.
   Migration `007_lookup` adds the role and the log.
 - `python -m app.review.users add --role reviewer|manager|admin`.
+- The review app is now **custIDR**, at `/app` (`/review` redirects). New
+  sign-in page; managers land on customer lookup (search, results, customer
+  view with every source record), reviewers on the review queue. A case can be
+  opened from a customer's page (`POST /review/api/cases/{id}/claim`) and the
+  reviewer returns there after deciding. The front end is split into ES modules
+  under the same strict Content-Security-Policy, with no build step.
+- Demo data adds a manager account, `mo@demo.local`.
 
 ### Fixed
 - A candidate pool truncated at `MAX_CANDIDATES` kept the oldest records and

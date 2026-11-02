@@ -8,7 +8,7 @@ from uuid import UUID
 
 import psycopg
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response, status
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
 from app.review import auth, cases, lookup
@@ -60,17 +60,25 @@ def build_router(cookie_secure: bool) -> APIRouter:
         return HTTPException(exc.status, exc.message)
 
     # ------------------------------------------------------------------ UI
-    @router.get("/review", include_in_schema=False)
-    @router.get("/review/", include_in_schema=False)
+    # The custIDR app lives at /app; its API stays under /review/api, where the session cookie is scoped.
+    @router.get("/app", include_in_schema=False)
+    @router.get("/app/", include_in_schema=False)
     def index() -> FileResponse:
         return FileResponse(STATIC / "index.html", headers={"Cache-Control": "no-store"})
 
-    @router.get("/review/static/{name}", include_in_schema=False)
+    @router.get("/review", include_in_schema=False)
+    @router.get("/review/", include_in_schema=False)
+    def old_index() -> RedirectResponse:
+        return RedirectResponse("/app", status.HTTP_308_PERMANENT_REDIRECT)
+
+    @router.get("/app/static/{name:path}", include_in_schema=False)
     def static_file(name: str) -> FileResponse:
+        root = STATIC.resolve()
         path = (STATIC / name).resolve()
-        if path.parent != STATIC.resolve() or not path.is_file():
+        if not path.is_relative_to(root) or not path.is_file():
             raise HTTPException(404)
-        return FileResponse(path)
+        media = "text/javascript" if path.suffix == ".js" else None
+        return FileResponse(path, media_type=media, headers={"Cache-Control": "no-cache"})
 
     # ------------------------------------------------------------------ auth
     @router.post("/review/api/login", dependencies=write, tags=["review"])
@@ -125,6 +133,10 @@ def build_router(cookie_secure: bool) -> APIRouter:
                       dob: Annotated[str | None, Query(max_length=40)] = None, reason: Reason = None) -> dict:
         return lookup_call(lookup.search, request, user, conn, q, kind=type, dob=dob, reason=reason)
 
+    @router.get("/review/api/lookup/recent", tags=["review"])
+    def lookup_recent(user: Manager, conn: Conn) -> list[dict]:
+        return lookup.recent(conn, user)
+
     @router.get("/review/api/customers/{customer_id}", tags=["review"])
     def lookup_customer(customer_id: UUID, request: Request, user: Manager, conn: Conn,
                         reason: Reason = None) -> dict:
@@ -162,6 +174,13 @@ def build_router(cookie_secure: bool) -> APIRouter:
                                 decision=body.decision, notes=body.notes,
                                 survivor_customer_id=body.survivor_customer_id,
                                 reason_codes=body.reason_codes, confidence=body.confidence)
+        except cases.CaseError as exc:
+            raise case_error(exc) from exc
+
+    @router.post("/review/api/cases/{case_id}/claim", dependencies=write, tags=["review"])
+    def claim(case_id: int, user: CurrentUser, conn: Conn) -> dict:
+        try:
+            return {"case_id": cases.claim(conn, user, case_id)}
         except cases.CaseError as exc:
             raise case_error(exc) from exc
 

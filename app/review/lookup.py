@@ -325,3 +325,23 @@ def customer_view(conn: psycopg.Connection, settings: Settings, user: User, cust
                         "other_customer_id": str(c["other"])} for c in cases],
         "recent_access": [dict(a) for a in access],
     }
+
+
+def recent(conn: psycopg.Connection, user: User, limit: int = 8) -> list[dict]:
+    """This user's latest distinct searches, newest first, each with the first customer found."""
+    rows = conn.execute(
+        "SELECT * FROM (SELECT DISTINCT ON (search_type, search_value) access_id, accessed_at, search_type,"
+        " search_value, reason, customer_ids FROM lookup_access WHERE user_id = %s AND action = 'search'"
+        " AND accessed_at > now() - interval '30 days' ORDER BY search_type, search_value, access_id DESC) s"
+        " ORDER BY access_id DESC LIMIT %s",
+        (user.user_id, limit),
+    ).fetchall()
+    firsts = [r["customer_ids"][0] for r in rows if r["customer_ids"]]
+    names = {s["customer_id"]: s["name"] for s in summaries(conn, list(dict.fromkeys(firsts)))}
+    conn.rollback()
+    return [{
+        "accessed_at": r["accessed_at"], "search_type": r["search_type"], "search_value": r["search_value"],
+        "reason": r["reason"], "customers": len(r["customer_ids"]),
+        "customer_id": str(r["customer_ids"][0]) if r["customer_ids"] else None,
+        "name": names.get(str(r["customer_ids"][0])) if r["customer_ids"] else None,
+    } for r in rows]

@@ -37,14 +37,14 @@ Demo ready.
   20,040 source records resolved to 10,487 customers; 1,136 cases waiting for review.
   The first 18 cases in the queue are curated hard cases; every case has a known answer.
 
-  Review app   http://localhost:8000/review
-               ana@demo.local (admin) or tom@demo.local, password: review-demo-2026
+  custIDR      http://localhost:8000/app
+               ana@demo.local (admin), mo@demo.local (manager) or tom@demo.local, password: review-demo-2026
   API docs     http://localhost:8000/docs   (X-API-Key: demo-key)
 ```
 
 Then:
 
-- **Review cases:** open http://localhost:8000/review, sign in, and take a case.
+- **Look up and review:** open http://localhost:8000/app and sign in. As mo@demo.local (manager), search for a customer by email or phone; as tom@demo.local, take a case from the review queue.
   The demo sends name + address matches that lack a DOB or personal identifier
   to review (`AUTO_LINK_TIERS=exact,strong,probable`), so the queue has plenty in it.
   In demo mode (`DEMO_MODE=true`) the app shows the known answer and why
@@ -125,7 +125,7 @@ All `/v1` endpoints require `X-API-Key` when `API_KEYS` is set.
 | GET | `/v1/source-records/{system}/{id}` | Customer ID for a source record |
 | POST | `/v1/customers/merge` | Merge two customers |
 | GET | `/health`, `/ready` | Liveness / database readiness |
-| GET | `/review` | Review app for merge decisions (see below) |
+| GET | `/app` | custIDR: customer lookup and merge review (see below); `/review` redirects here |
 
 ### Example
 
@@ -196,9 +196,10 @@ A pair a reviewer kept apart is never re-linked.
 | `REVIEW_COOKIE_SECURE` | true | Review session cookie only over HTTPS (http://localhost still works in browsers). |
 | `DB_POOL_MIN` / `DB_POOL_MAX` | 1 / 10 | |
 
-## Review app
+## custIDR app
 
-`/review` is a web app where data stewards decide merge cases: pairs of
+`/app` (custIDR) is the web app for people. Managers look customers up; reviewers
+and managers decide merge cases: pairs of
 customers that both matched an incoming record equally well, plus any matches
 in tiers left out of `AUTO_LINK_TIERS`.
 
@@ -265,9 +266,11 @@ per email per 5 minutes, counted in the database so it holds across workers).
 | POST | `/review/api/cases/next` | Claim (or resume) a case |
 | GET | `/review/api/cases/{id}` | Case with side-by-side comparison |
 | POST | `/review/api/cases/{id}/decision` | `{decision: merge \| keep_apart, notes, survivor_customer_id}` |
+| POST | `/review/api/cases/{id}/claim` | Claim a chosen case (opened from a customer's page) |
 | POST | `/review/api/cases/{id}/release` | Return a case to the queue |
 | GET | `/review/api/history` | Your decisions (`?everyone=true` for admins) |
 | GET | `/review/api/lookup?q=&type=&dob=&reason=` | Customer search (managers); `type` defaults to `auto` |
+| GET | `/review/api/lookup/recent` | Your latest distinct searches (managers; not itself logged) |
 | GET | `/review/api/customers/{id}?reason=` | Everything held about one customer (managers) |
 | GET | `/review/api/examples/summary`, `/examples/export` | Training data counts and downloads (admins) |
 

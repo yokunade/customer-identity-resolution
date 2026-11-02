@@ -56,7 +56,7 @@ def test_password_hashing():
 
 def test_sign_in_and_protection(app_settings):
     with TestClient(create_app(app_settings), base_url="https://testserver") as c:
-        assert c.get("/review").status_code == 200
+        assert c.get("/app").status_code == 200
         assert c.get("/review/api/me").status_code == 401
         r = c.post("/review/api/login", json={"email": "ana@example.co.uk", "password": "nope"}, headers=HDR)
         assert r.status_code == 401 and r.json()["detail"] == "Email or password is incorrect."
@@ -105,9 +105,34 @@ def test_login_throttle_window_and_cleanup(clean_db):
         assert not t.blocked(conn, "d@x.com")
 
 
+def test_app_moved_to_app_and_old_address_redirects(app_settings):
+    with TestClient(create_app(app_settings), base_url="https://testserver") as c:
+        r = c.get("/review", follow_redirects=False)
+        assert r.status_code in (301, 307, 308) and r.headers["location"] == "/app"
+        page = c.get("/app")
+        assert page.status_code == 200 and "<title>custIDR</title>" in page.text
+        assert c.get("/app/static/js/main.js").headers["content-type"].startswith("text/javascript")
+        assert c.get("/app/static/../routes.py").status_code == 404
+        assert c.get("/app/static/js/../../routes.py").status_code == 404
+
+
+def test_claim_a_chosen_case(app_settings, clean_db):
+    """A case opened from a customer's page can be claimed directly, not only in queue order."""
+    make_case(clean_db, app_settings, "a")
+    make_case(clean_db, app_settings, "b")
+    ana, tom = client_for(app_settings, "ana@example.co.uk"), client_for(app_settings, "tom@example.co.uk")
+    newest = max(r["case_id"] for r in ana.get("/review/api/overview").json()["queue"])
+    assert tom.post(f"/review/api/cases/{newest}/claim", headers=HDR).json() == {"case_id": newest}
+    assert tom.get(f"/review/api/cases/{newest}").json()["held_by_me"] is True
+    assert tom.post(f"/review/api/cases/{newest}/claim", headers=HDR).status_code == 200  # already his
+    assert ana.post(f"/review/api/cases/{newest}/claim", headers=HDR).status_code == 409
+    assert ana.post("/review/api/cases/999999/claim", headers=HDR).status_code == 404
+    assert ana.post(f"/review/api/cases/{newest}/claim").status_code == 403  # CSRF header required
+
+
 def test_review_pages_send_security_headers(app_settings):
     with TestClient(create_app(app_settings), base_url="https://testserver") as c:
-        for path in ("/review", "/review/static/app.js", "/review/api/me"):
+        for path in ("/app", "/app/static/js/main.js", "/app/static/app.css", "/review/api/me"):
             h = c.get(path).headers
             csp = h["content-security-policy"]
             assert "default-src 'self'" in csp and "frame-ancestors 'none'" in csp and "script-src 'self'" in csp
