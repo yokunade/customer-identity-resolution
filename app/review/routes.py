@@ -7,11 +7,11 @@ from typing import Annotated, Literal
 from uuid import UUID
 
 import psycopg
-from fastapi import APIRouter, Depends, Header, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response, status
 from fastapi.responses import FileResponse, JSONResponse
 from pydantic import BaseModel, Field
 
-from app.review import auth, cases
+from app.review import auth, cases, lookup
 from app.review import export as review_export
 from app.review.auth import LoginThrottle, User
 
@@ -98,7 +98,37 @@ def build_router(cookie_secure: bool) -> APIRouter:
 
     @router.get("/review/api/me", tags=["review"])
     def me(user: CurrentUser) -> dict:
-        return {"email": user.email, "display_name": user.display_name, "role": user.role}
+        return {"email": user.email, "display_name": user.display_name, "role": user.role,
+                "can_lookup": user.can_lookup}
+
+    # ------------------------------------------------------------------ customer lookup (managers)
+    def require_lookup(user: CurrentUser) -> User:
+        if not user.can_lookup:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Customer lookup is for managers.")
+        return user
+
+    Manager = Annotated[User, Depends(require_lookup)]
+    Reason = Annotated[str | None, Query(max_length=200)]
+
+    def lookup_call(fn, request: Request, user: User, conn: psycopg.Connection, *args, reason: str | None, **kw):
+        settings = request.app.state.service.settings
+        try:
+            lookup.check_rate(conn, user, settings)
+            return fn(conn, settings, user, *args, reason=(reason or "").strip() or None, **kw)
+        except lookup.LookupFailed as exc:
+            raise HTTPException(exc.status, exc.message) from exc
+
+    @router.get("/review/api/lookup", tags=["review"])
+    def lookup_search(request: Request, user: Manager, conn: Conn, q: Annotated[str, Query(max_length=200)],
+                      type: Literal["auto", "email", "phone", "postcode", "name_dob", "source_record",
+                                    "customer_id"] = "auto",
+                      dob: Annotated[str | None, Query(max_length=40)] = None, reason: Reason = None) -> dict:
+        return lookup_call(lookup.search, request, user, conn, q, kind=type, dob=dob, reason=reason)
+
+    @router.get("/review/api/customers/{customer_id}", tags=["review"])
+    def lookup_customer(customer_id: UUID, request: Request, user: Manager, conn: Conn,
+                        reason: Reason = None) -> dict:
+        return lookup_call(lookup.customer_view, request, user, conn, customer_id, reason=reason)
 
     # ------------------------------------------------------------------ cases
     @router.get("/review/api/stats", tags=["review"])

@@ -6,6 +6,14 @@ because they run automatically on start-up.
 
 ## [Unreleased]
 
+### Added
+- Customer lookup for a new `manager` role: search by email, phone, postcode,
+  name with date of birth, source record or customer ID, and a full view of one
+  customer with every source record and how it was linked. Every lookup is
+  logged to `lookup_access`; `LOOKUP_MAX_PER_HOUR` limits each manager.
+  Migration `007_lookup` adds the role and the log.
+- `python -m app.review.users add --role reviewer|manager|admin`.
+
 ### Fixed
 - A candidate pool truncated at `MAX_CANDIDATES` kept the oldest records and
   could miss the real match. Candidates are now ranked by the number of
