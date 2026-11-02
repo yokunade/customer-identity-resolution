@@ -6,6 +6,21 @@ because they run automatically on start-up.
 
 ## [Unreleased]
 
+### Fixed
+- A candidate pool truncated at `MAX_CANDIDATES` kept the oldest records and
+  could miss the real match. Candidates are now ranked by the number of
+  blocking keys they share with the inbound record.
+
+### Changed
+- Block sizes are counted only up to `MAX_BLOCK_SIZE + 1`, so an oversized
+  block costs no more to skip than a small one.
+- Every resolve reports `lock_wait_ms` (response and event log) and logs a
+  warning above `LOCK_WAIT_WARN_MS` (default 200).
+
+### Added
+- `python -m benchmark.generate --hot-blocks`: a switchboard number, a company
+  email and a big-user postcode shared by thousands of unrelated records.
+
 ## [0.2.0] - 2026-11-02
 
 Fixes from an external review of 0.1.0, ahead of a first public release.

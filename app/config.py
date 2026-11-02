@@ -36,6 +36,9 @@ class Settings:
     max_block_size: int = 5000
     # Hard ceiling on the candidate pool for a single inbound record.
     max_candidates: int = 2000
+    # Log a warning when a resolve waits longer than this for its advisory locks:
+    # a sign of a hot blocking key (a busy postcode or a shared phone number).
+    lock_wait_warn_ms: int = 200
     # Maximum records accepted by the batch endpoint.
     max_batch_size: int = 500
     # Requests with a larger body are refused with 413 before parsing. A full batch of
@@ -64,6 +67,7 @@ class Settings:
             api_keys=frozenset(k.strip() for k in keys.split(",") if k.strip()),
             max_block_size=_int("MAX_BLOCK_SIZE", Settings.max_block_size),
             max_candidates=_int("MAX_CANDIDATES", Settings.max_candidates),
+            lock_wait_warn_ms=_int("LOCK_WAIT_WARN_MS", Settings.lock_wait_warn_ms),
             max_batch_size=_int("MAX_BATCH_SIZE", Settings.max_batch_size),
             max_request_bytes=_int("MAX_REQUEST_BYTES", Settings.max_request_bytes),
             auto_migrate=_bool("AUTO_MIGRATE", Settings.auto_migrate),

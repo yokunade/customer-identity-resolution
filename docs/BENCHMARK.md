@@ -229,6 +229,62 @@ mobile in common falls back to Soundex/NYSIIS keys, which need DOB.
 - PostgreSQL ran with `synchronous_commit=off`; throughput with durable commits
   depends on the disk.
 
+### Round 6: hot blocks
+
+Real data has values shared by thousands of unrelated records; the generator
+had none (round 5 skipped no blocks and its largest pool was 25). Run on
+2 November 2026, same machine as round 5:
+`python -m benchmark.generate --records 200000 --seed 7 --hot-blocks` adds, to
+otherwise identical seed-7 data:
+
+| Hot value | Records | Path it exercises |
+|---|---:|---|
+| Switchboard `0113 243 0000` as `home_phone` | 8,025 | block outgrows `MAX_BLOCK_SIZE` (5,000), then is skipped |
+| `online.orders@bigshop.co.uk` as a second email | 1,990 | a shared email that passes the junk lists |
+| Big-user postcode `LS2 9ZZ` as the address | 3,960 | under `MAX_BLOCK_SIZE`, over `MAX_CANDIDATES` (2,000): the pool truncates |
+
+Round 5 rules against round 6 (pool ranked by shared blocking keys, block
+counts capped, lock waits recorded), on the hot data:
+
+| | Round 5 | Round 6 |
+|---|---:|---:|
+| Recall at arrival | 92.36% | 92.94% |
+| Missed links that blocking could reach | 4,708 | 4,050 |
+| ...on records with the hot phone | 16.1% | 5.5% |
+| ...on records with the hot postcode | 23.8% | 15.3% |
+| Wrong links | 1,169 | 1,134 |
+| Throughput, latency p99 | 153 rec/s, 321 ms | 153 rec/s, 315 ms |
+| Lock wait p50 / p99 / max | not recorded | 2.5 / 142 / 1,180 ms |
+
+**Pool ranking** is the gain. When a busy postcode filled the 2,000-record
+pool, the oldest records were kept and newer true matches were cut; now the
+records sharing the most keys are kept, which recovers 658 missed links.
+
+**Capped block counts** make no difference at these sizes (8,000 records at
+most). They matter for very large blocks: on a 400,000-record block,
+`block_sizes` takes 48.8 ms uncapped and 0.8 ms capped (median of 20).
+
+**Lock waits** are real under hot keys. Every arrival at the hot postcode
+locks it, and each holds the lock while matching against a 2,000-record pool
+(matching p99 181 ms), so throughput halves against the plain data (296 rec/s
+in round 5). Locks on oversized blocks are still taken; see `docs/MATCHING.md`.
+
+**Shared identifiers cause wrong links** (both columns). Wrong links rise
+from 93 on plain data to about 1,150, and pairwise precision falls to 77%
+because the wrong links build large mixed clusters:
+
+| Rule | Wrong links, plain data | Wrong links, hot data |
+|---|---:|---:|
+| `EMAIL_FIRST` (email + forename) | 1 | 724 |
+| `NAME_POSTCODE` (name + postcode) | 7 | 232 |
+| `EMAIL_NAME` (email + full name) | 1 | 92 |
+
+Two Sarahs who both carry the company email are linked as one person. The
+matcher treats every email and phone that passes the junk lists as personal.
+Detecting identifiers shared by many people (from block size or the number of
+distinct customers on a key) is the next fix; it is not in round 6.
+Report: `benchmark/results/round6_hot_blocks_report.json`.
+
 ## Reproduce
 
 ```bash

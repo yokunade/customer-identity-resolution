@@ -118,7 +118,13 @@ class ResolutionService:
             # (proved in tests), so locking every blocking key serialises
             # concurrent arrivals of the same person without a global lock.
             source_lock = lock_id(hashlib.sha256(f"{c.source_system}\x1f{c.source_record_id}".encode()).digest())
+            lock_started = time.perf_counter()
             repo.advisory_locks([source_lock, *(lock_id(v) for vals in p.blocking_keys.values() for v in vals)])
+            lock_ms = round((time.perf_counter() - lock_started) * 1000, 2)
+            if lock_ms > self.settings.lock_wait_warn_ms:
+                # Usually a hot blocking key: many arrivals at one busy postcode or shared number.
+                log.warning("resolve of %s/%s waited %.0f ms for advisory locks", c.source_system,
+                            c.source_record_id, lock_ms)
 
             existing = repo.find_source_record(c.source_system, c.source_record_id)  # type: ignore[attr-defined]
             relinked_from = None
@@ -133,11 +139,11 @@ class ResolutionService:
                 if repo.record_count(customer_id) > 1:
                     # Other records rest on this link; never re-link silently.
                     repo.log_event(record_id=record_id, customer_id=customer_id, outcome=outcome,
-                                   rule=None, details={})
+                                   rule=None, details={"lock_wait_ms": lock_ms})
                     return ResolveResponse(
                         customer_id=customer_id, outcome=outcome, record_id=record_id,
                         match_keys_generated=n_keys, data_quality=p.issues, cleansed=c,  # type: ignore[arg-type]
-                        processing_ms=round((time.perf_counter() - started) * 1000, 2),
+                        processing_ms=round((time.perf_counter() - started) * 1000, 2), lock_wait_ms=lock_ms,
                     )
                 # The record is its customer's only one, so a corrected field
                 # (e.g. a forename typo fixed) gets to match again. The move is a
@@ -190,6 +196,7 @@ class ResolutionService:
 
             details = {
                 "auto_linked": auto_link,
+                "lock_wait_ms": lock_ms,
                 "pool_size": len(found.pool),
                 "candidates_sharing_keys": found.candidates,
                 "skipped_blocks": found.skipped,
@@ -209,13 +216,13 @@ class ResolutionService:
             customer_id=customer_id, outcome=outcome, record_id=record_id, match=match,  # type: ignore[arg-type]
             candidates_considered=len(found.pool), skipped_blocks=found.skipped, matching_ms=round(found.ms, 2),
             match_keys_generated=n_keys, data_quality=p.issues, cleansed=c,  # type: ignore[arg-type]
-            processing_ms=round((time.perf_counter() - started) * 1000, 2),
+            processing_ms=round((time.perf_counter() - started) * 1000, 2), lock_wait_ms=lock_ms,
         )
 
     def _match(self, repo: Repository, p: Prepared, exclude_record_id: int | None = None) -> Found:
         started = time.perf_counter()
         # ---- blocking
-        sizes = repo.block_sizes(p.blocking_keys)
+        sizes = repo.block_sizes(p.blocking_keys, self.settings.max_block_size)
         usable: KeySet = {}
         skipped: list[str] = []
         for ktype, vals in p.blocking_keys.items():

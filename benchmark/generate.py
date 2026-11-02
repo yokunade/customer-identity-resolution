@@ -798,7 +798,37 @@ def _plan(w: World, n_records: int) -> list[tuple[Person, int]]:
     return plan
 
 
-def generate(n_records: int, seed: int) -> list[dict]:
+# --hot-blocks: values shared by thousands of unrelated records, which real data has
+# and the default generator does not. Each is usable for matching (not on a junk list),
+# so it lands in a blocking key: (field, value, share of records, scenario tag).
+HOT_BLOCKS = [
+    # An office switchboard keyed as the customer's home phone: ~8,000 records at 200k,
+    # so the block outgrows MAX_BLOCK_SIZE (5,000) and is skipped.
+    ("home_phone", "0113 243 0000", 0.04, "hot_phone"),
+    # A retailer's order address added as a second email: ~2,000 records.
+    ("emails", "online.orders@bigshop.co.uk", 0.01, "hot_email"),
+    # A big-user postcode (a hospital or university mail room) given as the address:
+    # ~4,000 records, under MAX_BLOCK_SIZE but over MAX_CANDIDATES (2,000), so the pool truncates.
+    ("postcode", "LS2 9ZZ", 0.02, "hot_postcode"),
+]
+
+
+def add_hot_blocks(row: dict, rng: random.Random) -> dict:
+    rec, tags = row["record"], row["truth"]["tags"]
+    for fld, value, share, tag in HOT_BLOCKS:
+        if rng.random() >= share:
+            continue
+        if fld == "postcode":
+            rec["address"] = {**(rec.get("address") or {}), "postcode": value}
+        elif fld == "emails":
+            rec["emails"] = [*(rec.get("emails") or []), value]
+        else:
+            rec[fld] = value
+        tags.append(tag)
+    return row
+
+
+def generate(n_records: int, seed: int, hot_blocks: bool = False) -> list[dict]:
     w = World(seed)
     r = Renderer(w)
     plan = _plan(w, n_records)
@@ -807,7 +837,11 @@ def generate(n_records: int, seed: int) -> list[dict]:
         for k in range(n):
             out.append(r.record(p, k, n, w.people[-5000:] if len(w.people) > 10 else []))
     w.rng.shuffle(out)
-    return out[:n_records]
+    out = out[:n_records]
+    if hot_blocks:  # own random stream: everything else stays identical to a run without it
+        hot = random.Random(seed * 15485863 + 5)
+        out = [add_hot_blocks(row, hot) for row in out]
+    return out
 
 
 # Records per generated person in the 200k dataset; sizes the dense postcode set.
@@ -859,12 +893,17 @@ def main() -> None:
     ap.add_argument("--large-buildings", action="store_true",
                     help="Put ~4%% of dwellings in towers and halls of 80-600 flats sharing one postcode.")
     ap.add_argument("--stream", action="store_true", help="Stream to disk (needed for millions of records).")
+    ap.add_argument("--hot-blocks", action="store_true",
+                    help="Add a few values shared by thousands of unrelated records (a switchboard number, a "
+                         "company email, a big-user postcode) to exercise oversized blocks and pool truncation.")
     args = ap.parse_args()
+    if args.hot_blocks and (args.stream or args.people_per_postcode or args.large_buildings):
+        ap.error("--hot-blocks is only supported without --stream, --people-per-postcode and --large-buildings")
     if args.stream or args.people_per_postcode or args.large_buildings:
         n = generate_to_file(args.records, args.seed, args.out, args.people_per_postcode, args.large_buildings)
         print(f"wrote {args.records} records for {n} people to {args.out}")
         return
-    data = generate(args.records, args.seed)
+    data = generate(args.records, args.seed, args.hot_blocks)
     with open(args.out, "w") as f:
         for row in data:
             f.write(json.dumps(row) + "\n")

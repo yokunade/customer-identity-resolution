@@ -166,7 +166,21 @@ gives two guarantees:
 
 Blocks larger than `MAX_BLOCK_SIZE` are skipped and reported in
 `skipped_blocks` (e.g. a university hall sharing one postcode). That is the
-one place a match can be missed; monitor it.
+one place a match can be missed; monitor it. Block sizes are counted only up
+to `MAX_BLOCK_SIZE + 1`, so a 400k-record block (a shared number the junk
+lists miss) costs no more to skip than a small one.
+
+The candidate pool is capped at `MAX_CANDIDATES`. Candidates are ranked by
+how many blocking keys they share with the inbound record (email, phone,
+postcode, dwelling, DOB + surname), so when a busy block fills the pool, the
+records dropped are those sharing the fewest keys, not the newest.
+
+Every resolve reports `lock_wait_ms`, the time spent waiting for its advisory
+locks, in the response and in `resolution_event.details`, and logs a warning
+above `LOCK_WAIT_WARN_MS`. Long waits point at a hot blocking key. Locks are
+taken on oversized blocks too: skipping them would break the concurrency
+guarantee for records near the size limit, where one arrival still uses a
+block that another has started to skip.
 
 ## Adding a rule
 
