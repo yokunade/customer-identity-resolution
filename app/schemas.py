@@ -174,6 +174,10 @@ class ResolveResponse(BaseModel):
     skipped_blocks: list[str] = Field(
         default_factory=list, description="Blocking keys skipped because they exceeded MAX_BLOCK_SIZE."
     )
+    shared_identifiers: list[str] = Field(
+        default_factory=list,
+        description="Identifiers (email, phone, postcode) held by so many customers that they were not used to match.",
+    )
     match_keys_generated: int = 0
     data_quality: list[Issue] = Field(default_factory=list)
     cleansed: CleansedRecord

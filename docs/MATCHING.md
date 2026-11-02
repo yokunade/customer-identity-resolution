@@ -182,6 +182,42 @@ taken on oversized blocks too: skipping them would break the concurrency
 guarantee for records near the size limit, where one arrival still uses a
 block that another has started to skip.
 
+## Shared identifiers
+
+The junk lists (`info@`, `noreply@`, drama-range numbers, ...) catch values
+that are never personal. They cannot catch a value that only real data shows
+is shared: a retailer's order address added to every customer's record, an
+office switchboard keyed as the home phone, a hospital mail-room postcode.
+Treated as personal, these link strangers: two Sarahs carrying the same
+company email match on `EMAIL_FIRST`; two John Smiths at one big-user
+postcode match on `NAME_POSTCODE`.
+
+So each resolve checks how many distinct customers already hold each of the
+inbound record's emails, phone numbers and postcodes:
+
+| Identifier | Shared when held by more than | Setting |
+|---|---:|---|
+| Email, phone | 10 customers | `SHARED_CONTACT_CUSTOMERS` |
+| Postcode | 250 customers | `SHARED_POSTCODE_CUSTOMERS` |
+
+A shared value is left out of the inbound record's components for matching,
+so no rule fires on it. It still gathers candidates through its blocking key,
+and everything else on the record matches as usual: the dwelling
+(`premise_postcode`) still counts at a big-user postcode. Values in a block
+skipped as oversized are always shared. The response and
+`resolution_event.details` list the kinds dropped in `shared_identifiers`.
+
+Customers are counted, not records, so one customer with many records does
+not make an email shared, and a household of four sharing one email stays
+under the limit. The count is cheap: a block with no more records than the
+limit cannot hold more customers, so only larger blocks are counted, and
+counting stops at the limit.
+
+The first customers to carry a shared value arrive before it reaches the
+limit, so a few early links on it can still be wrong. Lower the limits if
+your data has many small shared values (a family business email shared by
+six staff).
+
 ## Adding a rule
 
 1. Add a `KeyDef` to `MATCH_KEYS` (and a component in `extract_components` if needed).

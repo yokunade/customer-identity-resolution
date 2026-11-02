@@ -302,6 +302,76 @@ def test_lock_wait_is_reported_and_logged(clean_db, caplog):
     assert details["details"]["lock_wait_ms"] >= 300
 
 
+def _strangers(svc, conn, n, **shared):
+    """n different people (distinct names and DOBs) who all carry the given fields."""
+    firsts = ["Amir", "Beth", "Carl", "Dana", "Ezra", "Faye", "Gus", "Hana"]
+    lasts = ["Adebayo", "Brennan", "Chowdhury", "Dvorak", "Eriksen", "Fofana", "Gallo", "Hughes"]
+    for i in range(n):
+        svc.resolve(conn, InboundCustomer(source_system="s", source_record_id=f"x{i}", first_name=firsts[i],
+                                          last_name=lasts[i], date_of_birth=f"1990-01-{i + 1:02d}", **shared))
+
+
+def test_email_shared_by_many_customers_stops_linking(clean_db):
+    """A company order address carried by many customers is not personal: two
+    Sarahs with different surnames who both use it are different people."""
+    svc = ResolutionService(Settings(database_url=clean_db, key_secret="test-secret", shared_contact_customers=5))
+    shop = "online.orders@bigshop.co.uk"
+    with psycopg.connect(clean_db, row_factory=dict_row) as conn:
+        _strangers(svc, conn, 6, email=shop)
+        a = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id="a", first_name="Sarah",
+                                              last_name="Jones", email=shop))
+        b = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id="b", first_name="Sarah",
+                                              last_name="Brown", email=shop))
+        event = conn.execute("SELECT details FROM resolution_event ORDER BY event_id DESC LIMIT 1").fetchone()
+    assert b.outcome == "new_customer" and b.customer_id != a.customer_id
+    assert b.shared_identifiers == ["email"]
+    assert event["details"]["shared_identifiers"] == ["email"]
+
+
+def test_email_shared_by_a_household_still_links(clean_db):
+    """Below the threshold a shared email still counts: the same Sarah, surname changed."""
+    svc = ResolutionService(Settings(database_url=clean_db, key_secret="test-secret", shared_contact_customers=5))
+    family = "smiths@btinternet.com"
+    with psycopg.connect(clean_db, row_factory=dict_row) as conn:
+        _strangers(svc, conn, 3, email=family)
+        a = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id="a", first_name="Sarah",
+                                              last_name="Jones", email=family))
+        b = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id="b", first_name="Sarah",
+                                              last_name="Brown", email=family))
+    assert b.outcome == "matched" and b.customer_id == a.customer_id
+    assert b.match.rule == "EMAIL_FIRST" and b.shared_identifiers == []
+
+
+def test_phone_shared_by_many_customers_stops_linking(clean_db):
+    svc = ResolutionService(Settings(database_url=clean_db, key_secret="test-secret", shared_contact_customers=5))
+    board = "07911 123456"  # a firm's one mobile, given by every employee who orders
+    with psycopg.connect(clean_db, row_factory=dict_row) as conn:
+        _strangers(svc, conn, 6, mobile_phone=board)
+        a = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id="a", first_name="Sarah",
+                                              last_name="Jones", mobile_phone=board))
+        b = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id="b", first_name="Sarah",
+                                              last_name="Jones", date_of_birth="1985-03-04", mobile_phone=board))
+    assert b.outcome == "new_customer" and b.customer_id != a.customer_id
+    assert b.shared_identifiers == ["phone"]
+
+
+def test_postcode_shared_by_many_customers_stops_name_postcode_links(clean_db):
+    """At a big-user postcode (a hospital mail room) two John Smiths are not the same man."""
+    svc = ResolutionService(Settings(database_url=clean_db, key_secret="test-secret", shared_postcode_customers=5))
+    with psycopg.connect(clean_db, row_factory=dict_row) as conn:
+        _strangers(svc, conn, 6, address={"postcode": "LS2 9ZZ"})
+        a = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id="a", first_name="John",
+                                              last_name="Smith", address={"line1": "Ward 4", "postcode": "LS2 9ZZ"}))
+        b = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id="b", first_name="John",
+                                              last_name="Smith", address={"line1": "Ward 9", "postcode": "LS2 9ZZ"}))
+        # The same dwelling at that postcode still links.
+        c = svc.resolve(conn, InboundCustomer(source_system="t", source_record_id="b", first_name="John",
+                                              last_name="Smith", address={"line1": "Ward 9", "postcode": "LS2 9ZZ"}))
+    assert b.outcome == "new_customer" and b.customer_id != a.customer_id
+    assert b.shared_identifiers == ["postcode"]
+    assert c.outcome == "matched" and c.customer_id == b.customer_id
+
+
 def test_concurrent_arrivals_get_one_customer(clean_db):
     """Ten requests for the same person arriving at once must not create duplicates."""
     svc = ResolutionService(Settings(database_url=clean_db, key_secret="test-secret"))
