@@ -21,6 +21,9 @@ NULL_TOKENS = {
     "TBC", "TBA", "?", "??", "NOT KNOWN", "NOT PROVIDED", "NOT GIVEN", "REFUSED",
     "NO DATA", "UNDEFINED", "BLANK", "X", "XX", "XXX", "0",
 }
+# In name fields these are real names (Na is a common Korean surname, Nil a
+# Turkish forename), so only the unambiguous tokens count as "no data".
+NAME_NULL_TOKENS = NULL_TOKENS - {"NA", "NIL"}
 
 _CONTROL = re.compile(r"[\x00-\x1f\x7f]")
 
@@ -32,14 +35,14 @@ def fold(value: str) -> str:
     return "".join(c for c in value if not unicodedata.combining(c))
 
 
-def clean_text(value: object) -> str | None:
+def clean_text(value: object, null_tokens: set[str] | frozenset[str] = NULL_TOKENS) -> str | None:
     """Fold, strip control characters, collapse whitespace and drop null tokens."""
     if value is None:
         return None
     s = fold(str(value))
     s = _CONTROL.sub(" ", s)
     s = " ".join(s.split())
-    if s.upper().strip(" .") in NULL_TOKENS:
+    if s.upper().strip(" .") in null_tokens:
         return None
     return s
 

@@ -22,14 +22,14 @@ same decision. There is no scoring or threshold tuning.
 
 | Field | What happens |
 |---|---|
-| Names | Titles, generation suffixes (Jr/Snr/III) and post-nominals (OBE, PhD…) separated. "Surname, Forename" handled. Surname particles (van, de, al…) kept with the surname. Accents folded. UK casing (O'Brien, McDonald, Smith-Jones). Placeholder names (TEST, CUSTOMER…) removed. |
+| Names | Titles, generation suffixes (Jr/Snr/III) and post-nominals (OBE, PhD…) separated, including a title or suffix typed into the forename ("Mr John", "John Jr") when the title and suffix fields are also sent. "Surname, Forename" handled. Surname particles (van, de, al…) kept with the surname. Accents folded. UK casing (O'Brien, McDonald, Smith-Jones). Placeholder names (TEST, CUSTOMER…) removed. Null tokens that are also real names (Na, Nil) are kept in name fields. |
 | Forename forms | Own name plus formal forms from a UK nickname table (Bill→William, Liz→Elizabeth, Mohamed→Mohammed…). |
-| Gender | From the field, else inferred from title. |
+| Gender | From the field (M, F, or X for NB/non-binary/other), else inferred from title. An explicit X is never overridden by forename inference. |
 | Date of birth | ISO, UK day-first (DD/MM/YYYY, D-M-YY), YYYYMMDD, "3rd April 1985". Ambiguous numeric dates are read day-first; unambiguous US dates are detected. Future, implausible (>120 years) and placeholder dates (1900-01-01, 1970-01-01…) are kept but excluded from keys. |
 | Email | Lower-cased, typo domains fixed (gmial.com, hotmial.co.uk…), googlemail→gmail, Gmail dots removed, +tags removed for providers that support them. Placeholder and role accounts (info@, noemail@) excluded from keys. |
 | Phone | Ofcom numbering plan: E.164 output, national display format, type (mobile, landline, non-geographic…). Restores lost leading zeros, strips extensions and "(0)". Ofcom drama ranges and junk numbers excluded from keys; non-personal ranges (03/08/09) and work landlines excluded. |
 | Postcode | BS 7666 formats validated, formatted "SW1A 1AA", split into outward/inward/sector/district/area. Inward digit typos repaired (O→0). Postcodes typed into address lines are found. |
-| Address | Royal Mail style: upper case, no punctuation, abbreviations expanded (RD→ROAD, ST→STREET or SAINT by position), sub-building (FLAT 3, GROUND FLOOR FLAT), building number, building name, street, localities, post town. Country normalised (England/UK/GB → GB; Jersey/Guernsey/IoM kept). UPRN accepted. |
+| Address | Royal Mail style: upper case, no punctuation, abbreviations expanded (RD→ROAD; ST→SAINT before a name, STREET at the end or after a street name when a direction or the town follows: MAIN ST NORTH, HIGH ST LEEDS), commas inside a line split it into lines, sub-building (FLAT 3, GROUND FLOOR FLAT), building number, building name, street, localities, post town. Country normalised (England/UK/GB → GB; Jersey/Guernsey/IoM kept). UPRN accepted. |
 
 ## Components
 

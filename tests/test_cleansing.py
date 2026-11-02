@@ -56,6 +56,25 @@ class TestNames:
     def test_accents_folded(self):
         assert name(first_name="Zoë", last_name="Brontë").first_key == "zoe"
 
+    def test_title_in_first_name_stripped_even_with_title_field(self):
+        n = name(title="Mr", first_name="Mr John", last_name="Smith")
+        assert (n.title, n.first_name, n.middle_names) == ("Mr", "John", None)
+
+    @pytest.mark.parametrize("first,middle", [("John Jr", None), ("John", "Jr"), ("John Jnr Paul", None)])
+    def test_generation_suffix_in_given_names(self, first, middle):
+        n = name(first_name=first, middle_names=middle, last_name="Smith")
+        assert n.first_name == "John" and n.suffix == "Jr"
+        assert n.middle_names == ("Paul" if "Paul" in first else None)
+
+    @pytest.mark.parametrize("first,last", [("Na", "Kim"), ("Ji-woo", "Na"), ("Nil", "Demir")])
+    def test_real_names_that_look_like_null_tokens_are_kept(self, first, last):
+        n = name(first_name=first, last_name=last)
+        assert n.first_name and n.last_name
+
+    def test_null_tokens_still_dropped_from_names(self):
+        n = name(first_name="N/A", last_name="NULL")
+        assert n.first_name is None and n.last_name is None
+
 
 # ------------------------------------------------------------------ postcodes
 class TestPostcodes:
@@ -92,6 +111,19 @@ class TestAddresses:
     def test_saint_vs_street(self):
         a, _ = cleanse_address(InboundAddress(line1="4 St. John's Rd", town="Bath", postcode="BA1 1AA"))
         assert a.street == "SAINT JOHNS ROAD"
+
+    @pytest.mark.parametrize("addr,street,town", [
+        ({"line1": "12 High St, Leeds"}, "HIGH STREET", "LEEDS"),
+        ({"line1": "4 Main St North", "town": "York"}, "MAIN STREET NORTH", "YORK"),
+        ({"line1": "10 Church St Lower", "town": "Bath"}, "CHURCH STREET LOWER", "BATH"),
+        ({"line1": "12 High St Leeds", "town": "Leeds"}, "HIGH STREET", "LEEDS"),
+        ({"line1": "5 St Marys Lane", "town": "Ely"}, "SAINT MARYS LANE", "ELY"),
+        ({"line1": "Rose Cottage St Marys Lane", "town": "Ely"}, "ROSE COTTAGE SAINT MARYS LANE", "ELY"),
+        ({"line1": "1 Abbey Road", "town": "Bury St Edmunds"}, "ABBEY ROAD", "BURY SAINT EDMUNDS"),
+    ])
+    def test_st_after_a_street_name_is_street(self, addr, street, town):
+        a, _ = cleanse_address(InboundAddress(postcode="LS6 2AB", **addr))
+        assert (a.street, a.post_town) == (street, town)
 
     def test_named_house(self):
         a, _ = cleanse_address(InboundAddress(lines=["Rose Cottage", "Church Lane", "Little Snoring", "Fakenham", "NR21 0AA"]))
@@ -214,6 +246,16 @@ def test_gender_from_title_and_dedupe():
                           mobile_phone="+447712345678")
     c, _ = cleanse(rec, TODAY)
     assert c.gender == "F" and len(c.emails) == 1 and len(c.phones) == 1 and c.source_system == "CRM"
+
+
+@pytest.mark.parametrize("raw", ["X", "x", "NB", "Other"])
+def test_explicit_gender_x_is_kept_and_not_inferred(raw):
+    from app.matching.keys import match_profile
+
+    rec = InboundCustomer(source_system="crm", source_record_id="1", first_name="John", last_name="Lee", gender=raw)
+    c, issues = cleanse(rec, TODAY)
+    assert c.gender == "X" and not any(i.code == "unrecognised_gender" for i in issues)
+    assert match_profile(c)["gender"] is None  # never inferred from the forename, so never vetoes
 
 
 def test_work_landline_not_used_for_matching():

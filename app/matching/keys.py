@@ -262,7 +262,9 @@ def match_profile(rec: CleansedRecord) -> dict:
         "dob": rec.date_of_birth.isoformat() if rec.date_of_birth and rec.date_of_birth_usable else None,
         "dob_unordered": unordered_dob(rec.date_of_birth) if rec.date_of_birth and rec.date_of_birth_usable else None,
         # Explicit gender or title first; otherwise inferred from common UK forenames.
-        "gender": rec.gender if rec.gender in ("M", "F") else gender_from_forename(first_key),
+        # An explicit X is never overridden by inference, and never vetoes.
+        "gender": rec.gender if rec.gender in ("M", "F")
+        else None if rec.gender == "X" else gender_from_forename(first_key),
         "generation": rec.name.suffix,
         "first_forms": sorted(first_name_forms(first_key)),
         "first_key": first_key or None,
