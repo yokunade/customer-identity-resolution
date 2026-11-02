@@ -81,16 +81,6 @@ RULES: tuple[Rule, ...] = (
     _r(128, "MOBILE_LAST_INITIAL", "strong", MI | FN, dob_mode="lenient"),
     _r(130, "NAME_DOBSWAP_POSTCODE", "strong"),
     _r(140, "ALTSURNAME_DOB_PREMISE_POSTCODE", "strong"),
-    # Possible: name + address with no DOB or personal identifier. Same-named
-    # relatives at one address (mother/daughter, father/son without Jr/Snr)
-    # cannot be told apart, so these are the rules to send to review when
-    # over-merging is costly (AUTO_LINK_TIERS=exact,strong,probable).
-    _r(141, "UPRN_NAME", "possible", MI),
-    _r(142, "NAME_PREMISE_POSTCODE", "possible", MI),
-    _r(143, "NAME_PREMISE_STREET", "possible", MI | PC),
-    _r(144, "NAME_LASTSOUNDEX_PREMISE_POSTCODE", "possible", MI),
-    _r(146, "INITIAL_LAST_PREMISE_POSTCODE", "possible", MI | FN),
-    _r(145, "NAME_POSTCODE", "possible", MI),
     # Probable: surname changes and shared identifiers without a surname, all
     # anchored on DOB.
     _r(150, "FIRST_DOB_PREMISE_POSTCODE", "probable"),
@@ -98,13 +88,28 @@ RULES: tuple[Rule, ...] = (
     _r(170, "FIRST_DOB_MOBILE", "probable"),
     _r(180, "EMAIL_DOB", "probable", FN),
     _r(190, "MOBILE_DOB", "probable", FN),
+    # Possible: name + address with no DOB or personal identifier. Same-named
+    # relatives at one address (mother/daughter, father/son without Jr/Snr)
+    # cannot be told apart, so these are the rules to send to review when
+    # over-merging is costly (AUTO_LINK_TIERS=exact,strong,probable).
+    _r(200, "UPRN_NAME", "possible", MI),
+    _r(210, "NAME_PREMISE_POSTCODE", "possible", MI),
+    _r(220, "NAME_PREMISE_STREET", "possible", MI | PC),
+    _r(230, "NAME_LASTSOUNDEX_PREMISE_POSTCODE", "possible", MI),
+    _r(240, "NAME_POSTCODE", "possible", MI),
+    _r(250, "INITIAL_LAST_PREMISE_POSTCODE", "possible", MI | FN),
 )
+
+TIER_ORDER: tuple[Tier, ...] = ("exact", "strong", "probable", "possible")
 
 RULES_BY_KEY = {r.key: r for r in RULES}
 
 assert all(r.key in MATCH_KEYS for r in RULES), "every rule needs a match key definition"
 assert len({r.priority for r in RULES}) == len(RULES), "rule priorities must be unique"
 assert len(RULES_BY_KEY) == len(RULES), "one rule per match key"
+assert list(RULES) == sorted(RULES, key=lambda r: r.priority), "list rules in priority order"
+assert list(RULES) == sorted(RULES, key=lambda r: TIER_ORDER.index(r.tier)), \
+    "a weaker tier must never outrank a stronger one"
 
 
 def veto_reasons(rule: Rule, a: dict, b: dict) -> list[str]:

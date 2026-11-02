@@ -150,12 +150,12 @@ The scorer leads with:
 It also reports invalid outputs, survivor disagreements and a per-tier
 breakdown.
 
-Baselines on the 1,038 demo cases, which any model has to beat:
+Baselines on the 1,135 labelled demo cases, which any model has to beat:
 
 | Baseline | Accuracy | Wrong merges | Keep-apart recall | Merge recall | Curated cases right |
 |---|---:|---:|---:|---:|---:|
-| Always merge | 98.1% | 20 | 0% | 100% | 9 / 18 |
-| Merge unless the comparison shows a conflict | 99.1% | 9 | 55% | 100% | 11 / 18 |
+| Always merge | 98.1% | 21 | 0% | 100% | 9 / 18 |
+| Merge unless the comparison shows a conflict | 99.1% | 10 | 52% | 100% | 11 / 18 |
 
 The second baseline looks strong overall but gets only 2 of the 9 curated
 different-people cases right: it can't see twins, neighbours, flatmates, or a

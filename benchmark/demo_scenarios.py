@@ -8,9 +8,11 @@ answer, and each scenario carries a one-line explanation for the demo's
 answer reveal and for evaluating an AI reviewer on hard cases.
 
 The demo runs with AUTO_LINK_TIERS=exact,strong,probable, so cases come from
-two places:
+three places:
   - a record whose best match is in the possible tier (name + address only),
-  - a record that ties between two customers.
+  - a record that ties between two customers,
+  - a record that also matched a second customer lower down, in an
+    auto-linkable tier.
 """
 
 from __future__ import annotations

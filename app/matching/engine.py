@@ -33,6 +33,8 @@ class Decision:
     rule: Rule | None = None
     matched_record_ids: list[int] = field(default_factory=list)
     competing_customer_ids: list[UUID] = field(default_factory=list)
+    # Customers that matched below the winning rule, best first, with their best rule.
+    runners_up: list[tuple[UUID, Rule]] = field(default_factory=list)
     evaluations: list[Evaluation] = field(default_factory=list)
 
 
@@ -63,21 +65,20 @@ def decide(profile: dict, candidates: list[Candidate], rules: tuple[Rule, ...] =
     if not best:
         return Decision(customer_id=None, evaluations=evaluations)
 
-    top = min(v[0] for v in best.values())
-    tied = [(cid, v) for cid, v in best.items() if v[0] == top]
     far_future = dt.datetime.max.replace(tzinfo=dt.timezone.utc)
 
-    def tie_key(item: tuple[UUID, tuple]) -> tuple:
-        cid, (_, _, recs, created) = item
-        # More corroborating records first, then the oldest customer, then id.
-        return (-len(recs), created or far_future, str(cid))
+    def rank(item: tuple[UUID, tuple]) -> tuple:
+        cid, (priority, _, recs, created) = item
+        # Best rule, then more corroborating records, then the oldest customer, then id.
+        return (priority, -len(recs), created or far_future, str(cid))
 
-    tied.sort(key=tie_key)
-    winner_id, (_, rule, recs, _) = tied[0]
+    ranked = sorted(best.items(), key=rank)
+    winner_id, (top, rule, recs, _) = ranked[0]
     return Decision(
         customer_id=winner_id,
         rule=rule,
         matched_record_ids=sorted(recs),
-        competing_customer_ids=[cid for cid, _ in tied[1:]],
+        competing_customer_ids=[cid for cid, v in ranked[1:] if v[0] == top],
+        runners_up=[(cid, v[1]) for cid, v in ranked[1:] if v[0] != top],
         evaluations=evaluations,
     )

@@ -70,17 +70,17 @@ address still matches records held at that address.
 | 128 | `MOBILE_LAST_INITIAL` | strong | mobile + last_key + first_initial | dob (lenient), first_name, gender, generation, middle_initial |
 | 130 | `NAME_DOBSWAP_POSTCODE` | strong | first_forms + last_key + dob_unordered + postcode | dob, gender, generation |
 | 140 | `ALTSURNAME_DOB_PREMISE_POSTCODE` | strong | first_forms + last_parts + dob + premise_postcode | dob, gender, generation |
-| 141 | `UPRN_NAME` | possible | uprn + first_forms + last_key | dob, gender, generation, middle_initial |
-| 142 | `NAME_PREMISE_POSTCODE` | possible | first_forms + last_key + premise_postcode | dob, gender, generation, middle_initial |
-| 143 | `NAME_PREMISE_STREET` | possible | first_forms + last_key + premise_street | dob, gender, generation, middle_initial, postcode |
-| 144 | `NAME_LASTSOUNDEX_PREMISE_POSTCODE` | possible | first_forms + last_soundex + premise_postcode | dob, gender, generation, middle_initial |
-| 146 | `INITIAL_LAST_PREMISE_POSTCODE` | possible | first_initial + last_key + premise_postcode | dob, first_name, gender, generation, middle_initial |
-| 145 | `NAME_POSTCODE` | possible | first_forms + last_key + postcode | dob, gender, generation, middle_initial |
 | 150 | `FIRST_DOB_PREMISE_POSTCODE` | probable | first_forms + dob + premise_postcode | dob, gender, generation |
 | 160 | `FIRST_DOB_EMAIL` | probable | first_forms + dob + email | dob, gender, generation |
 | 170 | `FIRST_DOB_MOBILE` | probable | first_forms + dob + mobile | dob, gender, generation |
 | 180 | `EMAIL_DOB` | probable | email + dob | dob, first_name, gender, generation |
 | 190 | `MOBILE_DOB` | probable | mobile + dob | dob, first_name, gender, generation |
+| 200 | `UPRN_NAME` | possible | uprn + first_forms + last_key | dob, gender, generation, middle_initial |
+| 210 | `NAME_PREMISE_POSTCODE` | possible | first_forms + last_key + premise_postcode | dob, gender, generation, middle_initial |
+| 220 | `NAME_PREMISE_STREET` | possible | first_forms + last_key + premise_street | dob, gender, generation, middle_initial, postcode |
+| 230 | `NAME_LASTSOUNDEX_PREMISE_POSTCODE` | possible | first_forms + last_soundex + premise_postcode | dob, gender, generation, middle_initial |
+| 240 | `NAME_POSTCODE` | possible | first_forms + last_key + postcode | dob, gender, generation, middle_initial |
+| 250 | `INITIAL_LAST_PREMISE_POSTCODE` | possible | first_initial + last_key + premise_postcode | dob, first_name, gender, generation, middle_initial |
 
 A veto applies only when **both** records hold the attribute and they differ.
 DOBs never conflict when day and month are transposed. Under `dob (lenient)`,
@@ -99,6 +99,21 @@ vetoes a street-based match when both records have postcodes and none agree, so
 
 ### Auto-link tiers
 
+Tiers rank exact, strong, probable, possible. The names describe the evidence
+each rests on; measured precision on the 200k benchmark (round 5,
+`docs/BENCHMARK.md`) is:
+
+| Tier | Evidence | Links | Precision |
+|---|---|---:|---:|
+| exact | strong identifier or dwelling + full name + DOB | 45,572 | 100% |
+| strong | email or mobile + name, or DOB + phonetic name + address | 49,229 | 99.99% |
+| probable | DOB + forename, email or mobile; no surname needed | 585 | 100% |
+| possible | name + address, no DOB or personal identifier | 9,446 | 99.06% |
+
+`probable` scores 100% on few links; it ranks below `strong` because its
+evidence is weaker, not because it was measured to be. Synthetic data
+flatters every tier; see the caveats in `docs/BENCHMARK.md`.
+
 `AUTO_LINK_TIERS` (default `exact,strong,probable,possible`) decides which tiers link
 automatically. A match in a tier left out creates a new customer and is
 written to `merge_candidate` for review, with `match.auto_linked = false` and
@@ -116,10 +131,16 @@ email, and fathers and sons share names.
    key is shared and that is not vetoed is that record's result.
 2. Each customer takes its best record result.
 3. The customer with the best priority wins. Ties are broken by number of
-   corroborating records, then oldest customer, then customer ID.
-4. Other customers tied at the winning rule are returned as
-   `competing_customer_ids` and written to `merge_candidate` for review.
-   `POST /v1/customers/merge` resolves them.
+   corroborating records, then oldest customer, then customer ID. Priorities
+   follow the tiers (exact, strong, probable, possible), so a weaker tier never
+   outranks a stronger one; an import-time check enforces this.
+4. Other customers tied at the winning rule, and customers that matched lower
+   down at a rule in an auto-linkable tier, are returned as
+   `competing_customer_ids` and written to `merge_candidate` for review (each
+   under the rule it matched). A customer the record would have linked to on
+   its own is likely a duplicate of the winner.
+   `POST /v1/customers/merge` resolves them. Either ID may already have been
+   merged; the merge applies to the customers they now resolve to.
 
 ## Blocking
 
@@ -150,7 +171,7 @@ one place a match can be missed; monitor it.
 ## Adding a rule
 
 1. Add a `KeyDef` to `MATCH_KEYS` (and a component in `extract_components` if needed).
-2. Add a `Rule` to `RULES` with a unique priority.
+2. Add a `Rule` to `RULES` with a unique priority inside its tier's range, in order.
 3. Run the tests. If the coverage test fails, add a blocking key that covers it.
 4. Nothing to back-fill for a new match key: shared keys are worked out from
    each candidate's stored components (`source_record.match_components`) at
