@@ -77,6 +77,42 @@ def test_render_and_mask(app_settings, clean_db):
     assert render_case(ex["snapshot"], Masker()) == masked
 
 
+def test_scrub_catches_values_written_differently():
+    """The review's reproduction: every value below was left in a 'masked' note."""
+    masker = Masker()
+    masker("dob", "1979-02-14")
+    masker("address", "12 ACACIA AVENUE, LEEDS, LS6 2AB")
+    masker("postcode", "LS6 2AB")
+    masker("name", "Wei Li")
+    masker.learn_name_parts("Wei Li")
+    masker.learn_address_parts({"street": "ACACIA AVENUE", "building_name": "THE OLD MILL"})
+    note = ("Same DOB 14/02/1979 (14 Feb 79, 14th February 1979, 14.2.1979), both at 12 Acacia Ave "
+            "and The Old Mill, Mr Li confirmed by phone; postcode LS62AB. Lived near Linden Road.")
+    out = masker.scrub(note)
+    for leak in ("14/02/1979", "14 Feb 79", "14th February 1979", "14.2.1979", "Acacia", "Old Mill",
+                 " Li ", "LS62AB"):
+        assert leak not in out, (leak, out)
+    assert "Linden Road" in out  # a short name part is only masked as a whole word
+
+
+def test_masked_exports_leave_out_reviewer_notes_unless_asked(app_settings, clean_db):
+    a, _ = make_case(clean_db, app_settings, "n")
+    ana = client_for(app_settings, "ana@example.co.uk")
+    cid = ana.post("/review/api/cases/next", headers=HDR).json()["case_id"]
+    decide(ana, cid, decision="merge", survivor_customer_id=str(a), notes="Phoned her at 4 Elm Road")
+
+    def rationale(text):
+        return json.loads(json.loads(text.splitlines()[0])["messages"][2]["content"])["rationale"]
+
+    with psycopg.connect(clean_db, row_factory=dict_row) as conn:
+        assert rationale(export(conn, "chat")) is None
+        assert rationale(export(conn, "chat", include_notes=True)) == "Phoned her at 4 Elm Road"
+        assert "Elm Road" not in export(conn, "prompt", shots=3)
+        assert "Elm Road" in export(conn, "chat", masked=False)
+    assert rationale(ana.get("/review/api/examples/export?format=chat").text) is None
+    assert rationale(ana.get("/review/api/examples/export?format=chat&notes=true").text) is not None
+
+
 def test_exports_and_admin_endpoint(app_settings, clean_db):
     a, _ = make_case(clean_db, app_settings, "e")
     ana = client_for(app_settings, "ana@example.co.uk")

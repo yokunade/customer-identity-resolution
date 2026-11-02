@@ -185,6 +185,7 @@ A pair a reviewer kept apart is never re-linked.
 | `MAX_BLOCK_SIZE` | 5000 | Blocking keys larger than this are skipped. |
 | `MAX_CANDIDATES` | 2000 | Candidate pool ceiling per record. |
 | `MAX_BATCH_SIZE` | 500 | |
+| `MAX_REQUEST_BYTES` | 2000000 | Larger request bodies are refused with 413 before parsing. Every field also has a length limit. |
 | `AUTO_MIGRATE` | true | |
 | `AUTO_LINK_TIERS` | exact,strong,probable,possible | Tiers that link automatically; others go to the merge-review queue. |
 | `REVIEW_COOKIE_SECURE` | true | Review session cookie only over HTTPS (http://localhost still works in browsers). |
@@ -225,7 +226,8 @@ in tiers left out of `AUTO_LINK_TIERS`.
 
 Security: scrypt password hashes, revocable server-side sessions in an
 HttpOnly, SameSite=Strict cookie, a custom-header check on every change
-(CSRF), and sign-in throttling (5 failures per email per 5 minutes).
+(CSRF), a strict Content-Security-Policy, and sign-in throttling (5 failures
+per email per 5 minutes, counted in the database so it holds across workers).
 
 | Method | Path | Purpose |
 |---|---|---|
@@ -246,11 +248,14 @@ codes, confidence, notes, time taken and a fixed train/dev/test split. The demo
 also labels every queue case with synthetic ground truth for evaluation.
 
 ```bash
-python -m app.review.export --format chat --split train --out train.jsonl   # PII masked by default
+python -m app.review.export --format chat --split train --out train.jsonl   # PII masked (best effort)
 python -m app.review.export --format prompt --shots 6 --out prompt.md
 python -m benchmark.score_ai_reviewer --eval test.jsonl --predictions predictions.jsonl
 ```
 
+Masking is best effort. Structured values are replaced exactly, but reviewer
+notes are free text, so masked exports leave them out unless you pass
+`--notes`. Check a sample before sending any export outside your organisation.
 Details, the prompt format, PII masking and baselines:
 [docs/AI_REVIEWER.md](docs/AI_REVIEWER.md).
 

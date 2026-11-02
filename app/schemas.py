@@ -3,12 +3,19 @@
 from __future__ import annotations
 
 import datetime as dt
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
 # --------------------------------------------------------------------------- inbound
+
+# Generous bounds on every inbound value, so one request cannot carry megabytes of
+# text into cleansing and storage. The whole body is also capped (MAX_REQUEST_BYTES).
+Text = Annotated[str, Field(max_length=200)]
+Short = Annotated[str, Field(max_length=50)]
+Email = Annotated[str, Field(max_length=254)]
+MAX_ITEMS = 20
 
 
 class InboundAddress(BaseModel):
@@ -17,16 +24,16 @@ class InboundAddress(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-    line1: str | None = None
-    line2: str | None = None
-    line3: str | None = None
-    line4: str | None = None
-    lines: list[str] | None = None
-    town: str | None = None
-    county: str | None = None
-    postcode: str | None = None
-    country: str | None = None
-    uprn: str | int | None = Field(
+    line1: Text | None = None
+    line2: Text | None = None
+    line3: Text | None = None
+    line4: Text | None = None
+    lines: list[Text] | None = Field(default=None, max_length=10)
+    town: Text | None = None
+    county: Text | None = None
+    postcode: Short | None = None
+    country: Short | None = None
+    uprn: Short | int | None = Field(
         default=None, description="Unique Property Reference Number, if the source has one."
     )
 
@@ -40,28 +47,28 @@ class InboundCustomer(BaseModel):
     source_system: str = Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9_.:\-]+$")
     source_record_id: str = Field(min_length=1, max_length=128)
 
-    title: str | None = None
-    first_name: str | None = None
-    middle_names: str | None = None
-    last_name: str | None = None
-    full_name: str | None = Field(default=None, description="Used when name parts are not supplied.")
-    suffix: str | None = None
-    gender: str | None = None
-    date_of_birth: str | dt.date | None = Field(
+    title: Short | None = None
+    first_name: Text | None = None
+    middle_names: Text | None = None
+    last_name: Text | None = None
+    full_name: Text | None = Field(default=None, description="Used when name parts are not supplied.")
+    suffix: Short | None = None
+    gender: Short | None = None
+    date_of_birth: Short | dt.date | None = Field(
         default=None, description="ISO or UK day-first formats (DD/MM/YYYY etc.)."
     )
 
-    email: str | None = None
-    emails: list[str] = Field(default_factory=list)
+    email: Email | None = None
+    emails: list[Email] = Field(default_factory=list, max_length=MAX_ITEMS)
 
-    phone: str | None = None
-    mobile_phone: str | None = None
-    home_phone: str | None = None
-    work_phone: str | None = None
-    phones: list[str] = Field(default_factory=list)
+    phone: Short | None = None
+    mobile_phone: Short | None = None
+    home_phone: Short | None = None
+    work_phone: Short | None = None
+    phones: list[Short] = Field(default_factory=list, max_length=MAX_ITEMS)
 
     address: InboundAddress | None = None
-    previous_addresses: list[InboundAddress] = Field(default_factory=list)
+    previous_addresses: list[InboundAddress] = Field(default_factory=list, max_length=MAX_ITEMS)
 
 
 # --------------------------------------------------------------------------- cleansed
@@ -219,7 +226,7 @@ class SourceLookupResponse(BaseModel):
 class MergeRequest(BaseModel):
     survivor_customer_id: UUID
     merged_customer_id: UUID
-    reason: str | None = None
+    reason: str | None = Field(default=None, max_length=1000)
 
 
 class MergeResponse(BaseModel):
