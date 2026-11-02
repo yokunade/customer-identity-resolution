@@ -1,0 +1,32 @@
+name: Bug report
+description: Something crashes, returns an error, or behaves differently from the docs.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste real customer data.** Change names, dates of birth, emails, phones and
+        addresses to made-up values that still show the problem. For a security or privacy
+        vulnerability, don't open an issue: see CONTRIBUTING.md.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: How to reproduce
+      description: The request (with made-up data) or the steps, and the response or traceback.
+      render: shell
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Release tag or commit, and how you run it (Docker demo, pip, other).
+    validations:
+      required: true

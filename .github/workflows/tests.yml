@@ -5,6 +5,16 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install "$(grep '^ruff==' requirements-dev.txt)"
+      - run: ruff check --output-format github .
+
   test:
     runs-on: ubuntu-latest
     services:
@@ -27,5 +37,20 @@ jobs:
           cache: pip
       - run: pip install -r requirements-dev.txt
       - run: pytest -rs
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
       - name: Compose file is valid
         run: docker compose config --quiet
+      - name: Build the image and start the API with its database
+        run: docker compose up --build --detach --wait --wait-timeout 180 db api
+      - name: Smoke test
+        run: |
+          curl --fail --silent --show-error http://127.0.0.1:8000/ready
+          curl --fail --silent --show-error --dump-header - --output /dev/null http://127.0.0.1:8000/review \
+            | grep -i "^content-security-policy:"
+      - name: API logs
+        if: failure()
+        run: docker compose logs api

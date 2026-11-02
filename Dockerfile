@@ -6,8 +6,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 WORKDIR /srv
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+# Exact versions with hashes (requirements.lock), so every build installs the same
+# packages. requirements.txt keeps the version floors for installing as a library.
+COPY requirements.lock .
+RUN pip install --require-hashes --no-deps -r requirements.lock
 
 COPY app ./app
 COPY benchmark ./benchmark

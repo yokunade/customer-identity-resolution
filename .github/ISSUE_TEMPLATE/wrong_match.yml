@@ -1,0 +1,45 @@
+name: Wrong match or missed match
+description: Two records were linked that are different people, or not linked when they are the same person.
+labels: [matching]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Never paste real customer data.** Recreate the pair with made-up values that keep
+        what matters: the same kind of typo, the same shared email or address, the same
+        missing fields. `POST /v1/cleanse` shows how each record was cleansed.
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What went wrong
+      options:
+        - Linked, but they are different people (over-merge)
+        - Not linked, but they are the same person (missed match)
+        - Sent to review when it should have linked, or the reverse
+    validations:
+      required: true
+  - type: textarea
+    id: records
+    attributes:
+      label: The two records (made-up values)
+      description: As JSON, the way they were sent to /v1/resolve.
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: response
+    attributes:
+      label: The response
+      description: The `match` block from /v1/resolve (rule, tier, competing customers), if there was one.
+      render: json
+  - type: textarea
+    id: why
+    attributes:
+      label: Why you think the decision is wrong
+      description: For example, "same DOB and email, the surname changed after marriage".
+    validations:
+      required: true
+  - type: input
+    id: settings
+    attributes:
+      label: AUTO_LINK_TIERS and version

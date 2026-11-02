@@ -56,7 +56,7 @@ class Settings:
     log_level: str = "INFO"
 
     @staticmethod
-    def from_env() -> "Settings":
+    def from_env() -> Settings:
         keys = os.getenv("API_KEYS", "")
         return Settings(
             database_url=os.getenv("DATABASE_URL", Settings.database_url),

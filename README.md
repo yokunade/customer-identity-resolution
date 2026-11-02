@@ -262,11 +262,14 @@ Details, the prompt format, PII masking and baselines:
 ## Tests
 
 ```bash
+pip install -r requirements-dev.txt
+ruff check .
+pytest tests/test_cleansing.py tests/test_matching.py   # pure tests: no database needed
 export TEST_DATABASE_URL=postgresql://user:pass@localhost:5432/identity_test   # will be wiped
 pytest
 ```
 
-152 tests: cleansing (names, postcodes, addresses, phones, emails, DOB),
+The tests cover cleansing (names, postcodes, addresses, phones, emails, DOB),
 phonetics, key invariants, vetoes, the decision engine, and end-to-end API
 tests against PostgreSQL including a 10-thread concurrency test, and the
 review workflow (sign-in, exclusive claims, merge and keep-apart effects), and
@@ -317,8 +320,17 @@ docs/BENCHMARK.md    200k benchmark results
 docs/AI_REVIEWER.md  training data for a future AI reviewer
 docker-compose.yml   local demo stack
 Makefile             demo shortcuts
-.github/workflows/   CI: tests against PostgreSQL
+.github/workflows/   CI: lint, tests against PostgreSQL, Docker build and smoke test
 ```
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), including how to add a match rule and
+prove it reachable, and [CHANGELOG.md](CHANGELOG.md).
+
+## Licence
+
+[MIT](LICENSE).
 
 ## Suggested next steps
 
