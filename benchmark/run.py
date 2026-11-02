@@ -58,7 +58,8 @@ def worker(idx: int, n_workers: int, data_path: str, db: str, out_dir: str, secr
                         "matched_record_ids": r.match.matched_record_ids if r.match else [],
                         "competing": [str(x) for x in r.match.competing_customer_ids] if r.match else [],
                         "pool": r.candidates_considered, "skipped": r.skipped_blocks,
-                        "ms": (time.perf_counter() - t0) * 1000, "match_ms": r.matching_ms, "t": time.time(),
+                        "ms": (time.perf_counter() - t0) * 1000, "match_ms": r.matching_ms, "lock_ms": r.lock_wait_ms,
+                        "t": time.time(),
                     }
                 except Exception as exc:  # keep going; count errors
                     conn.rollback()

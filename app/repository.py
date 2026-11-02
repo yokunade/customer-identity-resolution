@@ -84,27 +84,32 @@ class Repository:
             (record_id, types, values),
         )
 
-    def block_sizes(self, blocking_keys: KeySet) -> dict[tuple[str, bytes], int]:
+    def block_sizes(self, blocking_keys: KeySet, cap: int) -> dict[tuple[str, bytes], int]:
+        """Records per block, counted no further than cap + 1: a block over the cap
+        is skipped anyway, so a 400k-record block costs no more than a small one."""
         types, values = _pairs(blocking_keys)
         if not types:
             return {}
         rows = self.conn.execute(
-            "SELECT b.key_type, b.key_value, count(*) AS n FROM blocking_key b"
-            " JOIN unnest(%s::text[], %s::bytea[]) AS q(t, v) ON b.key_type = q.t AND b.key_value = q.v"
-            " GROUP BY b.key_type, b.key_value",
-            (types, values),
+            "SELECT q.t AS key_type, q.v AS key_value, ("
+            "  SELECT count(*) FROM (SELECT 1 FROM blocking_key b"
+            "   WHERE b.key_type = q.t AND b.key_value = q.v LIMIT %s) s"
+            ") AS n FROM unnest(%s::text[], %s::bytea[]) AS q(t, v)",
+            (cap + 1, types, values),
         ).fetchall()
-        return {(r["key_type"], bytes(r["key_value"])): r["n"] for r in rows}
+        return {(r["key_type"], bytes(r["key_value"])): r["n"] for r in rows if r["n"]}
 
     def candidate_pool(self, blocking_keys: KeySet, limit: int, exclude_record_id: int | None = None) -> list[int]:
+        """Records sharing any blocking key, those sharing the most keys first, so a
+        pool truncated at limit drops the weakest candidates, not the newest."""
         types, values = _pairs(blocking_keys)
         if not types:
             return []
         rows = self.conn.execute(
-            "SELECT DISTINCT b.record_id FROM blocking_key b"
+            "SELECT b.record_id FROM blocking_key b"
             " JOIN unnest(%s::text[], %s::bytea[]) AS q(t, v) ON b.key_type = q.t AND b.key_value = q.v"
             " WHERE b.record_id IS DISTINCT FROM %s"
-            " ORDER BY b.record_id LIMIT %s",
+            " GROUP BY b.record_id ORDER BY count(*) DESC, b.record_id LIMIT %s",
             (types, values, exclude_record_id, limit),
         ).fetchall()
         return [r["record_id"] for r in rows]

@@ -237,6 +237,71 @@ def test_oversized_block_is_skipped(clean_db):
     assert "B_POSTCODE" in res.skipped_blocks
 
 
+def test_block_sizes_stop_counting_past_the_cap(clean_db):
+    from app.repository import Repository
+
+    svc = ResolutionService(Settings(database_url=clean_db, key_secret="test-secret"))
+    with psycopg.connect(clean_db, row_factory=dict_row) as conn:
+        for i in range(10):
+            svc.resolve(conn, InboundCustomer(source_system="s", source_record_id=str(i), first_name=f"P{i}x",
+                                              last_name=f"Person{i}", address={"line1": f"{i} Hall Road",
+                                                                               "postcode": "LS2 9JT"}))
+        keys = svc.prepare(InboundCustomer(source_system="s", source_record_id="z", first_name="Zed",
+                                           last_name="Last", address={"postcode": "LS2 9JT"})).blocking_keys
+        repo = Repository(conn)
+        assert set(repo.block_sizes({"B_POSTCODE": keys["B_POSTCODE"]}, cap=3).values()) == {4}
+        assert set(repo.block_sizes({"B_POSTCODE": keys["B_POSTCODE"]}, cap=50).values()) == {10}
+
+
+def test_truncated_pool_keeps_the_candidates_sharing_most_keys(clean_db):
+    """Six strangers share the inbound record's postcode; the real match, added
+    last, shares postcode, email and mobile. With room for only two candidates
+    the pool used to keep the oldest records and miss the match."""
+    svc = ResolutionService(Settings(database_url=clean_db, key_secret="test-secret", max_candidates=2))
+    home = {"line1": "1 Hall Road", "postcode": "LS2 9JT"}
+    with psycopg.connect(clean_db, row_factory=dict_row) as conn:
+        for i in range(6):
+            svc.resolve(conn, InboundCustomer(source_system="s", source_record_id=f"n{i}", first_name=f"Nob{i}ody",
+                                              last_name=f"Stranger{i}", address={"line1": f"{i + 2} Hall Road",
+                                                                                 "postcode": "LS2 9JT"}))
+        first = svc.resolve(conn, InboundCustomer(**dict(WILLIAM, source_record_id="w1", address=home)))
+        again = svc.resolve(conn, InboundCustomer(**dict(WILLIAM, source_system="other", source_record_id="w2",
+                                                         address=home)))
+    assert again.candidates_considered == 2
+    assert again.outcome == "matched" and again.customer_id == first.customer_id
+
+
+def test_lock_wait_is_reported_and_logged(clean_db, caplog):
+    import hashlib
+    import logging
+    import time
+
+    from app.repository import lock_id
+
+    svc = ResolutionService(Settings(database_url=clean_db, key_secret="test-secret", lock_wait_warn_ms=100))
+    rec = InboundCustomer(**dict(WILLIAM, source_system="crm", source_record_id="L-1"))
+    source_lock = lock_id(hashlib.sha256(b"CRM\x1fL-1").digest())
+    result: list = []
+    with psycopg.connect(clean_db, autocommit=True) as holder:
+        holder.execute("SELECT pg_advisory_lock(%s)", (source_lock,))
+
+        def worker():
+            with psycopg.connect(clean_db, row_factory=dict_row) as conn:
+                result.append(svc.resolve(conn, rec))
+
+        with caplog.at_level(logging.WARNING, logger="app.service"):
+            t = threading.Thread(target=worker)
+            t.start()
+            time.sleep(0.4)
+            holder.execute("SELECT pg_advisory_unlock(%s)", (source_lock,))
+            t.join()
+    assert result[0].lock_wait_ms >= 300
+    assert any("waited" in r.getMessage() and "lock" in r.getMessage() for r in caplog.records)
+    with psycopg.connect(clean_db, row_factory=dict_row) as conn:
+        details = conn.execute("SELECT details FROM resolution_event ORDER BY event_id DESC LIMIT 1").fetchone()
+    assert details["details"]["lock_wait_ms"] >= 300
+
+
 def test_concurrent_arrivals_get_one_customer(clean_db):
     """Ten requests for the same person arriving at once must not create duplicates."""
     svc = ResolutionService(Settings(database_url=clean_db, key_secret="test-secret"))

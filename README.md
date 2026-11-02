@@ -183,7 +183,8 @@ A pair a reviewer kept apart is never re-linked.
 | `KEY_SECRET` | `change-me` | HMAC secret for keys. Changing it requires re-keying all records. |
 | `API_KEYS` | empty | Comma-separated. Empty disables auth. |
 | `MAX_BLOCK_SIZE` | 5000 | Blocking keys larger than this are skipped. |
-| `MAX_CANDIDATES` | 2000 | Candidate pool ceiling per record. |
+| `MAX_CANDIDATES` | 2000 | Candidate pool ceiling per record; candidates sharing the most blocking keys are kept. |
+| `LOCK_WAIT_WARN_MS` | 200 | Log a warning when a resolve waits longer than this for its advisory locks. |
 | `MAX_BATCH_SIZE` | 500 | |
 | `MAX_REQUEST_BYTES` | 2000000 | Larger request bodies are refused with 413 before parsing. Every field also has a length limit. |
 | `AUTO_MIGRATE` | true | |

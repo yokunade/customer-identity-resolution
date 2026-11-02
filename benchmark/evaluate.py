@@ -176,6 +176,8 @@ def main() -> None:
     # ---- latency
     ms = sorted(r["ms"] for r in results.values() if "ms" in r)
     pools = sorted(r["pool"] for r in results.values() if "pool" in r)
+    match_ms = sorted(r["match_ms"] for r in results.values() if "match_ms" in r)
+    lock_ms = sorted(r["lock_ms"] for r in results.values() if "lock_ms" in r)
 
     def q(xs: list[float], f: float) -> float:
         return round(xs[min(len(xs) - 1, int(f * len(xs)))], 2) if xs else 0.0
@@ -258,6 +260,9 @@ def main() -> None:
                         "latency_ms_p95": q(ms, .95), "latency_ms_p99": q(ms, .99), "latency_ms_max": q(ms, 1),
                         "pool_median": median(pools) if pools else 0, "pool_p99": q(pools, .99),
                         "pool_max": pools[-1] if pools else 0,
+                        "matching_ms_p50": q(match_ms, .5), "matching_ms_p99": q(match_ms, .99),
+                        **({"lock_wait_ms_p50": q(lock_ms, .5), "lock_wait_ms_p99": q(lock_ms, .99),
+                            "lock_wait_ms_max": q(lock_ms, 1)} if lock_ms else {}),
                         "records_with_skipped_blocks": sum(1 for r in results.values() if r.get("skipped"))},
         "examples": {"wrong_links": wrong_detail, "missed_reachable": missed_detail},
         "errors_sample": errors[:10],

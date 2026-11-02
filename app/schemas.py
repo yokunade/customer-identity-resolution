@@ -179,6 +179,9 @@ class ResolveResponse(BaseModel):
     cleansed: CleansedRecord
     processing_ms: float
     matching_ms: float = Field(default=0.0, description="Part of processing_ms spent finding and scoring candidates.")
+    lock_wait_ms: float = Field(
+        default=0.0, description="Part of processing_ms spent waiting for the blocking-key advisory locks."
+    )
 
 
 class CleanseResponse(BaseModel):
