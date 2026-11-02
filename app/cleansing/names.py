@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 
-from app.cleansing.text import alpha_key, clean_text
+from app.cleansing.text import NAME_NULL_TOKENS, alpha_key, clean_text
 from app.schemas import Issue
 
 TITLES: dict[str, str] = {
@@ -142,8 +142,10 @@ def parse_name(
     full_name: str | None,
     suffix: str | None,
 ) -> ParsedName:
-    title, first_name, middle_names = clean_text(title), clean_text(first_name), clean_text(middle_names)
-    last_name, full_name, suffix = clean_text(last_name), clean_text(full_name), clean_text(suffix)
+    title, suffix = clean_text(title), clean_text(suffix)
+    first_name, middle_names, last_name, full_name = (
+        clean_text(v, NAME_NULL_TOKENS) for v in (first_name, middle_names, last_name, full_name)
+    )
     out = ParsedName()
     titles: list[str] = []
     generation: str | None = None
@@ -179,8 +181,8 @@ def parse_name(
             given, surname = _split_surname(toks)
     else:
         given = _tokens(first_name)
-        if given and not titles:
-            t, given = _take_titles(given) if len(given) > 1 else ([], given)
+        if len(given) > 1:  # "Mr John", even when a title field was also sent
+            t, given = _take_titles(given)
             titles += t
         surname = _tokens(last_name)
         if surname:
@@ -188,10 +190,14 @@ def parse_name(
             generation = generation or g
 
     # Middle names: explicit field wins; extra given-name tokens are prepended.
-    middle = _tokens(middle_names)
-    if len(given) > 1:
-        middle = given[1:] + middle
-        given = given[:1]
+    # A generation typed after the forename ("John Jr") is a suffix, not a middle name.
+    middle = []
+    for t in given[1:] + _tokens(middle_names):
+        if t.upper() in GENERATIONS:
+            generation = generation or GENERATIONS[t.upper()]
+        else:
+            middle.append(t)
+    given = given[:1]
 
     out.title = titles[0] if titles else None
     out.title_gender = next((TITLE_GENDER[t] for t in titles if t in TITLE_GENDER), None)

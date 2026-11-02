@@ -28,8 +28,12 @@ def cleanse(rec: InboundCustomer, today: dt.date | None = None) -> tuple[Cleanse
     )
     issues += name.issues
 
-    g_raw = (clean_text(rec.gender) or "").upper()
+    # Look gender up before null-token stripping, which would drop "X".
+    g_raw = " ".join(str(rec.gender or "").upper().split()).strip(" .")
     gender = _GENDERS.get(g_raw)
+    if gender is None:
+        g_raw = (clean_text(rec.gender) or "").upper()
+        gender = _GENDERS.get(g_raw)
     if g_raw and gender is None:
         issues.append(Issue(field="gender", code="unrecognised_gender", severity="info", detail=rec.gender))
     if gender is None:

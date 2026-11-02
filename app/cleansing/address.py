@@ -57,18 +57,36 @@ _FLOOR_WORDS = {"1ST": "FIRST", "2ND": "SECOND", "3RD": "THIRD", "4TH": "FOURTH"
 _NUMBER_RE = re.compile(r"^([0-9]+[A-Z]?(?:-[0-9]+[A-Z]?)?)\s+(.+)$")
 
 
-def _normalise_line(line: str) -> str:
+DIRECTIONS = {"NORTH", "SOUTH", "EAST", "WEST", "UPPER", "LOWER", "NTH", "STH", "UPR", "LWR"}
+
+
+def _line_tokens(line: str) -> list[str]:
     s = line.upper().replace("'", "")                     # ST JOHN'S -> ST JOHNS
     s = re.sub(r"(?<=\d)\s*-\s*(?=\d)", "-", s)        # 12 - 14 -> 12-14
     s = re.sub(r"(?<=\d)\s+([A-Z])\b(?=\s)", r"\1", s)  # 12 A HIGH ST -> 12A HIGH ST
     s = re.sub(r"[^A-Z0-9/\- ]", " ", s)                # drop punctuation
     s = re.sub(r"(?<![0-9])[-/]|[-/](?![0-9])", " ", s)  # keep - and / only between digits
-    tokens = s.split()
+    return s.split()
+
+
+def _st_is_street(tokens: list[str], i: int, town: list[str]) -> bool:
+    """"ST JOHNS ROAD" -> SAINT; "HIGH ST", "MAIN ST NORTH", "HIGH ST LEEDS" -> STREET."""
+    rest = tokens[i + 1:]
+    if not rest or rest[0] in ABBREVIATIONS:
+        return True
+    if i == 0 or tokens[i - 1][0].isdigit():
+        return False  # starts the street name: "12 ST MARYS LANE"
+    # After a street name, ST is STREET when a direction or the town follows.
+    return rest[0] in DIRECTIONS or (bool(town) and rest[:len(town)] == town)
+
+
+def _normalise_line(line: str, town: str | None = None) -> str:
+    tokens = _line_tokens(line)
+    town_tokens = _line_tokens(town) if town else []
     out: list[str] = []
     for i, t in enumerate(tokens):
         if t == "ST":
-            # "ST JOHNS ROAD" -> SAINT; "HIGH ST" -> STREET
-            out.append("SAINT" if i + 1 < len(tokens) and tokens[i + 1] not in ABBREVIATIONS else "STREET")
+            out.append("STREET" if _st_is_street(tokens, i, town_tokens) else "SAINT")
         elif t in ABBREVIATIONS:
             out.append(ABBREVIATIONS[t])
         else:
@@ -96,9 +114,11 @@ def cleanse_address(addr: InboundAddress | None, field: str = "address") -> tupl
         return None, issues
 
     raw_lines = [addr.line1, addr.line2, addr.line3, addr.line4, *(addr.lines or [])]
-    lines = [_normalise_line(t) for t in (clean_text(x) for x in raw_lines) if t]
-    lines = [ln for ln in lines if ln]
-    town = _normalise_line(clean_text(addr.town) or "") or None
+    # "12 High St, Leeds" is two lines typed as one.
+    parts = [p for x in raw_lines if (t := clean_text(x)) for p in (clean_text(q) for q in t.split(",")) if p]
+    town_raw = clean_text(addr.town)
+    lines = [ln for ln in (_normalise_line(p, town_raw) for p in parts) if ln]
+    town = _normalise_line(town_raw or "") or None
     county = _normalise_line(clean_text(addr.county) or "") or None
     country = normalise_country(addr.country)
     is_uk = country in {"GB", "JE", "GY", "IM"}
