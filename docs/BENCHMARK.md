@@ -80,6 +80,43 @@ On the corrected 200k dataset the cost is small:
 The generator gives twins random names that rarely sound alike, so this
 understates the benefit for real families.
 
+### Round 5: tier order and runners-up
+
+Run on 2 November 2026, on a different machine from earlier rounds (PostgreSQL 16 in
+Docker under WSL2, three loader processes), with round 4 and round 5 rules on the same
+seed-7 corrected data. Two fixes:
+
+- **Tier order.** The `possible` rules (name + address, no DOB) had priorities
+  141–146, ahead of the DOB-anchored `probable` rules at 150–190. A record that
+  matched a same-named household member at home *and* a customer with its DOB
+  and email linked to the household member. They are now 200–250, and an
+  import-time check stops a weaker tier outranking a stronger one again.
+- **Runners-up.** Only customers tied at the winning rule went to review. Any
+  other customer the record matched through an auto-linkable tier was dropped,
+  although the record would have linked to it on its own. Those customers are
+  now written to `merge_candidate` under the rule they matched.
+
+| | Round 4 rules | Round 5 rules |
+|---|---:|---:|
+| Pairwise precision | 99.82% | 99.82% |
+| Pairwise recall | 91.96% | 91.96% |
+| Wrong links | 93 | 93 |
+| Probable-tier links (all correct) | 517 | 585 |
+| Possible-tier links | 9,518 | 9,446 |
+| Review cases | 114 | 1,759 |
+| Review cases that are the same person | 112 (98.2%) | 1,715 (97.5%) |
+
+Linking accuracy is unchanged: 68 links moved from `possible` to `probable`,
+correct both ways, and the round 4 column reproduces the documented round 4
+numbers within run-to-run noise (1 pair). The gain is in review. About 1,600 genuine
+duplicate customers that the engine used to drop silently are now raised; 42
+of the new cases are same-household pairs and 2 are unrelated. With all tiers
+auto-linked, the review queue goes from nearly empty to ~0.9% of records, nearly
+all of them real merges. In the demo (`AUTO_LINK_TIERS=exact,strong,probable`)
+the queue grows from 1,038 to 1,136 cases, because `possible` runners-up are
+not raised there. Throughput and latency did not change (296 rec/s, p95 12 ms
+on this machine). Report: `benchmark/results/round5_rule_ranking_report.json`.
+
 ## Round 2 results
 
 ### Dataset

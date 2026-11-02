@@ -169,26 +169,31 @@ class ResolutionService:
                 )
                 repo.insert_blocking_keys(record_id, p.blocking_keys)
 
+            # A customer that lost only on rank but would have been auto-linked on
+            # its own is likely a duplicate of the winner, so it goes to review too.
+            runners_up = [(cid, r) for cid, r in decision.runners_up if r.tier in self.settings.auto_link_tiers]
+            competing = [*decision.competing_customer_ids, *(cid for cid, _ in runners_up)]
             match = None
             if decision.rule is not None:
                 match = MatchDetail(
                     rule=decision.rule.key, tier=decision.rule.tier, priority=decision.rule.priority,
                     matched_record_ids=decision.matched_record_ids, auto_linked=auto_link,
-                    suggested_customer_id=decision.customer_id,
-                    competing_customer_ids=decision.competing_customer_ids,
+                    suggested_customer_id=decision.customer_id, competing_customer_ids=competing,
                 )
                 review = list(decision.competing_customer_ids)
                 if not auto_link:
                     review.append(decision.customer_id)  # type: ignore[arg-type]
                 if review:
                     repo.add_merge_candidates(customer_id, review, decision.rule.key, record_id)
+                for cid, r in runners_up:
+                    repo.add_merge_candidates(customer_id, [cid], r.key, record_id)
 
             details = {
                 "auto_linked": auto_link,
                 "pool_size": len(found.pool),
                 "candidates_sharing_keys": found.candidates,
                 "skipped_blocks": found.skipped,
-                "competing_customer_ids": [str(x) for x in decision.competing_customer_ids],
+                "competing_customer_ids": [str(x) for x in competing],
                 "evaluations": [
                     {"record_id": e.record_id, "customer_id": str(e.customer_id), "rule": e.rule,
                      "vetoed": e.vetoed}
@@ -241,17 +246,25 @@ class ResolutionService:
     def merge(self, conn: psycopg.Connection, req: MergeRequest) -> MergeResponse:
         repo = Repository(conn)
         with conn.transaction():
-            survivor = repo.survivor(req.survivor_customer_id)
-            merged = req.merged_customer_id
-            if repo.get_customer(survivor) is None or repo.get_customer(merged) is None:
+            if repo.get_customer(req.survivor_customer_id) is None or repo.get_customer(req.merged_customer_id) is None:
                 raise MergeError("customer not found")
-            if repo.survivor(merged) == survivor:
+            # Either ID may already have been merged away, so merge the customers
+            # they now resolve to. Lock, then resolve again: a merge that landed
+            # before the lock could have moved either one on.
+            ids = {req.survivor_customer_id, req.merged_customer_id}
+            while True:
+                repo.advisory_locks(lock_id(i.bytes) for i in ids)
+                survivor, merged = repo.survivor(req.survivor_customer_id), repo.survivor(req.merged_customer_id)
+                if {survivor, merged} <= ids:
+                    break
+                ids |= {survivor, merged}
+            if survivor == merged:
                 raise MergeError("customers are already merged")
-            repo.advisory_locks([lock_id(survivor.bytes), lock_id(merged.bytes)])
             moved = repo.merge_customers(survivor, merged)
-            repo.log_event(record_id=None, customer_id=survivor, outcome="merge", rule=None,
-                           details={"merged_customer_id": str(merged), "reason": req.reason,
-                                    "records_moved": moved})
+            details = {"merged_customer_id": str(merged), "reason": req.reason, "records_moved": moved}
+            if merged != req.merged_customer_id:
+                details["requested_merged_customer_id"] = str(req.merged_customer_id)
+            repo.log_event(record_id=None, customer_id=survivor, outcome="merge", rule=None, details=details)
         return MergeResponse(survivor_customer_id=survivor, merged_customer_id=merged, source_records_moved=moved)
 
     # ------------------------------------------------------------------ lookups

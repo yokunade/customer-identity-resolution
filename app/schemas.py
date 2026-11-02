@@ -153,7 +153,8 @@ class MatchDetail(BaseModel):
     suggested_customer_id: UUID | None = None
     competing_customer_ids: list[UUID] = Field(
         default_factory=list,
-        description="Other customers that matched at the same rule. Logged as merge candidates.",
+        description="Other customers that matched at the same rule, or at a lower rule in an auto-linkable "
+                    "tier. Logged as merge candidates.",
     )
 
 

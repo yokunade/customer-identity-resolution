@@ -180,6 +180,32 @@ def test_engine_tie_breaks_on_corroboration_then_age():
     assert d.customer_id == new and d.matched_record_ids == [1, 3]
 
 
+def test_rules_are_listed_in_rank_order_and_tiers_never_interleave():
+    tier_order = ["exact", "strong", "probable", "possible"]
+    priorities = [r.priority for r in RULES]
+    assert priorities == sorted(priorities)
+    tiers = [tier_order.index(r.tier) for r in RULES]
+    assert tiers == sorted(tiers)
+
+
+def test_dob_anchored_probable_beats_name_and_address_possible():
+    """Sarah Jones at the same house with no DOB must not beat S Jones-Smith
+    with the same DOB and personal email; the household match is kept as a
+    runner-up so it can still be reviewed."""
+    _, ki, _, pi = prep(first_name="Sarah", last_name="Jones", date_of_birth="1985-03-02",
+                        email="sarah.jones85@gmail.com",
+                        address={"line1": "4 Elm Road", "town": "Leeds", "postcode": "LS6 2AB"})
+    _, ka, _, pa = prep(first_name="Sarah", last_name="Jones",
+                        address={"line1": "4 Elm Road", "town": "Leeds", "postcode": "LS6 2AB"})
+    _, kb, _, pb = prep(first_name="S", last_name="Jones-Smith", date_of_birth="1985-03-02",
+                        email="sarah.jones85@gmail.com",
+                        address={"line1": "9 Oak Lane", "town": "York", "postcode": "YO1 7HH"})
+    household, married = uuid.uuid4(), uuid.uuid4()
+    d = decide(pi, [cand(1, household, shared(ki, ka), pa), cand(2, married, shared(ki, kb), pb)])
+    assert d.customer_id == married and d.rule.key == "EMAIL_DOB" and d.competing_customer_ids == []
+    assert [(cid, r.key) for cid, r in d.runners_up] == [(household, "NAME_PREMISE_POSTCODE")]
+
+
 # ------------------------------------------------------------------ rules added after the 200k benchmark
 from app.matching.rules import damerau, first_names_conflict  # noqa: E402
 

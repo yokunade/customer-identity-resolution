@@ -34,7 +34,7 @@ On first start this:
 
 ```
 Demo ready.
-  20,040 source records resolved to 10,492 customers; 1,038 cases waiting for review.
+  20,040 source records resolved to 10,487 customers; 1,136 cases waiting for review.
   The first 18 cases in the queue are curated hard cases; every case has a known answer.
 
   Review app   http://localhost:8000/review
