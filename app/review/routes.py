@@ -76,14 +76,14 @@ def build_router(cookie_secure: bool) -> APIRouter:
     @router.post("/review/api/login", dependencies=write, tags=["review"])
     def login(body: LoginBody, conn: Conn) -> JSONResponse:
         key = body.email.strip().lower()
-        if _throttle.blocked(key):
+        if _throttle.blocked(conn, key):
             raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS,
                                 "Too many failed sign-ins. Wait five minutes and try again.")
         user = auth.authenticate(conn, body.email, body.password)
         if user is None:
-            _throttle.fail(key)
+            _throttle.fail(conn, key)
             raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Email or password is incorrect.")
-        _throttle.reset(key)
+        _throttle.reset(conn, key)
         token = auth.create_session(conn, user)
         resp = JSONResponse({"email": user.email, "display_name": user.display_name, "role": user.role})
         resp.set_cookie(COOKIE, token, httponly=True, secure=cookie_secure, samesite="strict",
@@ -171,10 +171,11 @@ def build_router(cookie_secure: bool) -> APIRouter:
                         format: Literal["chat", "eval", "raw", "prompt"] = "chat",
                         split: Literal["train", "dev", "test", "all"] = "all",
                         source: Literal["reviewer", "synthetic_truth", "all"] = "reviewer",
-                        pii: Literal["masked", "full"] = "masked", shots: int = 6) -> Response:
+                        pii: Literal["masked", "full"] = "masked", shots: int = 6,
+                        notes: bool = False) -> Response:
         try:
             text = review_export.export(conn, format, split=split, source=source, masked=pii == "masked",
-                                        shots=max(1, min(shots, 20)))
+                                        shots=max(1, min(shots, 20)), include_notes=notes)
         except ValueError as exc:
             raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, str(exc)) from exc
         ext = "md" if format == "prompt" else "jsonl"

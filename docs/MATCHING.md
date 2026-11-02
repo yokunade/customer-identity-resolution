@@ -180,6 +180,10 @@ one place a match can be missed; monitor it.
 
 ## Privacy
 
+**The database holds plain personal data.** Only the `blocking_key` table is
+pseudonymised; protect the whole database (access control, encryption at rest,
+backups) as you would any store of customer PII.
+
 Blocking key values are `HMAC-SHA256(KEY_SECRET, type ‖ values)` truncated
 to 16 bytes, so `blocking_key` holds no readable PII. Match keys are not
 stored: until migration 005 they were (`match_key`, ~20 rows per record and
@@ -188,5 +192,7 @@ candidates blocking finds, so they are now worked out in memory from the
 candidate's components. That is identical to comparing the hashes (same
 combinations, same 64-value cap; proved in `tests/test_matching.py` and on
 the 200k benchmark). The components sit on `source_record` next to the
-cleansed record they come from. Raw and cleansed records are
-stored in `source_record` for audit and re-keying.
+cleansed record they come from, in plain JSON: emails, phone numbers, dates of
+birth and name forms (`match_components`). The raw and cleansed records are
+stored there too, for audit and re-keying. Encrypting these columns is planned
+but not done.

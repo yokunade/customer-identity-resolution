@@ -31,6 +31,58 @@ from app.service import MergeError, ResolutionService, SearchError
 
 log = logging.getLogger("identity")
 
+# The review app needs nothing but its own files and Google Fonts. Swagger UI at /docs
+# loads from a CDN, so the strict policy applies to /review only.
+REVIEW_CSP = (
+    "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; "
+    "font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; "
+    "base-uri 'none'; form-action 'self'; frame-ancestors 'none'"
+)
+
+
+class BodyLimitMiddleware:
+    """Reject request bodies over max_bytes with 413 before FastAPI parses them,
+    whether or not Content-Length is sent. The body is read here (FastAPI would
+    buffer it anyway) and replayed to the app."""
+
+    def __init__(self, app, max_bytes: int) -> None:
+        self.app, self.max_bytes = app, max_bytes
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        length = dict(scope["headers"]).get(b"content-length")
+        if length is not None and length.isdigit() and int(length) > self.max_bytes:
+            return await self._reject(send)
+        chunks: list[bytes] = []
+        seen = 0
+        while True:
+            message = await receive()
+            if message["type"] != "http.request":  # client went away
+                return
+            chunks.append(message.get("body", b""))
+            seen += len(chunks[-1])
+            if seen > self.max_bytes:
+                return await self._reject(send)
+            if not message.get("more_body"):
+                break
+        replayed = False
+
+        async def replay():
+            nonlocal replayed
+            if not replayed:
+                replayed = True
+                return {"type": "http.request", "body": b"".join(chunks), "more_body": False}
+            return await receive()  # after the body: wait for disconnect as usual
+
+        await self.app(scope, replay, send)
+
+    async def _reject(self, send) -> None:
+        body = b'{"detail":"request body too large"}'
+        await send({"type": "http.response.start", "status": 413,
+                    "headers": [(b"content-type", b"application/json"), (b"content-length", str(len(body)).encode())]})
+        await send({"type": "http.response.body", "body": body})
+
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or get_settings()
@@ -59,6 +111,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         description="Cleanses inbound customer records to UK standards and resolves them to a persistent customer ID.",
         lifespan=lifespan,
     )
+    app.add_middleware(BodyLimitMiddleware, max_bytes=settings.max_request_bytes)
+
+    @app.middleware("http")
+    async def security_headers(request: Request, call_next):
+        resp = await call_next(request)
+        resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+        resp.headers.setdefault("Referrer-Policy", "no-referrer")
+        if request.url.path == "/review" or request.url.path.startswith("/review/"):
+            resp.headers["Content-Security-Policy"] = REVIEW_CSP
+            resp.headers["X-Frame-Options"] = "DENY"
+        return resp
 
     # ------------------------------------------------------------------ dependencies
     def require_api_key(x_api_key: Annotated[str | None, Header()] = None) -> None:

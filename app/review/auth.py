@@ -11,9 +11,6 @@ import base64
 import hashlib
 import hmac
 import secrets
-import threading
-import time
-from collections import defaultdict, deque
 from dataclasses import dataclass
 
 import psycopg
@@ -118,24 +115,33 @@ def create_user(conn: psycopg.Connection, email: str, display_name: str, passwor
 
 
 class LoginThrottle:
-    """At most `limit` failed logins per email per `window` seconds (per process)."""
+    """At most `limit` failed logins per email per `window` seconds. Failures live in
+    the login_failure table, so every worker shares the count. Only a hash of the email
+    is stored, and each new failure deletes expired rows, so attacker-chosen emails
+    cannot grow the table beyond one window of failures."""
 
     def __init__(self, limit: int = 5, window: float = 300.0) -> None:
         self.limit, self.window = limit, window
-        self._fails: dict[str, deque] = defaultdict(deque)
-        self._lock = threading.Lock()
 
-    def blocked(self, key: str) -> bool:
-        with self._lock:
-            q = self._fails[key]
-            while q and q[0] < time.monotonic() - self.window:
-                q.popleft()
-            return len(q) >= self.limit
+    @staticmethod
+    def _key(key: str) -> bytes:
+        return hashlib.sha256(key.strip().lower().encode()).digest()
 
-    def fail(self, key: str) -> None:
-        with self._lock:
-            self._fails[key].append(time.monotonic())
+    def blocked(self, conn: psycopg.Connection, key: str) -> bool:
+        row = conn.execute(
+            "SELECT count(*) AS n FROM login_failure"
+            " WHERE key_hash = %s AND failed_at > now() - make_interval(secs => %s)",
+            (self._key(key), self.window),
+        ).fetchone()
+        conn.rollback()
+        return row["n"] >= self.limit
 
-    def reset(self, key: str) -> None:
-        with self._lock:
-            self._fails.pop(key, None)
+    def fail(self, conn: psycopg.Connection, key: str) -> None:
+        with conn.transaction():
+            conn.execute("DELETE FROM login_failure WHERE failed_at <= now() - make_interval(secs => %s)",
+                         (self.window,))
+            conn.execute("INSERT INTO login_failure (key_hash) VALUES (%s)", (self._key(key),))
+
+    def reset(self, conn: psycopg.Connection, key: str) -> None:
+        with conn.transaction():
+            conn.execute("DELETE FROM login_failure WHERE key_hash = %s", (self._key(key),))

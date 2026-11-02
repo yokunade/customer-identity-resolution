@@ -22,10 +22,12 @@ def _int(name: str, default: int) -> int:
 @dataclass(frozen=True)
 class Settings:
     database_url: str = "postgresql://postgres:postgres@localhost:5432/identity"
-    # Secret used to HMAC every match/blocking key before it is stored. Keys in
-    # the database are therefore pseudonymous. Changing this value invalidates
-    # every stored key, so treat it like an encryption key and rotate with a
-    # full re-key job.
+    # Secret used to HMAC every blocking key before it is stored, so the
+    # blocking_key table holds no readable PII. The rest of the database does:
+    # source_record keeps the raw and cleansed record and, since migration 005,
+    # plain match components (emails, phones, DOBs, names). Changing this value
+    # invalidates every stored blocking key, so treat it like an encryption key
+    # and rotate with a full re-key job.
     key_secret: str = "change-me"
     # Comma-separated API keys accepted in the X-API-Key header. Empty disables auth.
     api_keys: frozenset[str] = field(default_factory=frozenset)
@@ -36,6 +38,9 @@ class Settings:
     max_candidates: int = 2000
     # Maximum records accepted by the batch endpoint.
     max_batch_size: int = 500
+    # Requests with a larger body are refused with 413 before parsing. A full batch of
+    # max_batch_size typical records is well under 1 MB.
+    max_request_bytes: int = 2_000_000
     # Apply SQL migrations on start-up.
     auto_migrate: bool = True
     # Tiers whose matches are linked automatically. A match in any other tier
@@ -60,6 +65,7 @@ class Settings:
             max_block_size=_int("MAX_BLOCK_SIZE", Settings.max_block_size),
             max_candidates=_int("MAX_CANDIDATES", Settings.max_candidates),
             max_batch_size=_int("MAX_BATCH_SIZE", Settings.max_batch_size),
+            max_request_bytes=_int("MAX_REQUEST_BYTES", Settings.max_request_bytes),
             auto_migrate=_bool("AUTO_MIGRATE", Settings.auto_migrate),
             auto_link_tiers=frozenset(
                 t.strip() for t in os.getenv("AUTO_LINK_TIERS", "exact,strong,probable,possible").split(",") if t.strip()

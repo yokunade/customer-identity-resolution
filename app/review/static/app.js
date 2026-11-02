@@ -11,6 +11,7 @@ function h(tag, attrs = {}, ...kids) {
     if (v === null || v === undefined || v === false) continue;
     if (k === "class") el.className = v;
     else if (k === "text") el.textContent = v;
+    else if (k === "style") el.style.cssText = v; // CSSOM, which the CSP allows; a style attribute it blocks
     else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
     else el.setAttribute(k, v === true ? "" : v);
   }
@@ -569,9 +570,9 @@ async function trainingPanel() {
   function renderLinks() {
     const q = (fmt, extra = "") => `/review/api/examples/export?format=${fmt}&source=${source}&pii=masked${extra}`;
     links.replaceChildren(
-      h("a", { class: "btn", href: q("chat"), download: "", text: "Chat examples" }),
-      h("a", { class: "btn", href: q("eval", "&split=test"), download: "", text: "Eval set (test split)" }),
-      h("a", { class: "btn", href: q("prompt", "&shots=6"), download: "", text: "Few-shot prompt" }));
+      h("a", { class: "btn", href: q("chat"), download: "", text: "Chat examples (masked, best effort)" }),
+      h("a", { class: "btn", href: q("eval", "&split=test"), download: "", text: "Eval set, test split (masked, best effort)" }),
+      h("a", { class: "btn", href: q("prompt", "&shots=6"), download: "", text: "Few-shot prompt (masked, best effort)" }));
   }
   renderLinks();
   const sourceSel = h("select", { class: "input select", "aria-label": "Labels to export", onchange: (e) => { source = e.target.value; renderLinks(); } },
@@ -580,7 +581,7 @@ async function trainingPanel() {
     h("option", { value: "all", text: "Both" }));
   return h("section", { class: "training", "aria-labelledby": "training-h" },
     h("h2", { id: "training-h", text: "AI reviewer training data" }),
-    h("p", { class: "hint", text: `Every decision is saved as a labelled example with a snapshot of the case as it was shown. Reviewer examples: ${splits("reviewer")}. Exports mask names, emails, phones, addresses and dates of birth.` }),
+    h("p", { class: "hint", text: `Every decision is saved as a labelled example with a snapshot of the case as it was shown. Reviewer examples: ${splits("reviewer")}. Best-effort masking: names, emails, phones, addresses and dates of birth are replaced, and reviewer notes are left out. Check a sample before sharing.` }),
     h("div", { class: "export-row" }, sourceSel, links));
 }
 

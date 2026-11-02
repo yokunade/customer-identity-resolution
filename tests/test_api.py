@@ -183,6 +183,33 @@ def test_tie_at_same_rule_logs_merge_candidate(client, clean_db):
     assert len(rows) == 1 and rows[0]["rule"] == "EMAIL_NAME"
 
 
+def test_oversized_fields_are_rejected(client):
+    assert client.post("/v1/cleanse", json=dict(WILLIAM, first_name="A" * 201)).status_code == 422
+    assert client.post("/v1/cleanse", json=dict(WILLIAM, emails=["x@gmail.com"] * 21)).status_code == 422
+    assert client.post("/v1/cleanse", json=dict(WILLIAM, address={"lines": ["1 Road"] * 11})).status_code == 422
+
+
+def test_request_body_size_is_capped(clean_db):
+    from fastapi.testclient import TestClient
+
+    from app.main import create_app
+
+    settings = Settings(database_url=clean_db, key_secret="test-secret", api_keys=frozenset({"k1"}),
+                        max_request_bytes=10_000)
+    with TestClient(create_app(settings), headers={"X-API-Key": "k1"}) as c:
+        big = dict(WILLIAM, notes="x" * 20_000)  # unknown fields are accepted, so only the body cap stops this
+        assert c.post("/v1/cleanse", json=big).status_code == 413
+
+        def chunks():  # no Content-Length: the cap must hold while streaming too
+            yield b'{"source_system": "s", "source_record_id": "1", "notes": "'
+            for _ in range(20):
+                yield b"x" * 1000
+            yield b'"}'
+        r = c.post("/v1/cleanse", content=chunks(), headers={"Content-Type": "application/json"})
+        assert r.status_code == 413
+        assert c.post("/v1/cleanse", json=WILLIAM).status_code == 200
+
+
 def test_cleanse_dry_run(client):
     r = client.post("/v1/cleanse", json=WILLIAM)
     body = r.json()

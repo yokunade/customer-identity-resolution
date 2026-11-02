@@ -10,7 +10,9 @@ prompt change is a code change you can diff and evaluate.
 
 PII: pass a Masker to replace names, emails, phones, addresses and dates of
 birth with placeholders that are consistent within one example ("Name 1"
-everywhere it appears, including in the reviewer's notes). Relationships the
+everywhere it appears). Structured values are masked exactly; scrubbing the
+reviewer's free-text notes is best effort, so masked exports leave notes out
+unless asked. Relationships the
 model needs (shared values, verdicts, nickname/typo notes) are kept, because
 they come from the comparison, not from the raw values.
 """
@@ -22,9 +24,10 @@ import re
 from collections import defaultdict
 from typing import Any
 
+from app.cleansing.address import ABBREVIATIONS, DESCRIPTORS
 from app.review.reasons import CONFIDENCE, KEEP_APART_REASONS, MERGE_REASONS
 
-PROMPT_VERSION = "2026-10-27.1"
+PROMPT_VERSION = "2026-11-02.1"
 
 _REASON_LINES = "\n".join(
     [f"  - {k}: {v}" for k, v in MERGE_REASONS.items()]
@@ -76,11 +79,12 @@ class Masker:
     """Consistent placeholders for PII within one example."""
 
     KINDS = {"name": "Name", "dob": "DOB", "email": "Email", "phone": "Phone", "address": "Address",
-             "postcode": "Postcode", "token": "Name part"}
+             "postcode": "Postcode", "token": "Name part", "street": "Address part"}
 
     def __init__(self) -> None:
         self._maps: dict[str, dict[str, str]] = defaultdict(dict)
-        self._raw: dict[str, str] = {}  # original text -> placeholder, for scrubbing free text
+        # For scrubbing free text: regex -> (length of the value it came from, placeholder).
+        self._patterns: dict[str, tuple[int, str]] = {}
 
     def __call__(self, kind: str, value: str | None) -> str | None:
         if value is None or value == "":
@@ -89,28 +93,82 @@ class Masker:
         m = self._maps[kind]
         if key not in m:
             m[key] = f"[{self.KINDS[kind]} {len(m) + 1}]"
-        self._raw[str(value)] = m[key]
+        self._learn(kind, str(value), m[key])
         return m[key]
 
-    def learn_name_parts(self, full_name: str) -> None:
-        for part in re.findall(r"[A-Za-z][A-Za-z'\-]{2,}", full_name or ""):
-            if part.lower() not in {"jr", "sr", "mr", "mrs", "miss", "ms", "dr"}:
-                self("token", part)
+    def _add(self, pattern: str, length: int, placeholder: str) -> None:
+        self._patterns.setdefault(pattern, (length, placeholder))
 
-    def scrub(self, text: str | None) -> str | None:
-        """Replace every known original value in free text (longest first)."""
-        if not text:
-            return text
-        out = text
-        for raw in sorted(self._raw, key=len, reverse=True):
-            if len(raw) < 3:
-                continue
-            out = re.sub(re.escape(raw), self._raw[raw], out, flags=re.IGNORECASE)
+    def _learn(self, kind: str, raw: str, placeholder: str) -> None:
+        # Whole words only, so a short name part like "Li" never eats "Linden".
+        self._add(rf"(?<![A-Za-z0-9]){_spaced(raw)}(?![A-Za-z0-9])", len(raw), placeholder)
+        if kind == "dob":
+            for p in _dob_patterns(raw):
+                self._add(p, len(raw), placeholder)
+        elif kind == "address":
+            for part in raw.split(","):  # "12 ACACIA AVENUE, LEEDS, LS6 2AB": each line on its own
+                if len(part.strip()) >= 4:
+                    self._add(rf"(?<![A-Za-z0-9]){_spaced(part.strip())}(?![A-Za-z0-9])", len(part), placeholder)
+        elif kind == "postcode":
+            out, _, inw = raw.upper().partition(" ")
+            if inw:  # LS62AB, ls6-2ab
+                self._add(rf"(?<![A-Za-z0-9]){re.escape(out)}[\s\-]*{re.escape(inw)}(?![A-Za-z0-9])", len(raw),
+                          placeholder)
+        elif kind == "phone":
             digits = re.sub(r"\D", "", raw)
             if len(digits) >= 9:  # phone numbers written another way
                 pattern = r"\D*".join(re.escape(d) for d in digits[-9:])
-                out = re.sub(r"(?:\+?44\s*|0)?" + pattern, self._raw[raw], out)
+                self._add(r"(?:\+?44\s*|0)?" + pattern, len(raw), placeholder)
+
+    def learn_name_parts(self, full_name: str) -> None:
+        for part in re.findall(r"[A-Za-z][A-Za-z'\-]+", full_name or ""):
+            if part.lower() not in {"jr", "sr", "mr", "mrs", "miss", "ms", "dr"}:
+                self("token", part)
+
+    def learn_address_parts(self, address: dict) -> None:
+        """Street and building names, so "12 Acacia Ave" is caught when the record says ACACIA AVENUE."""
+        for value in (address.get("street"), address.get("building_name")):
+            words = [w for w in (value or "").split() if w not in _ADDRESS_WORDS]
+            if words and len("".join(words)) >= 3:
+                self("street", " ".join(words))
+
+    def scrub(self, text: str | None) -> str | None:
+        """Replace every known original value in free text (longest first). Best effort:
+        free text can always describe a person in a way no pattern anticipates."""
+        if not text:
+            return text
+        out = text
+        for pattern, (_, placeholder) in sorted(self._patterns.items(), key=lambda p: -p[1][0]):
+            out = re.sub(pattern, placeholder, out, flags=re.IGNORECASE)
         return out
+
+
+_MONTH_NAMES = ["january", "february", "march", "april", "may", "june", "july", "august", "september",
+                "october", "november", "december"]
+_ADDRESS_WORDS = {*DESCRIPTORS, *ABBREVIATIONS.values(), "THE", "SAINT"}
+
+
+def _spaced(raw: str) -> str:
+    """The literal text, with any run of spaces matching any run of spaces."""
+    return r"\s+".join(re.escape(w) for w in raw.split())
+
+
+def _dob_patterns(iso: str) -> list[str]:
+    """14/02/1979, 14.2.79, 14-02-1979, 14 Feb 1979, 14th February 1979, February 14, 1979."""
+    m = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})", iso)
+    if not m:
+        return []
+    y, mo, d = m[1], int(m[2]), int(m[3])
+    year = rf"(?:{y}|{y[2:]})"
+    day = rf"0?{d}(?:st|nd|rd|th)?"
+    month_name = _MONTH_NAMES[mo - 1]
+    month_word = rf"(?:{month_name[:3]}\.?|{month_name})"
+    edge_l, edge_r = r"(?<![0-9])", r"(?![0-9])"
+    return [
+        rf"{edge_l}{day}[/.\-]0?{mo}[/.\-]{year}{edge_r}",
+        rf"{edge_l}{day}\s*{month_word}\s*,?\s*{year}{edge_r}",
+        rf"{month_word}\s*{day}\s*,?\s*{year}{edge_r}",
+    ]
 
 
 def _identity(kind: str, value: str | None) -> str | None:
@@ -145,6 +203,8 @@ def _prime_masker(snapshot: dict, masker: Masker) -> None:
             for a in [c.get("address"), *(c.get("previous_addresses") or [])]:
                 if a and a.get("postcode"):
                     masker("postcode", a["postcode"])
+                if a:
+                    masker.learn_address_parts(a)
 
 
 def render_case(snapshot: dict[str, Any], masker: Masker | None = None) -> str:
@@ -198,8 +258,10 @@ def render_case(snapshot: dict[str, Any], masker: Masker | None = None) -> str:
     return "\n".join(lines)
 
 
-def render_target(example: dict[str, Any], masker: Masker | None = None) -> str:
-    rationale = example.get("notes")
+def render_target(example: dict[str, Any], masker: Masker | None = None, include_notes: bool = True) -> str:
+    """The reviewer's notes become the rationale. Masked exports leave them out unless
+    include_notes is set: scrubbing free text is best effort, so notes can leak PII."""
+    rationale = example.get("notes") if include_notes else None
     if masker is not None:
         rationale = masker.scrub(rationale)
     return json.dumps({
@@ -230,21 +292,21 @@ def select_few_shot(examples: list[dict[str, Any]], k: int) -> list[dict[str, An
     return picked
 
 
-def chat_messages(example: dict[str, Any], masked: bool) -> list[dict[str, str]]:
+def chat_messages(example: dict[str, Any], masked: bool, include_notes: bool = False) -> list[dict[str, str]]:
     masker = Masker() if masked else None
     user = render_case(example["snapshot"], masker)
     return [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": user},
-        {"role": "assistant", "content": render_target(example, masker)},
+        {"role": "assistant", "content": render_target(example, masker, include_notes or not masked)},
     ]
 
 
-def few_shot_prompt(shots: list[dict[str, Any]], masked: bool) -> str:
+def few_shot_prompt(shots: list[dict[str, Any]], masked: bool, include_notes: bool = False) -> str:
     parts = [SYSTEM_PROMPT.rstrip(), "", "Worked examples follow.", ""]
     for i, ex in enumerate(shots, 1):
         masker = Masker() if masked else None
         parts += [f"### Example {i}", "", render_case(ex["snapshot"], masker), "", "Answer:",
-                  render_target(ex, masker), ""]
+                  render_target(ex, masker, include_notes or not masked), ""]
     parts += ["### Now review this case", "", "{case}"]
     return "\n".join(parts)

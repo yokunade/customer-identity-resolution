@@ -12,6 +12,11 @@ Formats
   prompt  a markdown few-shot prompt: instructions, k worked examples, then a {case} slot
 
 PII is masked by default. Use --pii full only for models you host yourself.
+
+Reviewer notes (the "rationale" in chat and prompt exports) are free text. Masking replaces every
+name, email, phone, address, postcode and date of birth the case holds, in the forms reviewers
+usually write them, but free text can mention someone in ways no pattern anticipates. So masked
+exports leave notes out (rationale null) unless --notes is given: best-effort masking.
 """
 
 from __future__ import annotations
@@ -57,10 +62,10 @@ def _metadata(ex: dict) -> dict[str, Any]:
             **({"scenario": ex["metadata"]["scenario"]} if (ex.get("metadata") or {}).get("scenario") else {})}
 
 
-def iter_lines(examples: list[dict], fmt: str, masked: bool) -> Iterator[str]:
+def iter_lines(examples: list[dict], fmt: str, masked: bool, include_notes: bool = False) -> Iterator[str]:
     for ex in examples:
         if fmt == "chat":
-            obj = {"messages": chat_messages(ex, masked), "metadata": _metadata(ex)}
+            obj = {"messages": chat_messages(ex, masked, include_notes), "metadata": _metadata(ex)}
         elif fmt == "eval":
             obj = {"id": f"case-{ex['case_id']}-{ex['label_source']}",
                    "input": render_case(ex["snapshot"], Masker() if masked else None),
@@ -76,11 +81,12 @@ def iter_lines(examples: list[dict], fmt: str, masked: bool) -> Iterator[str]:
 
 
 def export(conn: psycopg.Connection, fmt: str, *, split: str = "all", source: str = "reviewer",
-           masked: bool = True, shots: int = 6) -> str:
+           masked: bool = True, shots: int = 6, include_notes: bool = False) -> str:
     if fmt == "prompt":
         pool = load_examples(conn, split="train", source=source)
-        return few_shot_prompt(select_few_shot(pool, shots), masked)
-    return "\n".join(iter_lines(load_examples(conn, split=split, source=source), fmt, masked)) + "\n"
+        return few_shot_prompt(select_few_shot(pool, shots), masked, include_notes)
+    lines = iter_lines(load_examples(conn, split=split, source=source), fmt, masked, include_notes)
+    return "\n".join(lines) + "\n"
 
 
 def main() -> None:
@@ -93,6 +99,8 @@ def main() -> None:
     ap.add_argument("--source", choices=("reviewer", "synthetic_truth", "all"), default="reviewer",
                     help="reviewer decisions (default), synthetic ground truth from the demo, or both")
     ap.add_argument("--pii", choices=("masked", "full"), default="masked")
+    ap.add_argument("--notes", action="store_true",
+                    help="include reviewer notes in a masked export (scrubbed, best effort)")
     ap.add_argument("--shots", type=int, default=6, help="examples in a prompt export")
     ap.add_argument("--out", default="-")
     args = ap.parse_args()
@@ -100,7 +108,7 @@ def main() -> None:
     with psycopg.connect(get_settings().database_url, row_factory=dict_row) as conn:
         try:
             text = export(conn, args.format, split=args.split, source=args.source,
-                          masked=args.pii == "masked", shots=args.shots)
+                          masked=args.pii == "masked", shots=args.shots, include_notes=args.notes)
         except ValueError as exc:
             sys.exit(str(exc))
     if args.out == "-":

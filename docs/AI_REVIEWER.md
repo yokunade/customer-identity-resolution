@@ -90,16 +90,26 @@ Source records:
 
 ## PII
 
-Exports mask PII by default. Names, dates of birth, emails, phone numbers,
-addresses and postcodes become placeholders that are consistent within one
-example (`[Name 1]` everywhere it appears), including inside the reviewer's
-notes. What the model needs is kept: which values are shared, each row's
-verdict, and the comparison's notes such as "Nickname or spelling difference".
+Exports mask PII by default, on a best-effort basis. Names, dates of birth,
+emails, phone numbers, addresses and postcodes become placeholders that are
+consistent within one example (`[Name 1]` everywhere it appears). What the
+model needs is kept: which values are shared, each row's verdict, and the
+comparison's notes such as "Nickname or spelling difference".
+
+**Reviewer notes are left out of masked exports** (the `rationale` is `null`)
+unless you pass `--notes` (or `notes=true` on the download endpoint). Notes are
+free text, and no scrubber can be complete for free text. With `--notes`, the
+scrubber replaces every value the case holds, including the forms reviewers
+usually write them in: dates as 14/02/1979, 14.2.79 or 14th February 1979;
+postcodes with or without the space; street and building names on their own
+("Acacia" from ACACIA AVENUE); and name parts of two letters or more, matched
+as whole words.
 
 What masking costs: the model can't see *why* two values are close (that
 "Jon" and "John" differ by a letter) beyond the verdict, or a person's age.
-Scrubbing free-text notes is best-effort (known values and phone numbers in
-other formats); check a sample before sending data outside your organisation.
+Without notes, the model learns decisions and reason codes but not the
+reviewer's reasoning in their own words. If you include them, check a sample
+before sending data outside your organisation.
 
 `--pii full` keeps real values. Use it only for models you host yourself,
 under your data protection assessment.
@@ -125,9 +135,9 @@ python -m app.review.export --format raw --pii full --out raw.jsonl
 Add `--source synthetic_truth` (or `all`) to include the demo's ground-truth
 labels. In Docker: `docker compose exec api python -m app.review.export ...`.
 
-Admins can also download chat, eval and few-shot exports (masked) from the
-*History* page of the review app, or from
-`GET /review/api/examples/export?format=chat|eval|prompt&split=…&source=…`.
+Admins can also download chat, eval and few-shot exports (best-effort
+masked, without notes) from the *History* page of the review app, or from
+`GET /review/api/examples/export?format=chat|eval|prompt&split=…&source=…&notes=false`.
 
 ## Scoring a model
 

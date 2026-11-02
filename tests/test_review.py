@@ -77,6 +77,44 @@ def test_login_throttle(app_settings):
             c.post("/review/api/login", json={"email": "throttle@example.co.uk", "password": "x"}, headers=HDR)
         r = c.post("/review/api/login", json={"email": "throttle@example.co.uk", "password": "x"}, headers=HDR)
         assert r.status_code == 429
+    # Failures are counted in the database, so a second worker (a second app) sees them too.
+    with TestClient(create_app(app_settings), base_url="https://testserver") as c:
+        r = c.post("/review/api/login", json={"email": "Throttle@example.co.uk", "password": "x"}, headers=HDR)
+        assert r.status_code == 429
+        assert c.post("/review/api/login", json={"email": "ana@example.co.uk", "password": PW},
+                      headers=HDR).status_code == 200
+
+
+def test_login_throttle_window_and_cleanup(clean_db):
+    from app.review.auth import LoginThrottle
+
+    t = LoginThrottle(limit=2, window=300.0)
+    with psycopg.connect(clean_db, row_factory=dict_row) as conn:
+        t.fail(conn, "a@x.com")
+        t.fail(conn, "a@x.com")
+        assert t.blocked(conn, "a@x.com") and not t.blocked(conn, "b@x.com")
+        with conn.transaction():
+            conn.execute("UPDATE login_failure SET failed_at = failed_at - interval '10 minutes'")
+        assert not t.blocked(conn, "a@x.com")
+        t.fail(conn, "c@x.com")  # each failure also clears expired rows, so the table can't grow unbounded
+        assert conn.execute("SELECT count(*) AS n FROM login_failure").fetchone()["n"] == 1
+        # Only a hash of the email is stored.
+        assert "c@x.com" not in str(conn.execute("SELECT * FROM login_failure").fetchall())
+        t.fail(conn, "d@x.com")
+        t.reset(conn, "d@x.com")
+        assert not t.blocked(conn, "d@x.com")
+
+
+def test_review_pages_send_security_headers(app_settings):
+    with TestClient(create_app(app_settings), base_url="https://testserver") as c:
+        for path in ("/review", "/review/static/app.js", "/review/api/me"):
+            h = c.get(path).headers
+            csp = h["content-security-policy"]
+            assert "default-src 'self'" in csp and "frame-ancestors 'none'" in csp and "script-src 'self'" in csp
+            assert h["x-content-type-options"] == "nosniff" and h["referrer-policy"] == "no-referrer"
+        # The API docs load Swagger UI from a CDN, so they get the basic headers but not the review CSP.
+        h = c.get("/docs").headers
+        assert h["x-content-type-options"] == "nosniff" and "content-security-policy" not in h
 
 
 def test_claim_is_exclusive_and_held(app_settings, clean_db):
