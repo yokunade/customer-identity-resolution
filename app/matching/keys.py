@@ -237,7 +237,7 @@ def shared_match_keys(a: Mapping[str, Iterable[str]], b: Mapping[str, Iterable[s
             continue
         if math.prod(map(len, va)) <= MAX_VALUES_PER_KEY and math.prod(map(len, vb)) <= MAX_VALUES_PER_KEY:
             # Neither side truncated: a common combination exists iff every component overlaps.
-            if all(x & y for x, y in zip(va, vb)):
+            if all(x & y for x, y in zip(va, vb, strict=True)):
                 out.add(d.name)
         elif _combos(sa, d) & _combos(sb, d):  # type: ignore[operator]
             out.add(d.name)

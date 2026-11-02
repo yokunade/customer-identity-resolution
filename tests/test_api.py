@@ -171,8 +171,8 @@ def test_runner_up_outside_auto_link_tiers_is_not_queued(clean_db):
 
 
 def test_tie_at_same_rule_logs_merge_candidate(client, clean_db):
-    a = post(client, {"source_system": "s1", "source_record_id": "1", "first_name": "Chris", "last_name": "Hall",
-                      "email": "chall@gmail.com"})
+    post(client, {"source_system": "s1", "source_record_id": "1", "first_name": "Chris", "last_name": "Hall",
+                  "email": "chall@gmail.com"})
     b = post(client, {"source_system": "s2", "source_record_id": "2", "first_name": "Chris", "last_name": "Hall",
                       "email": "chris.hall@yahoo.co.uk"})
     c = post(client, {"source_system": "s3", "source_record_id": "3", "first_name": "Chris", "last_name": "Hall",

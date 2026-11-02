@@ -24,7 +24,8 @@ from __future__ import annotations
 import argparse
 import json
 import sys
-from typing import Any, Iterator
+from collections.abc import Iterator
+from typing import Any
 
 import psycopg
 from psycopg.rows import dict_row

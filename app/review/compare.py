@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.cleansing.nicknames import first_name_forms
-from app.cleansing.text import alpha_key, alnum_key
+from app.cleansing.text import alnum_key, alpha_key
 from app.matching.rules import _dobs_conflict, damerau
 
 

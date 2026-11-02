@@ -30,8 +30,8 @@ from app.matching.keys import (
 )
 from app.repository import Repository, lock_id
 from app.schemas import (
-    CleanseResponse,
     CleansedRecord,
+    CleanseResponse,
     CustomerResponse,
     CustomerSearchResponse,
     InboundCustomer,

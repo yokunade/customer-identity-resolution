@@ -130,7 +130,7 @@ SOURCE_WEIGHTS = [25, 25, 18, 12, 12, 8]
 KEYBOARD = {c: n for c, n in zip(
     "qwertyuiopasdfghjklzxcvbnm",
     ["wa", "qes", "wrd", "etf", "ryg", "tuh", "yij", "uok", "ipl", "ol", "qsz", "awdx", "sefc", "drgv",
-     "fthb", "gyjn", "hukm", "jil", "kop", "asx", "zsdc", "xdfv", "cfgb", "vghn", "bhjm", "njk"])}
+     "fthb", "gyjn", "hukm", "jil", "kop", "asx", "zsdc", "xdfv", "cfgb", "vghn", "bhjm", "njk"], strict=True)}
 
 FORMAL_TO_NICK: dict[str, list[str]] = defaultdict(list)
 for _nick, _formals in NICKNAMES.items():
@@ -176,7 +176,7 @@ class Person:
     mobile: str | None = None
     landline: str | None = None
     family_email: str | None = None
-    partner: "Person | None" = None
+    partner: Person | None = None
     moved_to: Dwelling | None = None
     tags: set[str] = field(default_factory=set)  # person-level scenario tags
 
@@ -337,17 +337,17 @@ class World:
         return d
 
     def email_for(self, first: str, last: str) -> str:
-        f, l = first.lower(), last.lower().replace("'", "").replace(" ", "")
+        f, sur = first.lower(), last.lower().replace("'", "").replace(" ", "")
         for _ in range(50):
             pattern = self.rng.random()
             if pattern < 0.35:
-                local = f"{f}.{l}"
+                local = f"{f}.{sur}"
             elif pattern < 0.55:
-                local = f"{f}{l}{self.rng.randint(1, 99)}"
+                local = f"{f}{sur}{self.rng.randint(1, 99)}"
             elif pattern < 0.7:
-                local = f"{f[0]}{l}"
+                local = f"{f[0]}{sur}"
             elif pattern < 0.8:
-                local = f"{f}_{l}{self.rng.randint(60, 99)}"
+                local = f"{f}_{sur}{self.rng.randint(60, 99)}"
             else:
                 local = f"{f}{self.rng.choice(['x', 'y', 'z', ''])}{self.rng.randint(100, 9999)}"
             domain = self.rng.choices([p for p, _ in EMAIL_PROVIDERS], [w for _, w in EMAIL_PROVIDERS])[0]
@@ -358,7 +358,7 @@ class World:
         # Common names run out of patterns in multi-million populations; a
         # sequence number always works (smaller datasets never get here).
         while True:
-            e = f"{f}.{l}.{len(self.used_emails)}@{domain}"
+            e = f"{f}.{sur}.{len(self.used_emails)}@{domain}"
             if e not in self.used_emails:
                 self.used_emails.add(e)
                 return e

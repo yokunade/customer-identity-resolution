@@ -1,13 +1,16 @@
 import os
 
-import psycopg
 import pytest
-from psycopg.rows import dict_row
 
 TEST_DATABASE_URL = os.getenv("TEST_DATABASE_URL", "postgresql://postgres@127.0.0.1:5432/identity_test")
 
+# psycopg is imported inside the fixtures, so the pure cleansing and matching
+# tests run without it (or a database) installed.
+
 
 def _db_available() -> bool:
+    import psycopg
+
     try:
         with psycopg.connect(TEST_DATABASE_URL, connect_timeout=2):
             return True
@@ -17,6 +20,8 @@ def _db_available() -> bool:
 
 @pytest.fixture(scope="session")
 def db_url():
+    import psycopg
+
     if not _db_available():
         pytest.skip(f"PostgreSQL not reachable at {TEST_DATABASE_URL}")
     with psycopg.connect(TEST_DATABASE_URL, autocommit=True) as conn:
@@ -26,6 +31,9 @@ def db_url():
 
 @pytest.fixture
 def clean_db(db_url):
+    import psycopg
+    from psycopg.rows import dict_row
+
     from app.db import migrate
 
     with psycopg.connect(db_url, row_factory=dict_row) as conn:

@@ -65,7 +65,7 @@ def decide(profile: dict, candidates: list[Candidate], rules: tuple[Rule, ...] =
     if not best:
         return Decision(customer_id=None, evaluations=evaluations)
 
-    far_future = dt.datetime.max.replace(tzinfo=dt.timezone.utc)
+    far_future = dt.datetime.max.replace(tzinfo=dt.UTC)
 
     def rank(item: tuple[UUID, tuple]) -> tuple:
         cid, (priority, _, recs, created) = item

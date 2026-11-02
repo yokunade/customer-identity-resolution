@@ -171,8 +171,8 @@ def test_engine_falls_through_vetoed_rule():
 
 def test_engine_tie_breaks_on_corroboration_then_age():
     old, new = uuid.uuid4(), uuid.uuid4()
-    t0 = dt.datetime(2020, 1, 1, tzinfo=dt.timezone.utc)
-    t1 = dt.datetime(2024, 1, 1, tzinfo=dt.timezone.utc)
+    t0 = dt.datetime(2020, 1, 1, tzinfo=dt.UTC)
+    t1 = dt.datetime(2024, 1, 1, tzinfo=dt.UTC)
     d = decide({}, [cand(1, new, {"EMAIL_NAME"}, {}, t1), cand(2, old, {"EMAIL_NAME"}, {}, t0)])
     assert d.customer_id == old and d.competing_customer_ids == [new]
     d = decide({}, [cand(1, new, {"EMAIL_NAME"}, {}, t1), cand(3, new, {"EMAIL_NAME"}, {}, t1),

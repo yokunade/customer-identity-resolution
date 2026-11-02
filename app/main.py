@@ -5,8 +5,9 @@
 
 import logging
 import secrets
+from collections.abc import Iterator
 from contextlib import asynccontextmanager
-from typing import Annotated, Iterator
+from typing import Annotated
 from uuid import UUID
 
 import psycopg
@@ -107,7 +108,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(
         title="Customer Identity Resolution",
-        version="0.1.0",
+        version="0.2.0",
         description="Cleanses inbound customer records to UK standards and resolves them to a persistent customer ID.",
         lifespan=lifespan,
     )
