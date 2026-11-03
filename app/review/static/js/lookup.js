@@ -72,8 +72,7 @@ export async function viewLookup() {
   const queueBox = h("div", {}, loading("Loading the queue"));
   show(h("div", { class: "lookup" },
     h("section", { class: "find", "aria-labelledby": "find-h" },
-      h("div", { class: "find-head" }, h("h1", { id: "find-h", text: "Find a customer" }),
-        h("a", { class: "btn", href: "#/add", text: "Add a record" })), form),
+      h("h1", { id: "find-h", text: "Find a customer" }), form),
     h("div", { class: "lookup-cols" },
       h("section", { class: "panel", "aria-labelledby": "recent-h" },
         h("div", { class: "panel-head" }, h("h2", { id: "recent-h", text: "Your recent lookups" })), recentList),

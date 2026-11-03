@@ -362,7 +362,6 @@ th:last-child, td:last-child { padding-right: 1.5rem; }
 .reason { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; }
 .reason label { font-weight: 600; font-size: .875rem; }
 .optional { font-weight: 400; color: var(--ink-3); }
-.find-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1rem; }
 .actions { display: flex; flex-wrap: wrap; gap: .75rem; }
 
 /* ---------- add a record */

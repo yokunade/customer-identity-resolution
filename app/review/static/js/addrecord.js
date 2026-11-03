@@ -76,7 +76,7 @@ function outcome(res) {
 }
 
 export function viewAddRecord() {
-  setNav("lookup");
+  setNav("add");
   const p = hashParams();
   const token = newToken();
   let checked = false;
@@ -175,7 +175,6 @@ export function viewAddRecord() {
   }
 
   show(
-    h("nav", { class: "crumbs", "aria-label": "Breadcrumb" }, h("a", { href: "#/lookup", text: "Lookup" }), " / Add a record"),
     h("div", { class: "page-head" }, h("div", {},
       h("h1", { id: "add-h", text: "Add a customer record" }),
       h("p", { class: "sub", text: "For details that reached you directly, such as on a call. They are cleaned up and matched exactly like a record from a source system." }))),
