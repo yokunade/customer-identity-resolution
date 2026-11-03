@@ -13,6 +13,8 @@ because they run automatically on start-up.
   logged to `lookup_access`; `LOOKUP_MAX_PER_HOUR` limits each manager.
   Migration `007_lookup` adds the role and the log.
 - `python -m app.review.users add --role reviewer|manager|admin`.
+- Dark mode in custIDR: follows the system setting, or pick light or dark
+  with the button in the top bar or on the sign-in page (kept per browser).
 - The review app is now **custIDR**, at `/app` (`/review` redirects). New
   sign-in page; managers land on customer lookup (search, results, customer
   view with every source record), reviewers on the review queue. A case can be

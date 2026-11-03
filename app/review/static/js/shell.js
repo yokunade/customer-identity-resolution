@@ -1,6 +1,7 @@
 // The top bar: navigation, the quick search box, who is signed in.
 
 import { $, api, fmtNum, state } from "./core.js";
+import { themeButton } from "./theme.js";
 
 const ROLE = { reviewer: "Reviewer", manager: "Manager", admin: "Admin" };
 
@@ -32,6 +33,7 @@ export async function refreshBadge() {
 }
 
 export function initShell() {
+  $("#theme-slot").replaceWith(themeButton());
   $("#signout").addEventListener("click", async () => {
     try { await api("/logout", { method: "POST" }); } catch { /* already signed out */ }
     state.user = null;

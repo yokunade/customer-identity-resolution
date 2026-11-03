@@ -2,12 +2,38 @@
 
 import { api, brandMark, h, s, show, state } from "./core.js";
 import { setNav } from "./shell.js";
+import { themeButton } from "./theme.js";
 
 const POINTS = [
   [["M8.5 3a5.5 5.5 0 1 1 0 11a5.5 5.5 0 0 1 0-11z", "M13 13l4.5 4.5"], "Search by email, phone, postcode or source ID"],
   [["M2 4h16v12H2z", "M2 8.5h16", "M8 8.5V16"], "A single view of each customer and their source records"],
   [["M4 10l4 4l8-9"], "A review queue for the matches that need a person"],
 ];
+
+// Three source records, written differently, resolving to one customer.
+const SOURCES = [
+  ["CRM", "Mrs S. Jones", "sarah.jones@example.com"],
+  ["Web shop", "Sarah Jones", "07700 900123"],
+  ["Billing", "SARAH JONES", "12 Elm Road, LS6 2AB"],
+];
+const MERGED = [
+  ["Email", "sarah.jones@example.com", "CRM"],
+  ["Mobile", "07700 900123", "Web shop"],
+  ["Address", "12 Elm Road, LS6 2AB", "Billing"],
+];
+
+function mergeGraphic() {
+  const links = s("svg", { class: "merge-links", "aria-hidden": "true", viewBox: "0 0 100 100", preserveAspectRatio: "none" },
+    ...[15, 50, 85].map((y) => s("path", { d: `M0 ${y} C 55 ${y}, 45 50, 100 50`, "vector-effect": "non-scaling-stroke" })));
+  return h("figure", { class: "merge", "aria-label": "Three source records for Sarah Jones, written differently, combined into one customer record." },
+    h("ol", { class: "merge-sources", "aria-hidden": "true" }, SOURCES.map(([src, name, detail]) =>
+      h("li", {}, h("span", { class: "merge-src", text: src }), h("b", { text: name }), h("span", { class: "merge-detail", text: detail })))),
+    links,
+    h("div", { class: "merge-customer", "aria-hidden": "true" },
+      h("div", { class: "merge-head" }, h("span", { class: "merge-avatar", text: "SJ" }),
+        h("div", {}, h("b", { text: "Sarah Jones" }), h("span", { text: "1 customer · 3 source records" }))),
+      h("dl", {}, MERGED.map(([k, v, src]) => [h("dt", { text: k }), h("dd", {}, v, h("span", { class: "merge-src", text: src }))]))));
+}
 
 export function viewSignIn() {
   state.user = null;
@@ -50,9 +76,6 @@ export function viewSignIn() {
     err, btn,
     h("p", { class: "notice", text: "Every customer lookup is recorded with your name. After 5 failed attempts, sign-in pauses for 5 minutes." }));
 
-  const rings = s("svg", { class: "signin-rings", viewBox: "0 0 560 360", "aria-hidden": "true" },
-    ...[[200, 150], [320, 150], [260, 90], [200, 60], [320, 60]].map(([cx, r]) => s("circle", { cx, cy: 200, r })));
-
   show(h("div", { class: "signin" },
     h("section", { class: "signin-brand" },
       h("div", { class: "signin-logo" }, brandMark("signin-mark"), h("span", {}, "cust", h("b", { text: "IDR" }))),
@@ -64,8 +87,8 @@ export function viewSignIn() {
           d.forEach((p) => svg.append(s("path", { d: p })));
           return h("li", {}, svg, t);
         }))),
-      rings,
+      mergeGraphic(),
       h("p", { class: "signin-foot", text: "custIDR · open source, MIT licence" })),
-    h("section", { class: "signin-side" }, form)));
+    h("section", { class: "signin-side" }, themeButton(), form)));
   email.focus();
 }
