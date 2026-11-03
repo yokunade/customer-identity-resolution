@@ -99,6 +99,20 @@ class Repository:
         ).fetchall()
         return {(r["key_type"], bytes(r["key_value"])): r["n"] for r in rows if r["n"]}
 
+    def block_customers(self, keys: list[tuple[str, bytes]], cap: int) -> dict[tuple[str, bytes], int]:
+        """Distinct customers holding each blocking key, counted no further than cap + 1."""
+        if not keys:
+            return {}
+        rows = self.conn.execute(
+            "SELECT q.t AS key_type, q.v AS key_value, ("
+            "  SELECT count(*) FROM (SELECT DISTINCT sr.customer_id FROM blocking_key b"
+            "   JOIN source_record sr ON sr.record_id = b.record_id"
+            "   WHERE b.key_type = q.t AND b.key_value = q.v LIMIT %s) s"
+            ") AS n FROM unnest(%s::text[], %s::bytea[]) AS q(t, v)",
+            (cap + 1, [t for t, _ in keys], [v for _, v in keys]),
+        ).fetchall()
+        return {(r["key_type"], bytes(r["key_value"])): r["n"] for r in rows}
+
     def candidate_pool(self, blocking_keys: KeySet, limit: int, exclude_record_id: int | None = None) -> list[int]:
         """Records sharing any blocking key, those sharing the most keys first, so a
         pool truncated at limit drops the weakest candidates, not the newest."""

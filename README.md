@@ -152,6 +152,7 @@ curl -s localhost:8000/v1/resolve -H 'X-API-Key: demo-key' -H 'Content-Type: app
             "competing_customer_ids": []},
   "candidates_considered": 1,
   "skipped_blocks": [],
+  "shared_identifiers": [],                 // email | phone | postcode held by too many customers to match on
   "match_keys_generated": 17,
   "data_quality": [{"field": "address.postcode", "code": "postcode_found_in_lines", "severity": "info"}],
   "cleansed": { "...": "standardised record" },
@@ -184,6 +185,8 @@ A pair a reviewer kept apart is never re-linked.
 | `API_KEYS` | empty | Comma-separated. Empty disables auth. |
 | `MAX_BLOCK_SIZE` | 5000 | Blocking keys larger than this are skipped. |
 | `MAX_CANDIDATES` | 2000 | Candidate pool ceiling per record; candidates sharing the most blocking keys are kept. |
+| `SHARED_CONTACT_CUSTOMERS` | 10 | An email or phone held by more customers than this is shared (a company inbox, a switchboard) and not matched on. |
+| `SHARED_POSTCODE_CUSTOMERS` | 250 | The same for a postcode (a big-user postcode); the dwelling still matches. |
 | `LOCK_WAIT_WARN_MS` | 200 | Log a warning when a resolve waits longer than this for its advisory locks. |
 | `MAX_BATCH_SIZE` | 500 | |
 | `MAX_REQUEST_BYTES` | 2000000 | Larger request bodies are refused with 413 before parsing. Every field also has a length limit. |

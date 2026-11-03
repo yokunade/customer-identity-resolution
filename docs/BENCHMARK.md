@@ -281,9 +281,37 @@ because the wrong links build large mixed clusters:
 
 Two Sarahs who both carry the company email are linked as one person. The
 matcher treats every email and phone that passes the junk lists as personal.
-Detecting identifiers shared by many people (from block size or the number of
-distinct customers on a key) is the next fix; it is not in round 6.
+Detecting identifiers shared by many people is round 7.
 Report: `benchmark/results/round6_hot_blocks_report.json`.
+
+### Round 7: shared identifiers
+
+An email or phone held by more than 10 distinct customers, or a postcode held
+by more than 250, is no longer matched on (see "Shared identifiers" in
+`docs/MATCHING.md`). Same machine and data as round 6:
+
+| Hot data | Round 6 | Round 7 |
+|---|---:|---:|
+| Wrong links | 1,134 | 97 |
+| ...`EMAIL_FIRST` | 724 | 1 |
+| ...`NAME_POSTCODE` | 232 | 13 |
+| ...`EMAIL_NAME` | 92 | 1 |
+| Pairwise precision | 77.17% | 99.81% |
+| Overmerged customers | 358 | 91 |
+| People resolved perfectly | 89.96% | 91.15% |
+| Recall at arrival | 92.94% | 92.83% |
+| Missed links that blocking could reach | 4,050 | 4,125 |
+
+On hot data, precision is back to the plain-data level (99.82%, 93 wrong
+links). The cost is 75 more missed links: real matches whose only evidence
+was the shared value, such as a person whose two records agree only on the
+company email and forename. Those were indistinguishable from the 724 wrong
+`EMAIL_FIRST` links.
+
+On the plain data, nothing is shared, so the results match round 5: 93 wrong
+links, recall at arrival 93.41%. Lock waits and matching times are within
+noise of round 6.
+Report: `benchmark/results/round7_shared_identifiers_report.json`.
 
 ## Reproduce
 

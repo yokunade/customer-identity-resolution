@@ -1,0 +1,6954 @@
+{
+ "run": {
+  "records": 200000,
+  "workers": 3,
+  "auto_link_tiers": "exact,strong,probable,possible",
+  "elapsed_s": 1200.044162273407,
+  "throughput_rps": 166.66053324330397
+ },
+ "dataset": {
+  "records": 200000,
+  "people": 87848,
+  "customers_created": 95817,
+  "errors": 0
+ },
+ "pairwise": {
+  "precision": 0.99813,
+  "recall": 0.91247,
+  "f1": 0.95338,
+  "true_pairs": 198919,
+  "predicted_pairs": 181847,
+  "correct_pairs": 181507
+ },
+ "clusters": {
+  "people": 87848,
+  "people_perfectly_resolved": 80069,
+  "people_perfect_pct": 91.145,
+  "people_split": 7623,
+  "customers": 95817,
+  "customers_overmerged": 91,
+  "customers_overmerged_pct": 0.095,
+  "records_in_overmerged_customers": 370
+ },
+ "arrival_decisions": {
+  "records_that_should_link": 112152,
+  "links_made": 104183,
+  "wrong_links": 97,
+  "wrong_link_pct_of_links": 0.093,
+  "missed_links": 8047,
+  "missed_reachable": 4125,
+  "missed_unreachable": 3922,
+  "recall_at_arrival_pct": 92.825,
+  "recall_of_reachable_pct": 96.189
+ },
+ "review_queue": [],
+ "if_probable_sent_to_review_estimate": {
+  "note": "Estimated from this run by treating probable-tier links as new customers; ignores knock-on effects.",
+  "links_made": 103608,
+  "wrong_links": 97,
+  "wrong_link_pct_of_links": 0.094,
+  "recall_at_arrival_pct": 92.312,
+  "review_queue_items": 575
+ },
+ "by_tier": [
+  {
+   "tier": "exact",
+   "links": 45328,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "tier": "strong",
+   "links": 49109,
+   "wrong": 4,
+   "precision_pct": 99.992
+  },
+  {
+   "tier": "probable",
+   "links": 575,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "tier": "possible",
+   "links": 9171,
+   "wrong": 93,
+   "precision_pct": 98.986
+  }
+ ],
+ "by_rule": [
+  {
+   "rule": "EMAIL_NAME_DOB",
+   "links": 26610,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "EMAIL_NAME",
+   "links": 16796,
+   "wrong": 1,
+   "precision_pct": 99.994
+  },
+  {
+   "rule": "EMAIL_MOBILE_FIRST",
+   "links": 13631,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "PHONE_NAME_DOB",
+   "links": 11743,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "MOBILE_NAME",
+   "links": 7818,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "NAME_PREMISE_POSTCODE",
+   "links": 6798,
+   "wrong": 65,
+   "precision_pct": 99.044
+  },
+  {
+   "rule": "NAME_DOB_PREMISE_POSTCODE",
+   "links": 6328,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "EMAIL_FIRST",
+   "links": 2903,
+   "wrong": 1,
+   "precision_pct": 99.966
+  },
+  {
+   "rule": "MOBILE_FIRST",
+   "links": 1996,
+   "wrong": 1,
+   "precision_pct": 99.95
+  },
+  {
+   "rule": "EMAIL_LAST_INITIAL",
+   "links": 1680,
+   "wrong": 1,
+   "precision_pct": 99.94
+  },
+  {
+   "rule": "INITIAL_DOB_PREMISE_POSTCODE",
+   "links": 1445,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "SOUNDEX_NAME_DOB_POSTCODE",
+   "links": 1107,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "EMAIL_MOBILE_LAST_DOB",
+   "links": 818,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "MOBILE_LAST_INITIAL",
+   "links": 683,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "UPRN_NAME",
+   "links": 642,
+   "wrong": 6,
+   "precision_pct": 99.065
+  },
+  {
+   "rule": "NAME_POSTCODE",
+   "links": 618,
+   "wrong": 13,
+   "precision_pct": 97.896
+  },
+  {
+   "rule": "INITIAL_LAST_PREMISE_POSTCODE",
+   "links": 521,
+   "wrong": 3,
+   "precision_pct": 99.424
+  },
+  {
+   "rule": "FIRST_DOB_PREMISE_POSTCODE",
+   "links": 355,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "NAME_LASTSOUNDEX_PREMISE_POSTCODE",
+   "links": 347,
+   "wrong": 4,
+   "precision_pct": 98.847
+  },
+  {
+   "rule": "UPRN_NAME_DOB",
+   "links": 246,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "NAME_PREMISE_STREET",
+   "links": 245,
+   "wrong": 2,
+   "precision_pct": 99.184
+  },
+  {
+   "rule": "NAME_DOB_PREMISE_STREET",
+   "links": 227,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "NAME_DOB_POSTCODE",
+   "links": 174,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "NYSIIS_NAME_DOB_PREMISE_DISTRICT",
+   "links": 145,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "EMAIL_DOB",
+   "links": 140,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "NAME_DOBSWAP_POSTCODE",
+   "links": 84,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "MOBILE_DOB",
+   "links": 80,
+   "wrong": 0,
+   "precision_pct": 100.0
+  },
+  {
+   "rule": "ALTSURNAME_DOB_PREMISE_POSTCODE",
+   "links": 3,
+   "wrong": 0,
+   "precision_pct": 100.0
+  }
+ ],
+ "by_scenario": [
+  {
+   "tag": "household",
+   "kind": "negative",
+   "records": 170669,
+   "wrong_links": 97,
+   "wrong_link_pct": 0.057,
+   "should_link": 95764,
+   "missed": 7064,
+   "missed_pct": 7.376,
+   "missed_unreachable": 3450,
+   "missed_reachable_pct": 3.774
+  },
+  {
+   "tag": "mobile_missing",
+   "kind": "variation",
+   "records": 75100,
+   "wrong_links": 42,
+   "wrong_link_pct": 0.056,
+   "should_link": 42191,
+   "missed": 5258,
+   "missed_pct": 12.462,
+   "missed_unreachable": 2755,
+   "missed_reachable_pct": 5.933
+  },
+  {
+   "tag": "dob_missing",
+   "kind": "variation",
+   "records": 65476,
+   "wrong_links": 52,
+   "wrong_link_pct": 0.079,
+   "should_link": 36629,
+   "missed": 3523,
+   "missed_pct": 9.618,
+   "missed_unreachable": 2398,
+   "missed_reachable_pct": 3.071
+  },
+  {
+   "tag": "shared_landline",
+   "kind": "negative",
+   "records": 59443,
+   "wrong_links": 37,
+   "wrong_link_pct": 0.062,
+   "should_link": 33183,
+   "missed": 2421,
+   "missed_pct": 7.296,
+   "missed_unreachable": 1137,
+   "missed_reachable_pct": 3.869
+  },
+  {
+   "tag": "email_missing",
+   "kind": "variation",
+   "records": 56499,
+   "wrong_links": 29,
+   "wrong_link_pct": 0.051,
+   "should_link": 31499,
+   "missed": 4561,
+   "missed_pct": 14.48,
+   "missed_unreachable": 2372,
+   "missed_reachable_pct": 6.949
+  },
+  {
+   "tag": "moved",
+   "kind": "variation",
+   "records": 20031,
+   "wrong_links": 9,
+   "wrong_link_pct": 0.045,
+   "should_link": 11270,
+   "missed": 1356,
+   "missed_pct": 12.032,
+   "missed_unreachable": 746,
+   "missed_reachable_pct": 5.413
+  },
+  {
+   "tag": "house_share",
+   "kind": "negative",
+   "records": 19417,
+   "wrong_links": 1,
+   "wrong_link_pct": 0.005,
+   "should_link": 10858,
+   "missed": 655,
+   "missed_pct": 6.032,
+   "missed_unreachable": 323,
+   "missed_reachable_pct": 3.058
+  },
+  {
+   "tag": "address_missing",
+   "kind": "variation",
+   "records": 18726,
+   "wrong_links": 1,
+   "wrong_link_pct": 0.005,
+   "should_link": 10504,
+   "missed": 2427,
+   "missed_pct": 23.105,
+   "missed_unreachable": 1693,
+   "missed_reachable_pct": 6.988
+  },
+  {
+   "tag": "nickname",
+   "kind": "variation",
+   "records": 15757,
+   "wrong_links": 6,
+   "wrong_link_pct": 0.038,
+   "should_link": 8831,
+   "missed": 976,
+   "missed_pct": 11.052,
+   "missed_unreachable": 316,
+   "missed_reachable_pct": 7.474
+  },
+  {
+   "tag": "moved_new_address",
+   "kind": "variation",
+   "records": 11409,
+   "wrong_links": 6,
+   "wrong_link_pct": 0.053,
+   "should_link": 5790,
+   "missed": 592,
+   "missed_pct": 10.225,
+   "missed_unreachable": 303,
+   "missed_reachable_pct": 4.991
+  },
+  {
+   "tag": "old_email",
+   "kind": "variation",
+   "records": 9017,
+   "wrong_links": 3,
+   "wrong_link_pct": 0.033,
+   "should_link": 5092,
+   "missed": 625,
+   "missed_pct": 12.274,
+   "missed_unreachable": 360,
+   "missed_reachable_pct": 5.204
+  },
+  {
+   "tag": "surname_change",
+   "kind": "variation",
+   "records": 8253,
+   "wrong_links": 0,
+   "wrong_link_pct": 0.0,
+   "should_link": 4585,
+   "missed": 931,
+   "missed_pct": 20.305,
+   "missed_unreachable": 527,
+   "missed_reachable_pct": 8.811
+  },
+  {
+   "tag": "typo_last",
+   "kind": "variation",
+   "records": 8055,
+   "wrong_links": 4,
+   "wrong_link_pct": 0.05,
+   "should_link": 4537,
+   "missed": 608,
+   "missed_pct": 13.401,
+   "missed_unreachable": 162,
+   "missed_reachable_pct": 9.83
+  },
+  {
+   "tag": "typo_first",
+   "kind": "variation",
+   "records": 8054,
+   "wrong_links": 3,
+   "wrong_link_pct": 0.037,
+   "should_link": 4461,
+   "missed": 997,
+   "missed_pct": 22.349,
+   "missed_unreachable": 140,
+   "missed_reachable_pct": 19.211
+  },
+  {
+   "tag": "hot_phone",
+   "kind": "variation",
+   "records": 8025,
+   "wrong_links": 6,
+   "wrong_link_pct": 0.075,
+   "should_link": 4516,
+   "missed": 436,
+   "missed_pct": 9.655,
+   "missed_unreachable": 178,
+   "missed_reachable_pct": 5.713
+  },
+  {
+   "tag": "shared_family_email",
+   "kind": "negative",
+   "records": 7996,
+   "wrong_links": 5,
+   "wrong_link_pct": 0.063,
+   "should_link": 4502,
+   "missed": 466,
+   "missed_pct": 10.351,
+   "missed_unreachable": 259,
+   "missed_reachable_pct": 4.598
+  },
+  {
+   "tag": "shared_couple_mobile",
+   "kind": "negative",
+   "records": 5137,
+   "wrong_links": 1,
+   "wrong_link_pct": 0.019,
+   "should_link": 2917,
+   "missed": 215,
+   "missed_pct": 7.371,
+   "missed_unreachable": 96,
+   "missed_reachable_pct": 4.08
+  },
+  {
+   "tag": "postcode_in_lines",
+   "kind": "variation",
+   "records": 5123,
+   "wrong_links": 3,
+   "wrong_link_pct": 0.059,
+   "should_link": 2866,
+   "missed": 169,
+   "missed_pct": 5.897,
+   "missed_unreachable": 71,
+   "missed_reachable_pct": 3.419
+  },
+  {
+   "tag": "(clean)",
+   "kind": "variation",
+   "records": 5037,
+   "wrong_links": 0,
+   "wrong_link_pct": 0.0,
+   "should_link": 2867,
+   "missed": 10,
+   "missed_pct": 0.349,
+   "missed_unreachable": 1,
+   "missed_reachable_pct": 0.314
+  },
+  {
+   "tag": "previous_address_supplied",
+   "kind": "variation",
+   "records": 4592,
+   "wrong_links": 6,
+   "wrong_link_pct": 0.131,
+   "should_link": 2355,
+   "missed": 105,
+   "missed_pct": 4.459,
+   "missed_unreachable": 40,
+   "missed_reachable_pct": 2.76
+  },
+  {
+   "tag": "old_address_unlinked",
+   "kind": "variation",
+   "records": 4174,
+   "wrong_links": 0,
+   "wrong_link_pct": 0.0,
+   "should_link": 2300,
+   "missed": 566,
+   "missed_pct": 24.609,
+   "missed_unreachable": 419,
+   "missed_reachable_pct": 6.391
+  },
+  {
+   "tag": "hot_postcode",
+   "kind": "variation",
+   "records": 3960,
+   "wrong_links": 6,
+   "wrong_link_pct": 0.152,
+   "should_link": 2233,
+   "missed": 510,
+   "missed_pct": 22.839,
+   "missed_unreachable": 122,
+   "missed_reachable_pct": 17.376
+  },
+  {
+   "tag": "postcode_missing",
+   "kind": "variation",
+   "records": 3411,
+   "wrong_links": 3,
+   "wrong_link_pct": 0.088,
+   "should_link": 1878,
+   "missed": 145,
+   "missed_pct": 7.721,
+   "missed_unreachable": 60,
+   "missed_reachable_pct": 4.526
+  },
+  {
+   "tag": "email_domain_typo",
+   "kind": "variation",
+   "records": 3261,
+   "wrong_links": 2,
+   "wrong_link_pct": 0.061,
+   "should_link": 1799,
+   "missed": 80,
+   "missed_pct": 4.447,
+   "missed_unreachable": 38,
+   "missed_reachable_pct": 2.335
+  },
+  {
+   "tag": "dob_typo",
+   "kind": "variation",
+   "records": 3020,
+   "wrong_links": 0,
+   "wrong_link_pct": 0.0,
+   "should_link": 1688,
+   "missed": 238,
+   "missed_pct": 14.1,
+   "missed_unreachable": 56,
+   "missed_reachable_pct": 10.782
+  },
+  {
+   "tag": "email_variant",
+   "kind": "variation",
+   "records": 2998,
+   "wrong_links": 1,
+   "wrong_link_pct": 0.033,
+   "should_link": 1717,
+   "missed": 65,
+   "missed_pct": 3.786,
+   "missed_unreachable": 32,
+   "missed_reachable_pct": 1.922
+  },
+  {
+   "tag": "mobile_lost_zero",
+   "kind": "variation",
+   "records": 2465,
+   "wrong_links": 3,
+   "wrong_link_pct": 0.122,
+   "should_link": 1353,
+   "missed": 68,
+   "missed_pct": 5.026,
+   "missed_unreachable": 28,
+   "missed_reachable_pct": 2.956
+  },
+  {
+   "tag": "postcode_typo",
+   "kind": "variation",
+   "records": 2095,
+   "wrong_links": 0,
+   "wrong_link_pct": 0.0,
+   "should_link": 1142,
+   "missed": 131,
+   "missed_pct": 11.471,
+   "missed_unreachable": 24,
+   "missed_reachable_pct": 9.37
+  },
+  {
+   "tag": "hot_email",
+   "kind": "variation",
+   "records": 1990,
+   "wrong_links": 1,
+   "wrong_link_pct": 0.05,
+   "should_link": 1104,
+   "missed": 80,
+   "missed_pct": 7.246,
+   "missed_unreachable": 41,
+   "missed_reachable_pct": 3.533
+  },
+  {
+   "tag": "mobile_digit_typo",
+   "kind": "variation",
+   "records": 1436,
+   "wrong_links": 0,
+   "wrong_link_pct": 0.0,
+   "should_link": 810,
+   "missed": 88,
+   "missed_pct": 10.864,
+   "missed_unreachable": 33,
+   "missed_reachable_pct": 6.79
+  },
+  {
+   "tag": "junior_senior",
+   "kind": "negative",
+   "records": 1383,
+   "wrong_links": 67,
+   "wrong_link_pct": 4.845,
+   "should_link": 769,
+   "missed": 42,
+   "missed_pct": 5.462,
+   "missed_unreachable": 16,
+   "missed_reachable_pct": 3.381
+  },
+  {
+   "tag": "missing_flat_number",
+   "kind": "variation",
+   "records": 1024,
+   "wrong_links": 1,
+   "wrong_link_pct": 0.098,
+   "should_link": 579,
+   "missed": 39,
+   "missed_pct": 6.736,
+   "missed_unreachable": 9,
+   "missed_reachable_pct": 5.181
+  },
+  {
+   "tag": "doppelganger",
+   "kind": "negative",
+   "records": 1014,
+   "wrong_links": 1,
+   "wrong_link_pct": 0.099,
+   "should_link": 512,
+   "missed": 35,
+   "missed_pct": 6.836,
+   "missed_unreachable": 14,
+   "missed_reachable_pct": 4.102
+  },
+  {
+   "tag": "dob_swapped",
+   "kind": "variation",
+   "records": 1004,
+   "wrong_links": 0,
+   "wrong_link_pct": 0.0,
+   "should_link": 552,
+   "missed": 44,
+   "missed_pct": 7.971,
+   "missed_unreachable": 24,
+   "missed_reachable_pct": 3.623
+  },
+  {
+   "tag": "suffix_omitted",
+   "kind": "negative",
+   "records": 847,
+   "wrong_links": 47,
+   "wrong_link_pct": 5.549,
+   "should_link": 477,
+   "missed": 23,
+   "missed_pct": 4.822,
+   "missed_unreachable": 8,
+   "missed_reachable_pct": 3.145
+  },
+  {
+   "tag": "twin",
+   "kind": "negative",
+   "records": 813,
+   "wrong_links": 1,
+   "wrong_link_pct": 0.123,
+   "should_link": 469,
+   "missed": 41,
+   "missed_pct": 8.742,
+   "missed_unreachable": 24,
+   "missed_reachable_pct": 3.625
+  },
+  {
+   "tag": "wrong_email_other_person",
+   "kind": "negative",
+   "records": 784,
+   "wrong_links": 1,
+   "wrong_link_pct": 0.128,
+   "should_link": 441,
+   "missed": 58,
+   "missed_pct": 13.152,
+   "missed_unreachable": 27,
+   "missed_reachable_pct": 7.029
+  },
+  {
+   "tag": "wrong_mobile_other_person",
+   "kind": "negative",
+   "records": 757,
+   "wrong_links": 0,
+   "wrong_link_pct": 0.0,
+   "should_link": 441,
+   "missed": 48,
+   "missed_pct": 10.884,
+   "missed_unreachable": 23,
+   "missed_reachable_pct": 5.669
+  },
+  {
+   "tag": "dob_placeholder",
+   "kind": "variation",
+   "records": 671,
+   "wrong_links": 0,
+   "wrong_link_pct": 0.0,
+   "should_link": 375,
+   "missed": 27,
+   "missed_pct": 7.2,
+   "missed_unreachable": 17,
+   "missed_reachable_pct": 2.667
+  },
+  {
+   "tag": "partner_email_by_mistake",
+   "kind": "negative",
+   "records": 549,
+   "wrong_links": 0,
+   "wrong_link_pct": 0.0,
+   "should_link": 311,
+   "missed": 50,
+   "missed_pct": 16.077,
+   "missed_unreachable": 32,
+   "missed_reachable_pct": 5.788
+  },
+  {
+   "tag": "placeholder_email",
+   "kind": "negative",
+   "records": 293,
+   "wrong_links": 0,
+   "wrong_link_pct": 0.0,
+   "should_link": 167,
+   "missed": 19,
+   "missed_pct": 11.377,
+   "missed_unreachable": 10,
+   "missed_reachable_pct": 5.389
+  },
+  {
+   "tag": "placeholder_phone",
+   "kind": "negative",
+   "records": 127,
+   "wrong_links": 0,
+   "wrong_link_pct": 0.0,
+   "should_link": 62,
+   "missed": 8,
+   "missed_pct": 12.903,
+   "missed_unreachable": 3,
+   "missed_reachable_pct": 8.065
+  }
+ ],
+ "performance": {
+  "throughput_rps": 166.7,
+  "latency_ms_p50": 8.54,
+  "latency_ms_p95": 29.86,
+  "latency_ms_p99": 301.69,
+  "latency_ms_max": 565.9,
+  "pool_median": 2.0,
+  "pool_p99": 2000,
+  "pool_max": 2000,
+  "matching_ms_p50": 1.87,
+  "matching_ms_p99": 165.94,
+  "lock_wait_ms_p50": 2.31,
+  "lock_wait_ms_p99": 138.42,
+  "lock_wait_ms_max": 376.81,
+  "records_with_skipped_blocks": 3024
+ },
+ "examples": {
+  "wrong_links": [
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0021841",
+      "full_name": "CHEN, THOMAS",
+      "gender": "Male",
+      "email": "thomas_chen88@icloud.com",
+      "address": {
+       "town": "LONDON",
+       "line1": "58 BELGRAVE LN",
+       "postcode": "N146JS"
+      },
+      "home_phone": "0113 243 0000"
+     },
+     "truth": {
+      "person_id": 98099,
+      "household_id": 38910,
+      "tags": [
+       "dob_missing",
+       "household",
+       "junior_senior",
+       "mobile_missing",
+       "suffix_omitted",
+       "hot_phone"
+      ]
+     },
+     "result": {
+      "customer_id": "25edcb57-a532-42d7-92fc-199b070f8fe3",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       83195
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0045648",
+       "first_name": "Thomas",
+       "last_name": "Chen",
+       "date_of_birth": "2003-05-07",
+       "email": "thomas7020@gmail.com",
+       "mobile_phone": "07394 962489",
+       "address": {
+        "town": "London",
+        "line1": "58 Belgrave Lane",
+        "postcode": "N14 6JS"
+       }
+      },
+      "truth": {
+       "person_id": 98101,
+       "household_id": 38910,
+       "tags": [
+        "household",
+        "junior_senior",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "25edcb57-a532-42d7-92fc-199b070f8fe3",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0013597",
+      "full_name": "HOWARD, THOMAS",
+      "suffix": "Jr",
+      "phone": "+44 (0)7329 239890",
+      "address": {
+       "line1": "61 GLADSTONE LN",
+       "line2": "CARDIFF CF4 8JH"
+      }
+     },
+     "truth": {
+      "person_id": 60983,
+      "household_id": 24271,
+      "tags": [
+       "dob_missing",
+       "email_missing",
+       "household",
+       "junior_senior",
+       "moved",
+       "postcode_in_lines"
+      ]
+     },
+     "result": {
+      "customer_id": "8cc15192-0ca8-430c-a375-45e3e6b5fc6b",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       27091
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0028427",
+       "first_name": "THOMAS",
+       "last_name": "HOWARD",
+       "date_of_birth": "1944-09-28",
+       "email": "thomas.howard@talktalk.net",
+       "address": {
+        "town": "Cardiff",
+        "line1": "61 Gladstone Ln",
+        "postcode": "cf4 8jh"
+       }
+      },
+      "truth": {
+       "person_id": 60981,
+       "household_id": 24271,
+       "tags": [
+        "household",
+        "junior_senior",
+        "mobile_missing",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "8cc15192-0ca8-430c-a375-45e3e6b5fc6b",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0010965",
+      "full_name": "ROBERTS, RLSS",
+      "address": {
+       "town": "GLASGOW",
+       "line1": "216B SALISBURY RISE",
+       "postcode": "G34 7AG",
+       "uprn": "640234432799"
+      }
+     },
+     "truth": {
+      "person_id": 49078,
+      "household_id": 19490,
+      "tags": [
+       "dob_missing",
+       "email_missing",
+       "household",
+       "junior_senior",
+       "mobile_missing",
+       "suffix_omitted",
+       "typo_first"
+      ]
+     },
+     "result": {
+      "customer_id": "bfa02574-e065-484e-a7ad-941c71d557db",
+      "outcome": "matched",
+      "rule": "INITIAL_LAST_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       16666,
+       58013
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0022783",
+       "full_name": "Mr Ross Roberts",
+       "email": " ross.roberts@gmail.com ",
+       "address": {
+        "town": "Glasgow",
+        "line1": "216B Salisbury Rise",
+        "postcode": "G34 7AG"
+       },
+       "home_phone": "0113 243 0000"
+      },
+      "truth": {
+       "person_id": 49081,
+       "household_id": 19490,
+       "tags": [
+        "dob_missing",
+        "household",
+        "junior_senior",
+        "mobile_missing",
+        "old_email",
+        "suffix_omitted",
+        "hot_phone"
+       ]
+      },
+      "result": {
+       "customer_id": "bfa02574-e065-484e-a7ad-941c71d557db",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     },
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0022784",
+       "title": "Mr",
+       "first_name": "Ross",
+       "middle_names": "Gary",
+       "last_name": "Roberts",
+       "suffix": "Jr",
+       "email": "ross.roberts@gmail.com",
+       "address": {
+        "town": "Glasgow",
+        "lines": [
+         "216B Salisbury Rise"
+        ],
+        "postcode": "G347AG"
+       },
+       "home_phone": "0113 243 0000"
+      },
+      "truth": {
+       "person_id": 49081,
+       "household_id": 19490,
+       "tags": [
+        "dob_missing",
+        "household",
+        "junior_senior",
+        "mobile_missing",
+        "old_email",
+        "hot_phone"
+       ]
+      },
+      "result": {
+       "customer_id": "bfa02574-e065-484e-a7ad-941c71d557db",
+       "outcome": "matched",
+       "rule": "EMAIL_NAME",
+       "matched_record_ids": [
+        16666
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "ECOMMERCE",
+      "source_record_id": "ECO-0033781",
+      "full_name": "Jamie Saunder",
+      "gender": "Male",
+      "mobile_phone": "07229 533864",
+      "address": {
+       "town": "SOUTHAMPTON",
+       "lines": [
+        "184 CASTLE WAY"
+       ],
+       "postcode": "SO36 1SB"
+      }
+     },
+     "truth": {
+      "person_id": 72501,
+      "household_id": 28813,
+      "tags": [
+       "dob_missing",
+       "email_missing",
+       "household",
+       "shared_landline",
+       "typo_last"
+      ]
+     },
+     "result": {
+      "customer_id": "2bc7097f-4ece-4347-aa79-57cb8a927db7",
+      "outcome": "matched",
+      "rule": "NAME_LASTSOUNDEX_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       2429
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0016127",
+       "full_name": "SAUNDERS, JIM",
+       "date_of_birth": "1997-09-17",
+       "email": "james_saunders71@gmail.com",
+       "mobile_phone": "07829 442750",
+       "home_phone": "+44 1922 081297",
+       "address": {
+        "town": "SOUTHAMPTON",
+        "line1": "184 CASTLE WAY",
+        "postcode": "SO361SB"
+       }
+      },
+      "truth": {
+       "person_id": 72504,
+       "household_id": 28813,
+       "tags": [
+        "household",
+        "nickname",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "2bc7097f-4ece-4347-aa79-57cb8a927db7",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CALLCENTRE",
+      "source_record_id": "CAL-0023478",
+      "first_name": "Jacob",
+      "last_name": "Cooper",
+      "date_of_birth": "27th November 2004",
+      "phone": "07938 519893",
+      "address": {
+       "town": "London",
+       "line1": "151 Heath St",
+       "postcode": "E127GJ"
+      }
+     },
+     "truth": {
+      "person_id": 104598,
+      "household_id": 41503,
+      "tags": [
+       "email_missing",
+       "household",
+       "junior_senior",
+       "suffix_omitted"
+      ]
+     },
+     "result": {
+      "customer_id": "d6ccf137-e0a3-4a67-9766-62c714d57ee9",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       38568,
+       100960
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0023287",
+       "full_name": "COOPER, JACOB",
+       "suffix": "Sr",
+       "gender": "Male",
+       "address": {
+        "town": "LONDON",
+        "line1": "151 HEATH ST",
+        "postcode": "E127GJ",
+        "uprn": "9806190632"
+       }
+      },
+      "truth": {
+       "person_id": 104596,
+       "household_id": 41503,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household",
+        "junior_senior",
+        "mobile_missing"
+       ]
+      },
+      "result": {
+       "customer_id": "d6ccf137-e0a3-4a67-9766-62c714d57ee9",
+       "outcome": "matched",
+       "rule": "NAME_POSTCODE",
+       "matched_record_ids": [
+        32980
+       ]
+      }
+     },
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0048567",
+       "full_name": "Jacob Cooper",
+       "email": "jacobcooper@gmail.com",
+       "phone": "00447822382890",
+       "address": {
+        "town": "London",
+        "lines": [
+         "151 Heath Street"
+        ],
+        "postcode": "E127GJ"
+       }
+      },
+      "truth": {
+       "person_id": 104596,
+       "household_id": 41503,
+       "tags": [
+        "dob_missing",
+        "email_variant",
+        "household",
+        "junior_senior",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "d6ccf137-e0a3-4a67-9766-62c714d57ee9",
+       "outcome": "matched",
+       "rule": "EMAIL_NAME",
+       "matched_record_ids": [
+        32980,
+        80129
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "MARKETING",
+      "source_record_id": "MAR-0013035",
+      "title": "Ms",
+      "first_name": "MARY",
+      "last_name": "THOMAS",
+      "address": {
+       "postcode": "LS2 9ZZ"
+      }
+     },
+     "truth": {
+      "person_id": 86655,
+      "household_id": 34366,
+      "tags": [
+       "dob_missing",
+       "email_missing",
+       "household",
+       "mobile_missing",
+       "shared_landline",
+       "hot_postcode"
+      ]
+     },
+     "result": {
+      "customer_id": "6a7e2619-482a-44cf-91dd-515b21f96cea",
+      "outcome": "matched",
+      "rule": "NAME_POSTCODE",
+      "matched_record_ids": [
+       3801
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0016792",
+       "first_name": "Mary",
+       "last_name": "Thomas",
+       "date_of_birth": "12/08/1953",
+       "email": "marythomas24@hotmail.co.uk",
+       "address": {
+        "town": "Belfast",
+        "line1": "146 Byron Grove",
+        "postcode": "LS2 9ZZ"
+       }
+      },
+      "truth": {
+       "person_id": 35969,
+       "household_id": 14244,
+       "tags": [
+        "household",
+        "mobile_missing",
+        "shared_landline",
+        "hot_postcode"
+       ]
+      },
+      "result": {
+       "customer_id": "6a7e2619-482a-44cf-91dd-515b21f96cea",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "ECOMMERCE",
+      "source_record_id": "ECO-0020624",
+      "full_name": "John Dean",
+      "email": "johndean84@btinternet.com",
+      "address": {
+       "town": "Newcastle Upon Tyne",
+       "line1": "Flat 27",
+       "line2": "79 Moor Road",
+       "postcode": "NE140QZ"
+      }
+     },
+     "truth": {
+      "person_id": 44273,
+      "household_id": 17548,
+      "tags": [
+       "dob_missing",
+       "household",
+       "junior_senior",
+       "mobile_missing",
+       "shared_couple_mobile",
+       "shared_family_email",
+       "suffix_omitted"
+      ]
+     },
+     "result": {
+      "customer_id": "aff63a3d-fc5c-432a-88da-dc2f01e11043",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       68072
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0020423",
+       "title": "Mr",
+       "first_name": "John",
+       "last_name": "Dean",
+       "suffix": "Jr",
+       "gender": "M",
+       "date_of_birth": "1998-11-03",
+       "email": "THEDEANS145@BTINTERNET.COM",
+       "mobile_phone": "07995597924",
+       "address": {
+        "town": "Newcastle Upon Tyne",
+        "line1": "Flat 27, 79 Moor Road",
+        "postcode": "NE14 0QZ",
+        "uprn": "441308371522"
+       }
+      },
+      "truth": {
+       "person_id": 44276,
+       "household_id": 17548,
+       "tags": [
+        "household",
+        "junior_senior",
+        "shared_family_email"
+       ]
+      },
+      "result": {
+       "customer_id": "aff63a3d-fc5c-432a-88da-dc2f01e11043",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0014277",
+      "full_name": "RICHARDS, THOMAS",
+      "gender": "M",
+      "address": {
+       "town": "GLASGOW",
+       "line1": "182 MILL CL",
+       "postcode": "G11 6XR",
+       "uprn": "586065842527"
+      }
+     },
+     "truth": {
+      "person_id": 63922,
+      "household_id": 25423,
+      "tags": [
+       "dob_missing",
+       "email_missing",
+       "household",
+       "junior_senior",
+       "mobile_missing",
+       "shared_landline",
+       "suffix_omitted"
+      ]
+     },
+     "result": {
+      "customer_id": "f385c3a9-907a-466a-8f5b-4eaf34be1d5a",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       77061,
+       180409
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "LOYALTY",
+       "source_record_id": "LOY-0021315",
+       "title": "Mr",
+       "first_name": "Thomas",
+       "last_name": "Richards",
+       "date_of_birth": "3/2/98",
+       "email": " thomasrichards58@gmail.com ",
+       "mobile_phone": "+44 7240 775731",
+       "address": {
+        "town": "GLASGOW",
+        "line1": "182 MILL CL",
+        "postcode": "G11 6XR"
+       }
+      },
+      "truth": {
+       "person_id": 63924,
+       "household_id": 25423,
+       "tags": [
+        "household",
+        "junior_senior",
+        "shared_landline",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "f385c3a9-907a-466a-8f5b-4eaf34be1d5a",
+       "outcome": "matched",
+       "rule": "EMAIL_NAME",
+       "matched_record_ids": [
+        8141
+       ]
+      }
+     },
+     {
+      "record": {
+       "source_system": "LOYALTY",
+       "source_record_id": "LOY-0021316",
+       "first_name": "Thomas",
+       "middle_names": "John",
+       "last_name": "Richards",
+       "suffix": "Jr",
+       "email": "thomasrichards58@gmail.com",
+       "mobile_phone": "07240775731",
+       "address": {
+        "town": "Glasgow",
+        "line1": "182 Mill Cl",
+        "postcode": "G11 6XR"
+       }
+      },
+      "truth": {
+       "person_id": 63924,
+       "household_id": 25423,
+       "tags": [
+        "dob_missing",
+        "household",
+        "junior_senior",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "f385c3a9-907a-466a-8f5b-4eaf34be1d5a",
+       "outcome": "matched",
+       "rule": "EMAIL_MOBILE_FIRST",
+       "matched_record_ids": [
+        77061
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "ECOMMERCE",
+      "source_record_id": "ECO-0040697",
+      "title": "Mr",
+      "first_name": "Joseph",
+      "last_name": "Mason",
+      "suffix": "Jr",
+      "email": "josephx1602@gmail.com",
+      "mobile_phone": "07971535967",
+      "address": {
+       "town": "LEEDS",
+       "line1": "205 BROOKFIELD CT",
+       "postcode": "LS212DN"
+      }
+     },
+     "truth": {
+      "person_id": 87800,
+      "household_id": 34845,
+      "tags": [
+       "dob_missing",
+       "household",
+       "junior_senior",
+       "shared_landline"
+      ]
+     },
+     "result": {
+      "customer_id": "dc3abf72-b3d9-4c87-8914-e71e62256faa",
+      "outcome": "matched",
+      "rule": "NAME_POSTCODE",
+      "matched_record_ids": [
+       22917
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "MARKETING",
+       "source_record_id": "MAR-0013178",
+       "title": "Mr",
+       "first_name": "Joseph",
+       "last_name": "Mason",
+       "email": "josephmason54@sky.com",
+       "address": {
+        "postcode": "LS21 2DN"
+       }
+      },
+      "truth": {
+       "person_id": 87798,
+       "household_id": 34845,
+       "tags": [
+        "dob_missing",
+        "household",
+        "junior_senior",
+        "mobile_missing",
+        "moved",
+        "shared_landline",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "dc3abf72-b3d9-4c87-8914-e71e62256faa",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0025434",
+      "first_name": "MOHAMMED",
+      "last_name": "THOMMAS",
+      "suffix": "Sr",
+      "date_of_birth": "15/12/1968",
+      "email": "MOHAMMEDZ5532@GMAIL.COM",
+      "mobile_phone": "07770 941728",
+      "home_phone": "0133-108-8486",
+      "address": {
+       "town": "Edinburgh",
+       "line1": "64 Priory Mews",
+       "postcode": "EH59NL"
+      }
+     },
+     "truth": {
+      "person_id": 54810,
+      "household_id": 21775,
+      "tags": [
+       "household",
+       "junior_senior",
+       "shared_landline",
+       "typo_last"
+      ]
+     },
+     "result": {
+      "customer_id": "7349bf4c-0e75-47cb-8430-8b8bae7920a3",
+      "outcome": "matched",
+      "rule": "NAME_LASTSOUNDEX_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       97063
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0025509",
+       "full_name": "MR MOHAMMED THOMAS",
+       "gender": "male",
+       "email": "mohammedy9249@gmail.com",
+       "address": {
+        "town": "EDINBURGH",
+        "line1": "64 PRIORY MEWS",
+        "postcode": "EH5 9NL"
+       }
+      },
+      "truth": {
+       "person_id": 54812,
+       "household_id": 21775,
+       "tags": [
+        "dob_missing",
+        "household",
+        "junior_senior",
+        "mobile_missing",
+        "old_email",
+        "shared_landline",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "7349bf4c-0e75-47cb-8430-8b8bae7920a3",
+       "outcome": "matched",
+       "rule": "NAME_POSTCODE",
+       "matched_record_ids": [
+        39761
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "ECOMMERCE",
+      "source_record_id": "ECO-0040795",
+      "full_name": "MRS LISA ELLIS",
+      "date_of_birth": "18/05/1947",
+      "email": "lisaellis10@gmail.com",
+      "mobile_phone": "07185 214641",
+      "address": {
+       "town": "Leeds",
+       "lines": [
+        "54 Marlborough Mews"
+       ],
+       "postcode": "LS102LR"
+      },
+      "previous_addresses": [
+       {
+        "town": "Oxford",
+        "county": "Oxfordshire",
+        "line1": "167 North Lane",
+        "postcode": "OX24 8FG"
+       }
+      ]
+     },
+     "truth": {
+      "person_id": 88015,
+      "household_id": 34927,
+      "tags": [
+       "household",
+       "moved",
+       "moved_new_address",
+       "previous_address_supplied"
+      ]
+     },
+     "result": {
+      "customer_id": "ae569fb5-77d5-42cf-8c95-b9dd3fab3c66",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       107526
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0019584",
+       "full_name": "ELLIS, ELIZABETH MELISSA",
+       "mobile_phone": "07801 591125",
+       "address": {
+        "town": "OXFORD",
+        "county": "OXFORDSHIRE",
+        "line1": "167 NORTH LN",
+        "postcode": "ox24 8fg"
+       }
+      },
+      "truth": {
+       "person_id": 88016,
+       "household_id": 34927,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household"
+       ]
+      },
+      "result": {
+       "customer_id": "ae569fb5-77d5-42cf-8c95-b9dd3fab3c66",
+       "outcome": "matched",
+       "rule": "MOBILE_NAME",
+       "matched_record_ids": [
+        100888
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0034871",
+      "title": "Mrs",
+      "first_name": "Samantha",
+      "last_name": "Newton",
+      "gender": "F",
+      "mobile_phone": "07972 357941",
+      "address": {
+       "town": "NEWCASTLE UPON TYNE",
+       "line1": "FLAT 2",
+       "line2": "212 RUSSELL GARDENS",
+       "postcode": "NE77FT"
+      }
+     },
+     "truth": {
+      "person_id": 75267,
+      "household_id": 29913,
+      "tags": [
+       "dob_missing",
+       "email_missing",
+       "household"
+      ]
+     },
+     "result": {
+      "customer_id": "9c503b8d-3e43-4e51-b1bc-0c1993634152",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       41287
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "LOYALTY",
+       "source_record_id": "LOY-0025125",
+       "first_name": "Sam",
+       "last_name": "Newton",
+       "date_of_birth": "12/04/1953",
+       "email": "snewton@yahoo.co.uk",
+       "phone": "00447467991380",
+       "address": {
+        "town": "Newcastle Upon Tyne",
+        "line1": "Flat 2, 212 Russell Gardens",
+        "postcode": "ne7 7ft"
+       }
+      },
+      "truth": {
+       "person_id": 75266,
+       "household_id": 29913,
+       "tags": [
+        "household",
+        "moved",
+        "nickname"
+       ]
+      },
+      "result": {
+       "customer_id": "9c503b8d-3e43-4e51-b1bc-0c1993634152",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0006625",
+      "full_name": "BROWN, MICHAEL",
+      "email": "michaelbrown83@yahoo.co.uk",
+      "home_phone": "02035 111523",
+      "address": {
+       "town": "PLYMOUTH",
+       "line1": "171 TENNYSON ST",
+       "postcode": "PL31 4GW",
+       "uprn": "177371869562"
+      }
+     },
+     "truth": {
+      "person_id": 29449,
+      "household_id": 11646,
+      "tags": [
+       "dob_missing",
+       "household",
+       "junior_senior",
+       "mobile_missing",
+       "shared_landline",
+       "suffix_omitted"
+      ]
+     },
+     "result": {
+      "customer_id": "7a98a523-3cc2-4794-b863-e3abac855fa5",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       36718,
+       140707,
+       141571
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0013578",
+       "title": "Mr",
+       "first_name": "Mick",
+       "last_name": "Brown",
+       "date_of_birth": "20/07/2003",
+       "mobile_phone": "+44 (0)7516 499895",
+       "address": {
+        "town": "Plymouth",
+        "line1": "171 Tennyson Street",
+        "postcode": "PL31 4GW"
+       }
+      },
+      "truth": {
+       "person_id": 29451,
+       "household_id": 11646,
+       "tags": [
+        "email_missing",
+        "household",
+        "junior_senior",
+        "nickname",
+        "shared_landline",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "7a98a523-3cc2-4794-b863-e3abac855fa5",
+       "outcome": "matched",
+       "rule": "PHONE_NAME_DOB",
+       "matched_record_ids": [
+        9160
+       ]
+      }
+     },
+     {
+      "record": {
+       "source_system": "LOYALTY",
+       "source_record_id": "LOY-0009804",
+       "title": "Mr",
+       "first_name": "Michael",
+       "last_name": "Brown",
+       "date_of_birth": "20/7/03",
+       "email": "michaelx7758@btinternet.com",
+       "address": {
+        "town": "PLYMOUTH",
+        "line1": "171 TENNYSON STREET",
+        "postcode": "PL31 4GW"
+       },
+       "home_phone": "0113 243 0000"
+      },
+      "truth": {
+       "person_id": 29451,
+       "household_id": 11646,
+       "tags": [
+        "household",
+        "junior_senior",
+        "mobile_missing",
+        "shared_landline",
+        "suffix_omitted",
+        "hot_phone"
+       ]
+      },
+      "result": {
+       "customer_id": "7a98a523-3cc2-4794-b863-e3abac855fa5",
+       "outcome": "matched",
+       "rule": "EMAIL_NAME_DOB",
+       "matched_record_ids": [
+        9160
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "MARKETING",
+      "source_record_id": "MAR-0013859",
+      "title": "Mr",
+      "first_name": "Jack",
+      "last_name": "Johnson",
+      "email": "jack.johnson@icloud.com",
+      "mobile_phone": "00447896753159",
+      "address": {
+       "postcode": "NG4 7PA",
+       "line1": "220 Wood Gardens"
+      },
+      "home_phone": "0113 243 0000"
+     },
+     "truth": {
+      "person_id": 92330,
+      "household_id": 36648,
+      "tags": [
+       "dob_missing",
+       "household",
+       "shared_landline",
+       "hot_phone"
+      ]
+     },
+     "result": {
+      "customer_id": "3620c756-83a2-4052-aabd-e4c98f8a132a",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       9022,
+       11701,
+       40354
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0020570",
+       "full_name": "JOHNSON, JACK",
+       "address": {
+        "town": "NOTTINGHAM",
+        "line1": "220 WOOD GDNS",
+        "postcode": "NG4 7PA",
+        "uprn": "407983287648"
+       }
+      },
+      "truth": {
+       "person_id": 92330,
+       "household_id": 36648,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household",
+        "mobile_missing",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "3620c756-83a2-4052-aabd-e4c98f8a132a",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     },
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0042876",
+       "title": "Mr",
+       "first_name": "John",
+       "last_name": "Johnson",
+       "date_of_birth": "17/08/2007",
+       "email": "johnjohnson17@gmail.com",
+       "phone": "+44 7532 137264",
+       "address": {
+        "town": "NOTTINGHAM",
+        "line1": "220 WOOD GARDENS",
+        "postcode": "NG4 7PA",
+        "uprn": "407983287648"
+       },
+       "home_phone": "0113 243 0000"
+      },
+      "truth": {
+       "person_id": 92333,
+       "household_id": 36648,
+       "tags": [
+        "household",
+        "shared_landline",
+        "hot_phone"
+       ]
+      },
+      "result": {
+       "customer_id": "3620c756-83a2-4052-aabd-e4c98f8a132a",
+       "outcome": "matched",
+       "rule": "UPRN_NAME",
+       "matched_record_ids": [
+        9022
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0047174",
+      "first_name": "James",
+      "last_name": "Williams",
+      "gender": "Male",
+      "mobile_phone": "07577074771",
+      "home_phone": "02073012159",
+      "address": {
+       "town": "EDINBURGH",
+       "line1": "212 CHESTNUT ROAD"
+      }
+     },
+     "truth": {
+      "person_id": 101317,
+      "household_id": 40219,
+      "tags": [
+       "dob_missing",
+       "email_missing",
+       "household",
+       "junior_senior",
+       "postcode_missing",
+       "shared_landline",
+       "suffix_omitted"
+      ]
+     },
+     "result": {
+      "customer_id": "467f159e-fe55-4489-8588-e983eb9063c2",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_STREET",
+      "matched_record_ids": [
+       35302
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0047024",
+       "full_name": "Mr Jim Williams",
+       "date_of_birth": "19/01/1943",
+       "email": "jamesx8737@gmail.com",
+       "mobile_phone": "(07333) 015822",
+       "address": {
+        "town": "Edinburgh",
+        "lines": [
+         "212 Chestnut Road"
+        ],
+        "postcode": "EH4 5XS"
+       }
+      },
+      "truth": {
+       "person_id": 101315,
+       "household_id": 40219,
+       "tags": [
+        "household",
+        "junior_senior",
+        "nickname",
+        "shared_landline",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "467f159e-fe55-4489-8588-e983eb9063c2",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0006174",
+      "full_name": "WILSON, JAMES",
+      "date_of_birth": "19/10/1988",
+      "address": {
+       "town": "LONDON",
+       "line1": "111B SALISBURY LN",
+       "postcode": "N18 0BE",
+       "uprn": "273966082556"
+      }
+     },
+     "truth": {
+      "person_id": 27526,
+      "household_id": 10884,
+      "tags": [
+       "email_missing",
+       "household",
+       "junior_senior",
+       "mobile_missing",
+       "suffix_omitted"
+      ]
+     },
+     "result": {
+      "customer_id": "344dbe44-9730-4fc6-b20f-d686b85da814",
+      "outcome": "matched",
+      "rule": "UPRN_NAME",
+      "matched_record_ids": [
+       85232
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0006172",
+       "full_name": "WILSON, JAMES",
+       "phone": "7341161869",
+       "address": {
+        "town": "LONDON",
+        "line1": "111B SALISBURY LN",
+        "postcode": "N180BE",
+        "uprn": "273966082556"
+       }
+      },
+      "truth": {
+       "person_id": 27524,
+       "household_id": 10884,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household",
+        "junior_senior",
+        "mobile_lost_zero",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "344dbe44-9730-4fc6-b20f-d686b85da814",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "ECOMMERCE",
+      "source_record_id": "ECO-0032529",
+      "first_name": "Hao",
+      "last_name": "Harris",
+      "address": {
+       "town": "LONDON",
+       "lines": [
+        "87 TENNYSON WALK"
+       ],
+       "postcode": "E7 0QZ"
+      },
+      "emails": [
+       "online.orders@bigshop.co.uk"
+      ]
+     },
+     "truth": {
+      "person_id": 69814,
+      "household_id": 27727,
+      "tags": [
+       "dob_missing",
+       "email_missing",
+       "household",
+       "junior_senior",
+       "mobile_missing",
+       "shared_landline",
+       "suffix_omitted",
+       "hot_email"
+      ]
+     },
+     "result": {
+      "customer_id": "4f7541d7-1e56-4201-8bc5-f55190ed2742",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       48293
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "LOYALTY",
+       "source_record_id": "LOY-0023257",
+       "first_name": "HAO",
+       "last_name": "HARRIS",
+       "suffix": "Sr",
+       "gender": "M",
+       "date_of_birth": "18 Jun 1960",
+       "email": "hao.harris@gmail.com",
+       "mobile_phone": "+44 7535 266780",
+       "address": {
+        "town": "London",
+        "line1": "87 Tennyson Walk",
+        "postcode": "E7 0QZ"
+       }
+      },
+      "truth": {
+       "person_id": 69812,
+       "household_id": 27727,
+       "tags": [
+        "household",
+        "junior_senior",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "4f7541d7-1e56-4201-8bc5-f55190ed2742",
+       "outcome": "matched",
+       "rule": "EMAIL_NAME",
+       "matched_record_ids": [
+        579
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0011861",
+      "first_name": "JOHN",
+      "last_name": "JONES",
+      "gender": "male",
+      "date_of_birth": "25-10-1967",
+      "email": "john_jones64@hotmail.co.uk",
+      "phone": "+44 7155 264660",
+      "address": {
+       "town": "Sheffield",
+       "county": "South Yorkshire",
+       "line1": "109 Portland Close",
+       "postcode": "LS2 9ZZ"
+      }
+     },
+     "truth": {
+      "person_id": 25677,
+      "household_id": 10175,
+      "tags": [
+       "household",
+       "shared_landline",
+       "hot_postcode"
+      ]
+     },
+     "result": {
+      "customer_id": "3522d1e1-aa1d-4f47-8fcb-e40730232642",
+      "outcome": "matched",
+      "rule": "NAME_POSTCODE",
+      "matched_record_ids": [
+       4064
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "LOYALTY",
+       "source_record_id": "LOY-0004526",
+       "first_name": "John",
+       "last_name": "Jones",
+       "gender": "Male",
+       "email": "john_jones96@hotmail.co.uk",
+       "phone": "07401 265127",
+       "address": {
+        "town": "Liverpool",
+        "line1": "Flat 22, Victoria House",
+        "line2": "137 Farm Gardens",
+        "postcode": "LS2 9ZZ"
+       }
+      },
+      "truth": {
+       "person_id": 13452,
+       "household_id": 5331,
+       "tags": [
+        "dob_missing",
+        "household",
+        "shared_landline",
+        "hot_postcode"
+       ]
+      },
+      "result": {
+       "customer_id": "3522d1e1-aa1d-4f47-8fcb-e40730232642",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "ECOMMERCE",
+      "source_record_id": "ECO-0040702",
+      "full_name": "Mr Christopher Robinson",
+      "date_of_birth": "14/07/1949",
+      "email": "christopherx9157@outlook.com",
+      "address": {
+       "town": "BELFAST",
+       "line1": "125A SPRINGFIELD LANE",
+       "line2": "JESMOND",
+       "postcode": "BT5 3ZG"
+      }
+     },
+     "truth": {
+      "person_id": 87816,
+      "household_id": 34853,
+      "tags": [
+       "household",
+       "mobile_missing",
+       "shared_landline"
+      ]
+     },
+     "result": {
+      "customer_id": "ff21208a-7d67-4dec-b551-1cad9214a821",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       26593
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0019541",
+       "full_name": "ROBINSON, CHRISTOPHER",
+       "mobile_phone": "07406 208816",
+       "home_phone": "01682351152",
+       "address": {
+        "town": "BELFAST",
+        "line1": "125A SPRINGFIELD LN",
+        "line2": "JESMOND",
+        "postcode": "BT53ZG"
+       }
+      },
+      "truth": {
+       "person_id": 87819,
+       "household_id": 34853,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household",
+        "shared_landline",
+        "twin"
+       ]
+      },
+      "result": {
+       "customer_id": "ff21208a-7d67-4dec-b551-1cad9214a821",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "LOYALTY",
+      "source_record_id": "LOY-0006650",
+      "title": "Mr",
+      "first_name": "James",
+      "last_name": "Smith",
+      "date_of_birth": "06/03/2006",
+      "email": " james4409@virginmedia.com ",
+      "phone": "+44 7805 294873",
+      "address": {
+       "town": "Southampton",
+       "line1": "93 Lincoln Avenue",
+       "postcode": "so52 0xd"
+      }
+     },
+     "truth": {
+      "person_id": 19757,
+      "household_id": 7863,
+      "tags": [
+       "household",
+       "junior_senior",
+       "suffix_omitted"
+      ]
+     },
+     "result": {
+      "customer_id": "8e84a852-e63e-4dd4-98b7-c36125bdcaa2",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       15215
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0004391",
+       "full_name": "SMITH, JAMES",
+       "email": "james4849@btinternet.com",
+       "address": {
+        "town": "SOUTHAMPTON",
+        "line1": "93 LINCOLN AVE",
+        "postcode": "SO52 0XD",
+        "uprn": "503602830152"
+       }
+      },
+      "truth": {
+       "person_id": 19755,
+       "household_id": 7863,
+       "tags": [
+        "dob_missing",
+        "household",
+        "junior_senior",
+        "mobile_missing",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "8e84a852-e63e-4dd4-98b7-c36125bdcaa2",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0009051",
+      "full_name": "SUTTON, JAMES",
+      "date_of_birth": "1947-09-17",
+      "address": {
+       "town": "LONDON",
+       "line1": "72 BROADWAY RD",
+       "postcode": "E61SX",
+       "uprn": "366166860530"
+      }
+     },
+     "truth": {
+      "person_id": 40533,
+      "household_id": 16060,
+      "tags": [
+       "email_missing",
+       "household",
+       "junior_senior",
+       "mobile_missing",
+       "suffix_omitted"
+      ]
+     },
+     "result": {
+      "customer_id": "1e2af520-4d16-4a25-94c5-3e52aa682f2d",
+      "outcome": "matched",
+      "rule": "UPRN_NAME",
+      "matched_record_ids": [
+       4630
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0009052",
+       "full_name": "SUTTON, JAMES",
+       "suffix": "Jr",
+       "email": "jsutton@gmail.com",
+       "address": {
+        "town": "LONDON",
+        "line1": "72 BROADWAY RD",
+        "postcode": "E6 1SX",
+        "uprn": "366166860530"
+       }
+      },
+      "truth": {
+       "person_id": 40535,
+       "household_id": 16060,
+       "tags": [
+        "dob_missing",
+        "household",
+        "junior_senior",
+        "mobile_missing"
+       ]
+      },
+      "result": {
+       "customer_id": "1e2af520-4d16-4a25-94c5-3e52aa682f2d",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0016379",
+      "full_name": "BROWN, ELIZABETH",
+      "email": "elizabeth1615@hotmail.co.uk",
+      "home_phone": "01645302872",
+      "address": {
+       "town": "BELFAST",
+       "line1": "39 MAIN ST",
+       "postcode": "BT43BQ",
+       "uprn": "314345005785"
+      }
+     },
+     "truth": {
+      "person_id": 73715,
+      "household_id": 29294,
+      "tags": [
+       "dob_missing",
+       "household",
+       "mobile_missing",
+       "shared_landline"
+      ]
+     },
+     "result": {
+      "customer_id": "9439f3fa-ccf7-4a6c-bb60-ef844a515e36",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       71296
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0034337",
+       "title": "Miss",
+       "first_name": "Lisa",
+       "last_name": "Brown",
+       "email": "lisabrown52@yaho.co.uk",
+       "mobile_phone": "+44 7525 625186",
+       "address": {
+        "town": "Belfast",
+        "line1": "39 Main Street",
+        "postcode": "BT4 3BQ"
+       }
+      },
+      "truth": {
+       "person_id": 73717,
+       "household_id": 29294,
+       "tags": [
+        "dob_missing",
+        "email_domain_typo",
+        "household",
+        "old_email",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "9439f3fa-ccf7-4a6c-bb60-ef844a515e36",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0011499",
+      "full_name": "ROSS, JAMES",
+      "gender": "M",
+      "email": "james.ross@icloud.com",
+      "address": {
+       "town": "LEEDS",
+       "line1": "70 OAK RD",
+       "line2": "JESMOND",
+       "postcode": "ls21 4ex"
+      }
+     },
+     "truth": {
+      "person_id": 51590,
+      "household_id": 20481,
+      "tags": [
+       "dob_missing",
+       "household",
+       "mobile_missing"
+      ]
+     },
+     "result": {
+      "customer_id": "2022c437-8a81-4cdd-83bc-2a7857b1b3aa",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       25970
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0024028",
+       "title": "Mr",
+       "first_name": "JAMIE",
+       "last_name": "ROSS",
+       "date_of_birth": "2005-08-08",
+       "email": "jamiez1792@live.co.uk",
+       "mobile_phone": "(07223) 558205",
+       "address": {
+        "town": "Leeds",
+        "line1": "70 Oak Rd",
+        "line2": "Jesmond",
+        "postcode": "ls21 4ex"
+       }
+      },
+      "truth": {
+       "person_id": 51591,
+       "household_id": 20481,
+       "tags": [
+        "household"
+       ]
+      },
+      "result": {
+       "customer_id": "2022c437-8a81-4cdd-83bc-2a7857b1b3aa",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "ECOMMERCE",
+      "source_record_id": "ECO-0047911",
+      "full_name": "Mr James May Sr",
+      "date_of_birth": "12/02/1993",
+      "email": "james_may88@btinternet.com",
+      "address": {
+       "town": "Liverpool",
+       "line1": "123 Green Road",
+       "postcode": "L165QB"
+      }
+     },
+     "truth": {
+      "person_id": 103153,
+      "household_id": 40939,
+      "tags": [
+       "household",
+       "junior_senior",
+       "mobile_missing"
+      ]
+     },
+     "result": {
+      "customer_id": "e4bef883-4da9-455a-be3e-b5e5c5be4a30",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       33381
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "CALLCENTRE",
+       "source_record_id": "CAL-0023139",
+       "title": "Mr",
+       "first_name": "JAMES",
+       "last_name": "MAY",
+       "address": {
+        "town": "LIVERPOOL",
+        "line1": "123 GREEN RD",
+        "postcode": "L16 5QB"
+       }
+      },
+      "truth": {
+       "person_id": 103155,
+       "household_id": 40939,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household",
+        "junior_senior",
+        "mobile_missing",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "e4bef883-4da9-455a-be3e-b5e5c5be4a30",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "MARKETING",
+      "source_record_id": "MAR-0005240",
+      "first_name": "Richard",
+      "last_name": "Lee",
+      "suffix": "Jr",
+      "email": "rlee@btinternet.com",
+      "address": {
+       "postcode": "NE28 9FX"
+      }
+     },
+     "truth": {
+      "person_id": 34739,
+      "household_id": 13742,
+      "tags": [
+       "dob_missing",
+       "household",
+       "junior_senior",
+       "mobile_missing"
+      ]
+     },
+     "result": {
+      "customer_id": "2cd3fc79-163b-4847-8e70-3e24c7461c92",
+      "outcome": "matched",
+      "rule": "NAME_POSTCODE",
+      "matched_record_ids": [
+       160474
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0015982",
+       "first_name": "RICHARD",
+       "middle_names": "Christopher",
+       "last_name": "LEE",
+       "gender": "Male",
+       "email": "richard.lee@talktalk.net",
+       "mobile_phone": "07905 951518",
+       "address": {
+        "town": "Newcastle Upon Tyne",
+        "line1": "48 Springfield Lane",
+        "postcode": "NE28 9FX"
+       },
+       "emails": [
+        "online.orders@bigshop.co.uk"
+       ]
+      },
+      "truth": {
+       "person_id": 34737,
+       "household_id": 13742,
+       "tags": [
+        "dob_missing",
+        "household",
+        "junior_senior",
+        "suffix_omitted",
+        "hot_email"
+       ]
+      },
+      "result": {
+       "customer_id": "2cd3fc79-163b-4847-8e70-3e24c7461c92",
+       "outcome": "matched",
+       "rule": "EMAIL_FIRST",
+       "matched_record_ids": [
+        40472
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0045428",
+      "first_name": "Justin",
+      "last_name": "Clayton",
+      "date_of_birth": "1997-06-30",
+      "email": "justin.clayton@gmail.com",
+      "mobile_phone": "+44 7233 787162",
+      "home_phone": "00442039806411",
+      "address": {
+       "line1": "94 Clifton Court",
+       "line2": "Headingley",
+       "line3": "Leicester LE1 8TL"
+      }
+     },
+     "truth": {
+      "person_id": 97620,
+      "household_id": 38728,
+      "tags": [
+       "household",
+       "junior_senior",
+       "postcode_in_lines",
+       "shared_landline",
+       "suffix_omitted"
+      ]
+     },
+     "result": {
+      "customer_id": "14346f65-cc1c-493b-9c31-647a9e0b729c",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       294
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0045316",
+       "full_name": "Justin Clayton Sr",
+       "email": "justinclayton59@yahoo.co.uk",
+       "phone": "+44 7993 088575",
+       "address": {
+        "town": "Leicester",
+        "line1": "94 Clifton Ct",
+        "line2": "Headingley",
+        "postcode": "LE1 8TL"
+       }
+      },
+      "truth": {
+       "person_id": 97617,
+       "household_id": 38728,
+       "tags": [
+        "dob_missing",
+        "household",
+        "junior_senior",
+        "shared_couple_mobile",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "14346f65-cc1c-493b-9c31-647a9e0b729c",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0013925",
+      "full_name": "LEWIS, JAMES MATTHEW",
+      "suffix": "Sr",
+      "gender": "Male",
+      "address": {
+       "town": "LONDON",
+       "line1": "111 LINCOLN RD",
+       "postcode": "N105WD",
+       "uprn": "712486340409"
+      }
+     },
+     "truth": {
+      "person_id": 62431,
+      "household_id": 24838,
+      "tags": [
+       "dob_missing",
+       "email_missing",
+       "household",
+       "junior_senior",
+       "mobile_missing",
+       "shared_landline"
+      ]
+     },
+     "result": {
+      "customer_id": "4f26c6fa-0aea-4c88-b845-d108f4ded749",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       48274,
+       49960,
+       94154
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0028976",
+       "title": "Mr",
+       "first_name": "Jamie",
+       "last_name": "Lewis",
+       "gender": "male",
+       "date_of_birth": "23/04/2005",
+       "home_phone": "0126-712-9801",
+       "address": {
+        "line1": "111 Lincoln Road",
+        "line2": "London N105WD"
+       }
+      },
+      "truth": {
+       "person_id": 62434,
+       "household_id": 24838,
+       "tags": [
+        "email_missing",
+        "household",
+        "junior_senior",
+        "mobile_missing",
+        "nickname",
+        "postcode_in_lines",
+        "shared_landline",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "4f26c6fa-0aea-4c88-b845-d108f4ded749",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     },
+     {
+      "record": {
+       "source_system": "LOYALTY",
+       "source_record_id": "LOY-0020792",
+       "first_name": "JAMES",
+       "last_name": "LEWIS",
+       "date_of_birth": "23/4/05",
+       "address": {
+        "town": "London",
+        "line1": "111 Lincoln Rd",
+        "postcode": "N105WD"
+       }
+      },
+      "truth": {
+       "person_id": 62434,
+       "household_id": 24838,
+       "tags": [
+        "email_missing",
+        "household",
+        "junior_senior",
+        "mobile_missing",
+        "shared_landline",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "4f26c6fa-0aea-4c88-b845-d108f4ded749",
+       "outcome": "matched",
+       "rule": "NAME_DOB_PREMISE_POSTCODE",
+       "matched_record_ids": [
+        48274
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "LOYALTY",
+      "source_record_id": "LOY-0023333",
+      "title": "Mr",
+      "first_name": "Jack",
+      "middle_names": "Thomas",
+      "last_name": "Singh",
+      "date_of_birth": "15-10-1988",
+      "email": "jackx9034@btinternet.com",
+      "mobile_phone": "07385 302110",
+      "address": {
+       "town": "NOTTINGHAM",
+       "line1": "41 PORTLAND LN",
+       "postcode": "NG15 2HU"
+      }
+     },
+     "truth": {
+      "person_id": 70059,
+      "household_id": 27822,
+      "tags": [
+       "household",
+       "moved",
+       "shared_landline"
+      ]
+     },
+     "result": {
+      "customer_id": "30a17729-b94b-46a8-a7de-c5f05bd44187",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       16843
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0032632",
+       "title": "Mr",
+       "first_name": "Jack",
+       "last_name": "Singh",
+       "gender": "male",
+       "email": "john_singh65@gmail.com",
+       "address": {
+        "town": "NOTTINGHAM",
+        "lines": [
+         "41 PORTLAND LANE"
+        ],
+        "postcode": "NG15 2HU"
+       }
+      },
+      "truth": {
+       "person_id": 70056,
+       "household_id": 27822,
+       "tags": [
+        "dob_missing",
+        "household",
+        "mobile_missing",
+        "nickname",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "30a17729-b94b-46a8-a7de-c5f05bd44187",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0042876",
+      "title": "Mr",
+      "first_name": "John",
+      "last_name": "Johnson",
+      "date_of_birth": "17/08/2007",
+      "email": "johnjohnson17@gmail.com",
+      "phone": "+44 7532 137264",
+      "address": {
+       "town": "NOTTINGHAM",
+       "line1": "220 WOOD GARDENS",
+       "postcode": "NG4 7PA",
+       "uprn": "407983287648"
+      },
+      "home_phone": "0113 243 0000"
+     },
+     "truth": {
+      "person_id": 92333,
+      "household_id": 36648,
+      "tags": [
+       "household",
+       "shared_landline",
+       "hot_phone"
+      ]
+     },
+     "result": {
+      "customer_id": "3620c756-83a2-4052-aabd-e4c98f8a132a",
+      "outcome": "matched",
+      "rule": "UPRN_NAME",
+      "matched_record_ids": [
+       9022
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0020570",
+       "full_name": "JOHNSON, JACK",
+       "address": {
+        "town": "NOTTINGHAM",
+        "line1": "220 WOOD GDNS",
+        "postcode": "NG4 7PA",
+        "uprn": "407983287648"
+       }
+      },
+      "truth": {
+       "person_id": 92330,
+       "household_id": 36648,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household",
+        "mobile_missing",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "3620c756-83a2-4052-aabd-e4c98f8a132a",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0002994",
+      "full_name": "KNIGHT, NATHAN",
+      "suffix": "Sr",
+      "email": "nathan.knight@gmail.com",
+      "home_phone": "+44 (0)1363 313863",
+      "address": {
+       "town": "MANCHESTER",
+       "line1": "10 WESTFIELD DR",
+       "postcode": "M28 8SE",
+       "uprn": "207779646881"
+      }
+     },
+     "truth": {
+      "person_id": 13524,
+      "household_id": 5360,
+      "tags": [
+       "dob_missing",
+       "household",
+       "junior_senior",
+       "mobile_missing",
+       "shared_landline"
+      ]
+     },
+     "result": {
+      "customer_id": "26196317-06c2-43ac-bba5-cf10ee32a600",
+      "outcome": "matched",
+      "rule": "UPRN_NAME",
+      "matched_record_ids": [
+       100283
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0002996",
+       "full_name": "KNIGHT, NATHAN",
+       "gender": "male",
+       "date_of_birth": "07-07-2005",
+       "email": "nknight@icloud.com",
+       "mobile_phone": "07416180956",
+       "home_phone": "01363313863",
+       "address": {
+        "town": "MANCHESTER",
+        "county": "GREATER MANCHESTER",
+        "line1": "10 WESTFIELD DR",
+        "postcode": "M288SE",
+        "uprn": "207779646881"
+       }
+      },
+      "truth": {
+       "person_id": 13526,
+       "household_id": 5360,
+       "tags": [
+        "household",
+        "junior_senior",
+        "shared_landline",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "26196317-06c2-43ac-bba5-cf10ee32a600",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CALLCENTRE",
+      "source_record_id": "CAL-0002814",
+      "first_name": "BERT",
+      "middle_names": "Connor",
+      "last_name": "KHN",
+      "phone": "7309328396",
+      "address": {
+       "line1": "36 Stafford Cl",
+       "line2": "Liverpool L2 5PY"
+      }
+     },
+     "truth": {
+      "person_id": 12570,
+      "household_id": 4970,
+      "tags": [
+       "dob_missing",
+       "email_missing",
+       "household",
+       "junior_senior",
+       "mobile_lost_zero",
+       "nickname",
+       "postcode_in_lines",
+       "suffix_omitted",
+       "typo_last"
+      ]
+     },
+     "result": {
+      "customer_id": "72a180dd-64cc-4f3c-93df-f10ee40a0d1b",
+      "outcome": "matched",
+      "rule": "NAME_LASTSOUNDEX_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       57439,
+       97998,
+       109160,
+       132515,
+       139633,
+       163270
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "LOYALTY",
+       "source_record_id": "LOY-0004245",
+       "title": "Mr",
+       "first_name": "Robert",
+       "last_name": "Khan",
+       "suffix": "Sr",
+       "gender": "M",
+       "date_of_birth": "29/03/1972",
+       "mobile_phone": "07808687408",
+       "address": {
+        "town": "LIVERPOOL",
+        "line1": "36 STAFFORD CL",
+        "postcode": "L2 5PY"
+       },
+       "home_phone": "0113 243 0000"
+      },
+      "truth": {
+       "person_id": 12568,
+       "household_id": 4970,
+       "tags": [
+        "email_missing",
+        "household",
+        "junior_senior",
+        "hot_phone"
+       ]
+      },
+      "result": {
+       "customer_id": "72a180dd-64cc-4f3c-93df-f10ee40a0d1b",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     },
+     {
+      "record": {
+       "source_system": "LOYALTY",
+       "source_record_id": "LOY-0004244",
+       "first_name": "Robert",
+       "last_name": "Khan",
+       "date_of_birth": "29/3/72",
+       "phone": "07808 687408",
+       "address": {
+        "town": "LIVERPOOL",
+        "line1": "36 STAFFORD CLOSE",
+        "postcode": "L25PY"
+       }
+      },
+      "truth": {
+       "person_id": 12568,
+       "household_id": 4970,
+       "tags": [
+        "email_missing",
+        "household",
+        "junior_senior",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "72a180dd-64cc-4f3c-93df-f10ee40a0d1b",
+       "outcome": "matched",
+       "rule": "PHONE_NAME_DOB",
+       "matched_record_ids": [
+        57439
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "ECOMMERCE",
+      "source_record_id": "ECO-0004930",
+      "full_name": "Daniel Smith Sr",
+      "date_of_birth": "1978-12-19",
+      "email": "danielx1494@outlook.com",
+      "mobile_phone": "00447209756730",
+      "address": {
+       "town": "Southampton",
+       "lines": [
+        "145A Clifton Lane"
+       ],
+       "postcode": "SO3 0WX"
+      }
+     },
+     "truth": {
+      "person_id": 10682,
+      "household_id": 4247,
+      "tags": [
+       "household",
+       "junior_senior"
+      ]
+     },
+     "result": {
+      "customer_id": "60404759-6237-463b-9e0c-aa73627ea5d5",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       152569
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0002353",
+       "full_name": "SMITH, DANIEL",
+       "address": {
+        "town": "SOUTHAMPTON",
+        "line1": "145A CLIFTON LN",
+        "postcode": "SO30WX",
+        "uprn": "967528967420"
+       }
+      },
+      "truth": {
+       "person_id": 10684,
+       "household_id": 4247,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household",
+        "junior_senior",
+        "mobile_missing",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "60404759-6237-463b-9e0c-aa73627ea5d5",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "LOYALTY",
+      "source_record_id": "LOY-0016016",
+      "title": "Mr",
+      "first_name": "Robert",
+      "last_name": "Patel",
+      "suffix": "Jr",
+      "date_of_birth": "4/1/98",
+      "mobile_phone": "07103054101",
+      "address": {
+       "town": "Liverpool",
+       "line1": "29 North Gdns",
+       "line2": "Morningside",
+       "postcode": "L18 9TZ"
+      }
+     },
+     "truth": {
+      "person_id": 48121,
+      "household_id": 19102,
+      "tags": [
+       "email_missing",
+       "household",
+       "junior_senior",
+       "old_email"
+      ]
+     },
+     "result": {
+      "customer_id": "20925832-6740-4301-a05d-05d724e8b1f8",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       27233
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0022219",
+       "first_name": "Robert",
+       "last_name": "Patel",
+       "email": "robertpatel72@gmail.com",
+       "phone": "07166 861309",
+       "address": {
+        "town": "Liverpool",
+        "line1": "29 North Gardens",
+        "line2": "Morningside",
+        "postcode": "L18 9TZ"
+       }
+      },
+      "truth": {
+       "person_id": 48119,
+       "household_id": 19102,
+       "tags": [
+        "dob_missing",
+        "household",
+        "junior_senior",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "20925832-6740-4301-a05d-05d724e8b1f8",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "ECOMMERCE",
+      "source_record_id": "ECO-0032853",
+      "full_name": "MR JACK ANDERSON",
+      "address": {
+       "town": "Manchester",
+       "line1": "Flat 3 Rose Court",
+       "line2": "43 Green Street",
+       "postcode": "M17 7SX"
+      }
+     },
+     "truth": {
+      "person_id": 70569,
+      "household_id": 28030,
+      "tags": [
+       "dob_missing",
+       "email_missing",
+       "household",
+       "mobile_missing",
+       "shared_landline"
+      ]
+     },
+     "result": {
+      "customer_id": "0a584b9a-9d86-48eb-a341-53c73ea85775",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       35633,
+       168427
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0015716",
+       "full_name": "ANDERSON, JACK",
+       "address": {
+        "town": "MANCHESTER",
+        "line1": "FLAT 3 ROSE COURT",
+        "line2": "43 GREEN ST",
+        "postcode": "M17 7SX",
+        "uprn": "116872879225"
+       }
+      },
+      "truth": {
+       "person_id": 70569,
+       "household_id": 28030,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household",
+        "mobile_missing",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "0a584b9a-9d86-48eb-a341-53c73ea85775",
+       "outcome": "matched",
+       "rule": "NAME_POSTCODE",
+       "matched_record_ids": [
+        6362
+       ]
+      }
+     },
+     {
+      "record": {
+       "source_system": "CALLCENTRE",
+       "source_record_id": "CAL-0015797",
+       "title": "Mr",
+       "first_name": "John",
+       "last_name": "Anderson",
+       "date_of_birth": "30/09/1991",
+       "mobile_phone": "07885 353621",
+       "home_phone": "(01832) 942773",
+       "address": {
+        "town": "MANCHESTER",
+        "line1": "FLAT 3 ROSE COURT",
+        "line2": "43 GREEN ST",
+        "postcode": "M17 7SX"
+       }
+      },
+      "truth": {
+       "person_id": 70571,
+       "household_id": 28030,
+       "tags": [
+        "email_missing",
+        "household",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "0a584b9a-9d86-48eb-a341-53c73ea85775",
+       "outcome": "matched",
+       "rule": "NAME_PREMISE_POSTCODE",
+       "matched_record_ids": [
+        35633
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "ECOMMERCE",
+      "source_record_id": "ECO-0013030",
+      "full_name": "Ms Lisa Graham",
+      "gender": "F",
+      "email": "lisay6291@gmail.com",
+      "address": {
+       "town": "Glasgow",
+       "line1": "Flat 26, Clarence House",
+       "line2": "124 Station Street",
+       "line3": "Moseley",
+       "postcode": "g10 3xs"
+      }
+     },
+     "truth": {
+      "person_id": 27930,
+      "household_id": 11049,
+      "tags": [
+       "dob_missing",
+       "household",
+       "mobile_missing",
+       "shared_landline"
+      ]
+     },
+     "result": {
+      "customer_id": "bd439f93-4883-49d9-897c-4328879f4c5f",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       16671
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "LOYALTY",
+       "source_record_id": "LOY-0009327",
+       "title": "Miss",
+       "first_name": "Elizabeth",
+       "middle_names": "Jennifer",
+       "last_name": "Graham",
+       "date_of_birth": "7/4/81",
+       "email": "elizabeth.graham@sky.com",
+       "phone": "+44 7976 468706",
+       "address": {
+        "town": "GLASGOW",
+        "line1": "FLAT 26 CLARENCE HOUSE",
+        "line2": "124 STATION STREET",
+        "line3": "MOSELEY",
+        "postcode": "G10 3XS"
+       }
+      },
+      "truth": {
+       "person_id": 27927,
+       "household_id": 11049,
+       "tags": [
+        "household",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "bd439f93-4883-49d9-897c-4328879f4c5f",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "LOYALTY",
+      "source_record_id": "LOY-0014020",
+      "title": "Ms",
+      "first_name": "Elizabeth",
+      "last_name": "Burgess",
+      "date_of_birth": "05-01-2001",
+      "email": "elizabeth9831@gmail.com",
+      "mobile_phone": "07855903525",
+      "address": {
+       "town": "LIVERPOOL",
+       "line1": "151 CAMBRIDGE PL",
+       "postcode": "L15 5HU"
+      }
+     },
+     "truth": {
+      "person_id": 42245,
+      "household_id": 16746,
+      "tags": [
+       "household"
+      ]
+     },
+     "result": {
+      "customer_id": "9941722b-b1ba-44aa-b806-45d1bf805cbf",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       134089
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "CALLCENTRE",
+       "source_record_id": "CAL-0009448",
+       "title": "Miss",
+       "first_name": "LISA",
+       "last_name": "BURGESS",
+       "phone": "07748595598",
+       "address": {
+        "town": "Liverpool",
+        "line1": "151 Cambridge Pl",
+        "postcode": "L15 5HU"
+       }
+      },
+      "truth": {
+       "person_id": 42244,
+       "household_id": 16746,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household"
+       ]
+      },
+      "result": {
+       "customer_id": "9941722b-b1ba-44aa-b806-45d1bf805cbf",
+       "outcome": "matched",
+       "rule": "MOBILE_NAME",
+       "matched_record_ids": [
+        59276
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0007232",
+      "full_name": "HAYES, MATTHEEW",
+      "email": "thehayess560@gmail.com",
+      "address": {
+       "town": "LONDON",
+       "line1": "47 HOLLY LN",
+       "line2": "HEADINGLEY",
+       "postcode": "E3 4FY"
+      }
+     },
+     "truth": {
+      "person_id": 32268,
+      "household_id": 12769,
+      "tags": [
+       "dob_missing",
+       "household",
+       "junior_senior",
+       "mobile_missing",
+       "shared_family_email",
+       "suffix_omitted",
+       "typo_first"
+      ]
+     },
+     "result": {
+      "customer_id": "64de68b3-6595-4f88-aab6-3fb60d8b0648",
+      "outcome": "matched",
+      "rule": "EMAIL_LAST_INITIAL",
+      "matched_record_ids": [
+       107722
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0015006",
+       "full_name": "MATTHEW HAYES JR",
+       "email": "thehayess560@gmail.com",
+       "phone": "+44 (0)7374 469502",
+       "address": {
+        "town": "London",
+        "line1": "47 Holly Ln",
+        "line2": "Headingley",
+        "postcode": "E3 4FY"
+       }
+      },
+      "truth": {
+       "person_id": 32270,
+       "household_id": 12769,
+       "tags": [
+        "dob_missing",
+        "household",
+        "junior_senior",
+        "mobile_digit_typo",
+        "shared_family_email"
+       ]
+      },
+      "result": {
+       "customer_id": "64de68b3-6595-4f88-aab6-3fb60d8b0648",
+       "outcome": "matched",
+       "rule": "NAME_PREMISE_POSTCODE",
+       "matched_record_ids": [
+        6895
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "LOYALTY",
+      "source_record_id": "LOY-0031822",
+      "first_name": "James",
+      "last_name": "Simth",
+      "gender": "male",
+      "email": "james_smith62@sky.com",
+      "phone": "07507 226939",
+      "address": {
+       "town": "Belfast",
+       "line1": "187 Chapel Street",
+       "postcode": "BT24 0XL"
+      }
+     },
+     "truth": {
+      "person_id": 94716,
+      "household_id": 37580,
+      "tags": [
+       "dob_missing",
+       "household",
+       "junior_senior",
+       "suffix_omitted",
+       "typo_last"
+      ]
+     },
+     "result": {
+      "customer_id": "15a369cb-13d4-4c82-a133-77a77a473f1e",
+      "outcome": "matched",
+      "rule": "NAME_LASTSOUNDEX_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       2393
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0043900",
+       "full_name": "James Smith Jr",
+       "email": "james_smith84@icloud.com",
+       "phone": "00447142363535",
+       "address": {
+        "town": "Belfast",
+        "lines": [
+         "187 Chapel Street"
+        ],
+        "postcode": "BT24 0XL"
+       }
+      },
+      "truth": {
+       "person_id": 94718,
+       "household_id": 37580,
+       "tags": [
+        "dob_missing",
+        "household",
+        "junior_senior"
+       ]
+      },
+      "result": {
+       "customer_id": "15a369cb-13d4-4c82-a133-77a77a473f1e",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "LOYALTY",
+      "source_record_id": "LOY-0012205",
+      "title": "Mr",
+      "first_name": "Thomas",
+      "last_name": "Poole",
+      "gender": "M",
+      "date_of_birth": "1988-03-17",
+      "address": {
+       "town": "Leicester",
+       "line1": "156 Stanley Place",
+       "postcode": "LE143JA"
+      }
+     },
+     "truth": {
+      "person_id": 36759,
+      "household_id": 14560,
+      "tags": [
+       "email_missing",
+       "household",
+       "junior_senior",
+       "mobile_missing",
+       "suffix_omitted"
+      ]
+     },
+     "result": {
+      "customer_id": "d3052b3b-519b-4893-8c3c-81e6632dea51",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       36100
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0008207",
+       "full_name": "POOLE, TAM",
+       "address": {
+        "town": "LEICESTER",
+        "line1": "156 STANLEY PL",
+        "postcode": "LE14 3JA"
+       }
+      },
+      "truth": {
+       "person_id": 36761,
+       "household_id": 14560,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household",
+        "junior_senior",
+        "mobile_missing",
+        "nickname",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "d3052b3b-519b-4893-8c3c-81e6632dea51",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0007906",
+      "first_name": "Charles",
+      "last_name": "Brown",
+      "date_of_birth": "2002-04-23",
+      "email": "charlesbrown79@gmail.com",
+      "mobile_phone": "07701 137689",
+      "address": {
+       "town": "CAMBRIDGE",
+       "line1": "15 MARKET AVENUE",
+       "postcode": "cb10 0hf"
+      }
+     },
+     "truth": {
+      "person_id": 17223,
+      "household_id": 6838,
+      "tags": [
+       "household",
+       "junior_senior",
+       "suffix_omitted"
+      ]
+     },
+     "result": {
+      "customer_id": "53353b6a-de22-454e-9bea-3b05d64da4ef",
+      "outcome": "matched",
+      "rule": "NAME_PREMISE_POSTCODE",
+      "matched_record_ids": [
+       46149
+      ]
+     }
+    },
+    "matched_to": [
+     {
+      "record": {
+       "source_system": "MARKETING",
+       "source_record_id": "MAR-0002587",
+       "first_name": "Charles",
+       "last_name": "Brown",
+       "email": "charles.brown@gmail.com",
+       "address": {
+        "postcode": "CB10 0HF",
+        "line1": "15 Market Avenue"
+       }
+      },
+      "truth": {
+       "person_id": 17220,
+       "household_id": 6838,
+       "tags": [
+        "dob_missing",
+        "household",
+        "junior_senior",
+        "mobile_missing",
+        "moved",
+        "suffix_omitted"
+       ]
+      },
+      "result": {
+       "customer_id": "53353b6a-de22-454e-9bea-3b05d64da4ef",
+       "outcome": "matched",
+       "rule": "EMAIL_NAME",
+       "matched_record_ids": [
+        40104
+       ]
+      }
+     }
+    ]
+   }
+  ],
+  "missed_reachable": [
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0021685",
+      "title": "Miss",
+      "first_name": "Dorpthy",
+      "last_name": "George",
+      "date_of_birth": "27/03/1954",
+      "email": "dorothygeorge57@yahoo.co.uk",
+      "mobile_phone": "07783551957",
+      "home_phone": "01361783926",
+      "address": {
+       "town": "London",
+       "line1": "139 Bridge Way",
+       "line2": "Moseley",
+       "postcode": "N16 8XH"
+      }
+     },
+     "truth": {
+      "person_id": 46988,
+      "household_id": 18631,
+      "tags": [
+       "household",
+       "shared_landline",
+       "typo_first"
+      ]
+     },
+     "result": {
+      "customer_id": "327cd1ae-42db-43f1-9d68-3fbfcb80c06b",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0010480",
+       "full_name": "GEORGE, DOT",
+       "phone": "7783551957",
+       "home_phone": "01361 783926",
+       "address": {
+        "town": "LONDON",
+        "line1": "139 BRIDGE WAY",
+        "line2": "MOSELEY",
+        "postcode": "n16 8xh"
+       }
+      },
+      "truth": {
+       "person_id": 46988,
+       "household_id": 18631,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household",
+        "mobile_lost_zero",
+        "nickname",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "e09bd314-4e1b-4120-a466-90bd1f5927c5",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     },
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0010479",
+       "full_name": "GEORGE, DOT",
+       "mobile_phone": "07783 551957",
+       "home_phone": "01361 783926",
+       "address": {
+        "town": "LONDON",
+        "line1": "139 BRIDGE WAY",
+        "line2": "MOSELEY",
+        "postcode": "N16 8XH",
+        "uprn": "916809972819"
+       }
+      },
+      "truth": {
+       "person_id": 46988,
+       "household_id": 18631,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household",
+        "nickname",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "e09bd314-4e1b-4120-a466-90bd1f5927c5",
+       "outcome": "matched",
+       "rule": "MOBILE_NAME",
+       "matched_record_ids": [
+        23078
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0035786",
+      "title": "Mrs",
+      "first_name": "Molly",
+      "last_name": "Cox",
+      "date_of_birth": "17/01/2006",
+      "mobile_phone": "07709 286491",
+      "home_phone": "+44 (0)1483 648896",
+      "address": {
+       "town": "CAMBRIDGE",
+       "line1": "FERN COTTAGE",
+       "line2": "KINGSWAY LN",
+       "postcode": "CB19WY"
+      }
+     },
+     "truth": {
+      "person_id": 77174,
+      "household_id": 30646,
+      "tags": [
+       "dob_typo",
+       "email_missing",
+       "household",
+       "nickname",
+       "shared_landline"
+      ]
+     },
+     "result": {
+      "customer_id": "819c2397-df1d-4a01-82d1-1781d7d19e48",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0035788",
+       "title": "Mrs",
+       "first_name": "Maryy",
+       "middle_names": "Jennifer",
+       "last_name": "Cox",
+       "gender": "Female",
+       "date_of_birth": "17/01/2004",
+       "email": "marycox63@outlook.com",
+       "mobile_phone": "07709 286491",
+       "home_phone": "01483 648896",
+       "address": {
+        "town": "Cambridge",
+        "line1": "Fern Cottage",
+        "line2": "Kingsway Lane",
+        "postcode": "CB1 9WF"
+       }
+      },
+      "truth": {
+       "person_id": 77174,
+       "household_id": 30646,
+       "tags": [
+        "dob_typo",
+        "household",
+        "postcode_typo",
+        "shared_landline",
+        "typo_first"
+       ]
+      },
+      "result": {
+       "customer_id": "02526e69-f001-4a64-bb76-3da94d09486f",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CALLCENTRE",
+      "source_record_id": "CAL-0004868",
+      "first_name": "Susann",
+      "last_name": "Brooks",
+      "date_of_birth": "07/01/1979",
+      "mobile_phone": "07377800351",
+      "address": {
+       "town": "Bristol",
+       "line1": "197 Meadow Ct",
+       "postcode": "LS2 9ZZ"
+      }
+     },
+     "truth": {
+      "person_id": 22078,
+      "household_id": 8780,
+      "tags": [
+       "email_missing",
+       "household",
+       "old_email",
+       "surname_change",
+       "typo_first",
+       "hot_postcode"
+      ]
+     },
+     "result": {
+      "customer_id": "7f2aadf0-32ae-4118-9573-808f83c4e65d",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0010256",
+       "full_name": "Miss Susan Brooks",
+       "email": "susan_lowe62@yahoo.co.uk",
+       "address": {
+        "town": "Bristol",
+        "lines": [
+         "197 Meadow Court"
+        ],
+        "postcode": "BS107PE"
+       }
+      },
+      "truth": {
+       "person_id": 22078,
+       "household_id": 8780,
+       "tags": [
+        "dob_missing",
+        "household",
+        "mobile_missing",
+        "surname_change"
+       ]
+      },
+      "result": {
+       "customer_id": "04f17e35-92b1-416d-90f5-52cd2e926606",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "LOYALTY",
+      "source_record_id": "LOY-0011569",
+      "first_name": "David",
+      "last_name": "Howard",
+      "date_of_birth": "03/05/1947"
+     },
+     "truth": {
+      "person_id": 34864,
+      "household_id": 13795,
+      "tags": [
+       "address_missing",
+       "email_missing",
+       "household",
+       "mobile_missing"
+      ]
+     },
+     "result": {
+      "customer_id": "25373898-4b44-460b-ab08-35546376cb44",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0016048",
+       "title": "Mr",
+       "first_name": "DAVID",
+       "last_name": "HOWARD",
+       "gender": "Male",
+       "date_of_birth": "03/05/1947",
+       "email": "dhoward@outlook.com",
+       "mobile_phone": "07250 338404",
+       "address": {
+        "town": "London",
+        "line1": "195 Springfield Ave",
+        "postcode": "SE5 5AQ",
+        "uprn": "384598579834"
+       }
+      },
+      "truth": {
+       "person_id": 34864,
+       "household_id": 13795,
+       "tags": [
+        "household"
+       ]
+      },
+      "result": {
+       "customer_id": "975f2e1b-e84d-4fd7-8bed-f35a82a7e670",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "ECOMMERCE",
+      "source_record_id": "ECO-0045111",
+      "full_name": "Ms Mary Robinson",
+      "date_of_birth": "1980-07-26",
+      "email": "maryhawkins98@yahoo.co.uk",
+      "address": {
+       "town": "London",
+       "lines": [
+        "79 Bedford Avenue",
+        "Edgbaston"
+       ],
+       "postcode": "NW3 5BZ"
+      }
+     },
+     "truth": {
+      "person_id": 97203,
+      "household_id": 38563,
+      "tags": [
+       "dob_typo",
+       "household",
+       "mobile_missing",
+       "surname_change"
+      ]
+     },
+     "result": {
+      "customer_id": "82eed784-7042-4128-9a41-c9d21eec3c88",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0045196",
+       "title": "Mrs",
+       "first_name": "Mary",
+       "last_name": "Hawkins",
+       "gender": "Female",
+       "date_of_birth": "26/07/1981",
+       "mobile_phone": "+44 (0)7343 043627",
+       "address": {
+        "town": "London",
+        "line1": "79 Bedford Avenue",
+        "line2": "Edgbaston",
+        "postcode": "nw3 5bz"
+       }
+      },
+      "truth": {
+       "person_id": 97203,
+       "household_id": 38563,
+       "tags": [
+        "email_missing",
+        "household"
+       ]
+      },
+      "result": {
+       "customer_id": "644dbfb7-da57-4d99-ba57-ea6634c79c4a",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0045513",
+      "first_name": "JEBNY",
+      "middle_names": "Carol",
+      "last_name": "AHMED",
+      "gender": "Female",
+      "date_of_birth": "15/08/1995",
+      "email": "jenniferahmed87@outlook.com",
+      "mobile_phone": "+44 (0)7412 412415",
+      "address": {
+       "town": "Leicester",
+       "line1": "80 Broadway Lane",
+       "postcode": "LE14 7FL",
+       "uprn": "927872237124"
+      }
+     },
+     "truth": {
+      "person_id": 97784,
+      "household_id": 38791,
+      "tags": [
+       "nickname",
+       "typo_first"
+      ]
+     },
+     "result": {
+      "customer_id": "a72cb6e8-77ff-4663-86b0-171db4afcadb",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0045382",
+       "full_name": "Ms Jennifer Ahmed",
+       "date_of_birth": "1995-08-15",
+       "email": "jenniferahmed87@outlook.com",
+       "mobile_phone": "07412 412415",
+       "address": {
+        "town": "Leicester",
+        "lines": [
+         "80 Broadway Lane"
+        ],
+        "postcode": "LE147FL"
+       }
+      },
+      "truth": {
+       "person_id": 97784,
+       "household_id": 38791,
+       "tags": []
+      },
+      "result": {
+       "customer_id": "20b70e20-4de9-433d-bcf1-bd745aeda33e",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "MARKETING",
+      "source_record_id": "MAR-0005536",
+      "title": "Ms",
+      "first_name": "CARS",
+      "middle_names": "Barbara",
+      "last_name": "BUTLER",
+      "email": "carys.butler@icloud.com",
+      "address": {
+       "postcode": "BS9 9YD",
+       "line1": "33 Hill Close"
+      }
+     },
+     "truth": {
+      "person_id": 36766,
+      "household_id": 14562,
+      "tags": [
+       "dob_missing",
+       "household",
+       "mobile_missing",
+       "typo_first"
+      ]
+     },
+     "result": {
+      "customer_id": "92869ca5-3c60-473e-a567-e90c97bd50a3",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "LOYALTY",
+       "source_record_id": "LOY-0012207",
+       "first_name": "Carys",
+       "middle_names": "Barbara",
+       "last_name": "Bradley",
+       "date_of_birth": "1994-04-10",
+       "email": "carys.butler@icloud.com",
+       "phone": "+44 7208 553398",
+       "address": {
+        "town": "Bristol",
+        "county": "Avon",
+        "line1": "33 Hill Close",
+        "postcode": "BS9 9YD"
+       }
+      },
+      "truth": {
+       "person_id": 36766,
+       "household_id": 14562,
+       "tags": [
+        "household",
+        "surname_change"
+       ]
+      },
+      "result": {
+       "customer_id": "64948347-e45d-4744-850c-11b0c8ad5f12",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0039543",
+      "title": "Mrs",
+      "first_name": "Linda",
+      "last_name": "Gibson",
+      "date_of_birth": "17/10/1956",
+      "phone": "00447952816203"
+     },
+     "truth": {
+      "person_id": 85159,
+      "household_id": 33776,
+      "tags": [
+       "address_missing",
+       "email_missing",
+       "household"
+      ]
+     },
+     "result": {
+      "customer_id": "e31bdaf9-f0f4-4ff7-a312-684c5bead2f7",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0039490",
+       "full_name": "MS LINDA SIMPSON-PEARSON",
+       "gender": "Female",
+       "address": {
+        "town": "BELFAST",
+        "lines": [
+         "87 PRIORY RD"
+        ],
+        "postcode": "BT9 6JL"
+       }
+      },
+      "truth": {
+       "person_id": 85159,
+       "household_id": 33776,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household",
+        "mobile_missing",
+        "old_address_unlinked",
+        "surname_change"
+       ]
+      },
+      "result": {
+       "customer_id": "9f2b56f6-2aa5-4625-86cb-ea2a8cbce525",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     },
+     {
+      "record": {
+       "source_system": "MARKETING",
+       "source_record_id": "MAR-0012799",
+       "first_name": "Linda",
+       "middle_names": "Patricia",
+       "last_name": "Gibson",
+       "date_of_birth": "17/10/1956"
+      },
+      "truth": {
+       "person_id": 85159,
+       "household_id": 33776,
+       "tags": [
+        "address_missing",
+        "email_missing",
+        "household",
+        "mobile_missing"
+       ]
+      },
+      "result": {
+       "customer_id": "4a554d01-b770-4b39-af65-4f89f9b3a4c4",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0020634",
+      "title": "Mr",
+      "first_name": "Christopher",
+      "last_name": "Kaur",
+      "gender": "Male",
+      "date_of_birth": "10/12/1944",
+      "email": "christopher415@yahoo.co.uk",
+      "mobile_phone": "00447792933883",
+      "address": {
+       "town": "Liverpool",
+       "line1": "Flat 27, 89 Tennyson Road",
+       "line2": "Morningside",
+       "postcode": "L258HH"
+      },
+      "emails": [
+       "online.orders@bigshop.co.uk"
+      ]
+     },
+     "truth": {
+      "person_id": 44673,
+      "household_id": 17713,
+      "tags": [
+       "household",
+       "hot_email"
+      ]
+     },
+     "result": {
+      "customer_id": "118bbb73-6b52-4018-814e-5a2ae1690637",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0020788",
+       "full_name": "KTI KAUR",
+       "email": "christopher415@yahoo.co.uk",
+       "phone": "07792 933883",
+       "address": {
+        "town": "Liverpool",
+        "line1": "Flat 27, 89 Tennyson Road",
+        "line2": "Morningside",
+        "postcode": "L25 8HH"
+       }
+      },
+      "truth": {
+       "person_id": 44673,
+       "household_id": 17713,
+       "tags": [
+        "dob_missing",
+        "household",
+        "nickname",
+        "typo_first"
+       ]
+      },
+      "result": {
+       "customer_id": "51e31fea-84bd-47c7-8ead-138140ecdd86",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0008623",
+      "full_name": "MORRIS, WILLIAM",
+      "date_of_birth": "12-09-1996"
+     },
+     "truth": {
+      "person_id": 38635,
+      "household_id": 15288,
+      "tags": [
+       "address_missing",
+       "email_missing",
+       "household",
+       "mobile_missing"
+      ]
+     },
+     "result": {
+      "customer_id": "ad1825e5-6f8c-4291-b78e-c7f8f92f7c9c",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "LOYALTY",
+       "source_record_id": "LOY-0012808",
+       "title": "Mr",
+       "first_name": "Willia",
+       "last_name": "Morris",
+       "mobile_phone": "(07566) 120988",
+       "address": {
+        "town": "Manchester",
+        "line1": "68 Wordsworth Walk",
+        "postcode": "M32 9NZ"
+       }
+      },
+      "truth": {
+       "person_id": 38635,
+       "household_id": 15288,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household",
+        "typo_first"
+       ]
+      },
+      "result": {
+       "customer_id": "f5219c36-410f-4818-b5b0-2fd00ecd37ad",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     },
+     {
+      "record": {
+       "source_system": "CALLCENTRE",
+       "source_record_id": "CAL-0008631",
+       "first_name": "WILLIAM",
+       "last_name": "MORRIS",
+       "date_of_birth": "12-09-1996",
+       "mobile_phone": "+44 7566 120988",
+       "address": {
+        "town": "MANCHESTER",
+        "county": "GREATER MANCHESTER",
+        "line1": "68 WORDSWORTH WALK",
+        "postcode": "M329NZ"
+       },
+       "home_phone": "0113 243 0000"
+      },
+      "truth": {
+       "person_id": 38635,
+       "household_id": 15288,
+       "tags": [
+        "email_missing",
+        "household",
+        "hot_phone"
+       ]
+      },
+      "result": {
+       "customer_id": "f5219c36-410f-4818-b5b0-2fd00ecd37ad",
+       "outcome": "matched",
+       "rule": "MOBILE_LAST_INITIAL",
+       "matched_record_ids": [
+        13628
+       ]
+      }
+     },
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0017780",
+       "title": "Mr",
+       "first_name": "BILLY",
+       "last_name": "MORRIS",
+       "gender": "M",
+       "date_of_birth": "1996-09-12",
+       "mobile_phone": "+44 7566 120988",
+       "address": {
+        "town": "MANCHESTER",
+        "line1": "68 WORDSWORTH WALK",
+        "postcode": "m32 9nz",
+        "uprn": "796818595269"
+       }
+      },
+      "truth": {
+       "person_id": 38635,
+       "household_id": 15288,
+       "tags": [
+        "email_missing",
+        "household",
+        "nickname"
+       ]
+      },
+      "result": {
+       "customer_id": "f5219c36-410f-4818-b5b0-2fd00ecd37ad",
+       "outcome": "matched",
+       "rule": "PHONE_NAME_DOB",
+       "matched_record_ids": [
+        44773
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0002009",
+      "full_name": "MORRIS, STEPHANIE",
+      "address": {
+       "town": "LONDON",
+       "line1": "69 WARWICK AVE",
+       "postcode": "LS2 9ZZ"
+      }
+     },
+     "truth": {
+      "person_id": 8996,
+      "household_id": 3579,
+      "tags": [
+       "dob_missing",
+       "email_missing",
+       "household",
+       "mobile_missing",
+       "surname_change",
+       "hot_postcode"
+      ]
+     },
+     "result": {
+      "customer_id": "629db878-04e0-4e64-b4e9-2770d92968f0",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0004112",
+       "title": "Mrs",
+       "first_name": "Stephanie",
+       "last_name": "Davies",
+       "date_of_birth": "07 Nov 1988",
+       "email": "stephaniedavies53@gmail.com",
+       "phone": "07941 459752",
+       "address": {
+        "town": "LONDON",
+        "line1": "69 WARWICK AVENUE",
+        "postcode": "SE8 1NA"
+       }
+      },
+      "truth": {
+       "person_id": 8996,
+       "household_id": 3579,
+       "tags": [
+        "household"
+       ]
+      },
+      "result": {
+       "customer_id": "07050f87-6d85-49b2-8c00-fb8e92c064b5",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0003332",
+      "full_name": "HARRIS, JESSICA",
+      "gender": "F",
+      "date_of_birth": "19/12/1963",
+      "home_phone": "+44 2075 354880",
+      "address": {
+       "town": "SHEFFIELD",
+       "line1": "197 HILL RD",
+       "postcode": "S30 8RS",
+       "uprn": "448116827803"
+      }
+     },
+     "truth": {
+      "person_id": 15024,
+      "household_id": 5958,
+      "tags": [
+       "email_missing",
+       "household",
+       "mobile_missing",
+       "old_address_unlinked",
+       "shared_landline",
+       "surname_change"
+      ]
+     },
+     "result": {
+      "customer_id": "46bbc400-d95e-498c-bcff-9910d081f7f3",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0006894",
+       "title": "Mrs",
+       "first_name": "Jessica",
+       "middle_names": "Aisha",
+       "last_name": "Writht",
+       "gender": "Female",
+       "date_of_birth": "19/12/1963",
+       "email": "jessica3764@outlook.com",
+       "mobile_phone": "(07391) 064190",
+       "home_phone": "0207-535-4880",
+       "address": {
+        "town": "Southampton",
+        "line1": "124 Highfield Gardens",
+        "postcode": "SO514EY",
+        "uprn": "979643282595"
+       }
+      },
+      "truth": {
+       "person_id": 15024,
+       "household_id": 5958,
+       "tags": [
+        "household",
+        "shared_landline",
+        "typo_last"
+       ]
+      },
+      "result": {
+       "customer_id": "f28e022c-0172-47b4-9550-c47ce53c950f",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0001073",
+      "full_name": "WARC, LAURA",
+      "date_of_birth": "08 Nov 1992",
+      "address": {
+       "town": "LONDON",
+       "line1": "137 WESTFIELD LN",
+       "uprn": "201214253098"
+      }
+     },
+     "truth": {
+      "person_id": 4719,
+      "household_id": 1899,
+      "tags": [
+       "email_missing",
+       "house_share",
+       "household",
+       "mobile_missing",
+       "postcode_missing",
+       "typo_last"
+      ]
+     },
+     "result": {
+      "customer_id": "7164f295-3f5c-417b-a5bc-2bc0d45f7e0c",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CALLCENTRE",
+       "source_record_id": "CAL-0001083",
+       "title": "Mrs",
+       "first_name": "Laura",
+       "last_name": "Ward",
+       "gender": "F",
+       "date_of_birth": "08/11/1992",
+       "email": "laura.ward@gmail.com",
+       "mobile_phone": "07809 184348",
+       "address": {
+        "town": "London",
+        "line1": "137 Westfield Ln",
+        "postcode": "SW1 8RF"
+       }
+      },
+      "truth": {
+       "person_id": 4719,
+       "household_id": 1899,
+       "tags": [
+        "house_share",
+        "household"
+       ]
+      },
+      "result": {
+       "customer_id": "51c6375a-a6ef-4ea6-9b9d-8697910cf82a",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "LOYALTY",
+      "source_record_id": "LOY-0000948",
+      "title": "Ms",
+      "first_name": "Sarah",
+      "last_name": "Hardy",
+      "gender": "female",
+      "date_of_birth": "13/2/06",
+      "phone": "07825429078"
+     },
+     "truth": {
+      "person_id": 2693,
+      "household_id": 1092,
+      "tags": [
+       "address_missing",
+       "email_missing",
+       "house_share",
+       "household",
+       "shared_landline"
+      ]
+     },
+     "result": {
+      "customer_id": "00198232-00d2-4619-8b45-39f1a7c98187",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0001262",
+       "title": "Mrs",
+       "first_name": "Sarah",
+       "last_name": "Hardy",
+       "date_of_birth": "13/02/2006",
+       "email": "sarahx2143@icloud.com",
+       "address": {
+        "town": "London",
+        "line1": "2 Salisbury Grove",
+        "postcode": "N165XQ"
+       }
+      },
+      "truth": {
+       "person_id": 2693,
+       "household_id": 1092,
+       "tags": [
+        "house_share",
+        "household",
+        "mobile_missing",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "9c273117-ea7a-423a-a10d-115ec93a69f7",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CALLCENTRE",
+      "source_record_id": "CAL-0006526",
+      "first_name": "MICCKY",
+      "middle_names": "Joshua",
+      "last_name": "FRANCIS",
+      "date_of_birth": "03/07/1977",
+      "mobile_phone": "07301 241961",
+      "address": {
+       "town": "Birmingham",
+       "line1": "Flat 13, 112 Highfield Cl",
+       "postcode": "B222XZ"
+      }
+     },
+     "truth": {
+      "person_id": 29370,
+      "household_id": 11617,
+      "tags": [
+       "email_missing",
+       "household",
+       "moved",
+       "nickname",
+       "typo_first"
+      ]
+     },
+     "result": {
+      "customer_id": "de673cfc-f85a-4268-aa28-d1013077209a",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "MARKETING",
+       "source_record_id": "MAR-0004417",
+       "title": "Mr",
+       "first_name": "MICHAEL",
+       "last_name": "FRANCIS",
+       "date_of_birth": "03/07/1977",
+       "mobile_phone": "07301 241961",
+       "address": {
+        "postcode": "B22 2XZ",
+        "line1": "112 Highfield Close"
+       }
+      },
+      "truth": {
+       "person_id": 29370,
+       "household_id": 11617,
+       "tags": [
+        "email_missing",
+        "household",
+        "moved"
+       ]
+      },
+      "result": {
+       "customer_id": "5329539e-3a62-43af-a0aa-52dcd5e504a4",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0007509",
+      "full_name": "BATES, DONNA",
+      "home_phone": "01285 797643",
+      "address": {
+       "town": "LONDON",
+       "line1": "161 DERBY RD",
+       "line2": "FALLOWFIELD",
+       "postcode": "E153EX",
+       "uprn": "395969071832"
+      }
+     },
+     "truth": {
+      "person_id": 33645,
+      "household_id": 13320,
+      "tags": [
+       "dob_missing",
+       "email_missing",
+       "household",
+       "mobile_missing",
+       "old_address_unlinked",
+       "shared_landline",
+       "surname_change"
+      ]
+     },
+     "result": {
+      "customer_id": "1f087d86-bcc3-4a33-9563-18c9c3fa2342",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0015643",
+       "full_name": "DONNA SHAW",
+       "date_of_birth": "1978-10-20",
+       "mobile_phone": "07378 879187",
+       "address": {
+        "town": "Southampton",
+        "line1": "128 Brookfield Terr",
+        "postcode": "SO374AZ"
+       },
+       "home_phone": "0113 243 0000"
+      },
+      "truth": {
+       "person_id": 33645,
+       "household_id": 13320,
+       "tags": [
+        "email_missing",
+        "household",
+        "shared_landline",
+        "wrong_mobile_other_person",
+        "hot_phone"
+       ]
+      },
+      "result": {
+       "customer_id": "a97aabf0-870f-4046-a05f-ba7ee830b1b9",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     },
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0015477",
+       "first_name": "Donna",
+       "last_name": "Bates",
+       "date_of_birth": "1978-10-20",
+       "home_phone": "01285 797643",
+       "address": {
+        "town": "London",
+        "line1": "34 East St",
+        "line2": "Didsbury",
+        "postcode": "SW205DS"
+       }
+      },
+      "truth": {
+       "person_id": 33645,
+       "household_id": 13320,
+       "tags": [
+        "email_missing",
+        "household",
+        "mobile_missing",
+        "old_address_unlinked",
+        "shared_landline",
+        "surname_change"
+       ]
+      },
+      "result": {
+       "customer_id": "dc46c409-fa00-43e9-9245-d4600852e0b3",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0003124",
+      "title": "Mr",
+      "first_name": "John",
+      "last_name": "Begum",
+      "date_of_birth": "15-01-1942",
+      "email": "thebegums656@gmail.com",
+      "home_phone": "(01742) 353259",
+      "address": {
+       "town": "London",
+       "line1": "Flat 10 Rose Court",
+       "line2": "20 Springfield Lane",
+       "postcode": "SE16 9FE",
+       "uprn": "652323707186"
+      }
+     },
+     "truth": {
+      "person_id": 6813,
+      "household_id": 2710,
+      "tags": [
+       "household",
+       "mobile_missing",
+       "shared_family_email",
+       "shared_landline"
+      ]
+     },
+     "result": {
+      "customer_id": "a036d444-5d03-43f5-96ce-2f0ba6383810",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0003174",
+       "title": "Mr",
+       "first_name": "Javk",
+       "last_name": "Begum",
+       "gender": "M",
+       "date_of_birth": "15/01/1942",
+       "email": "thebegums656@gmail.com",
+       "address": {
+        "town": "London",
+        "line1": "Flat 10, Rose Court",
+        "line2": "20 Springfield Ln",
+        "postcode": "SE16 9FE"
+       }
+      },
+      "truth": {
+       "person_id": 6813,
+       "household_id": 2710,
+       "tags": [
+        "household",
+        "mobile_missing",
+        "nickname",
+        "shared_family_email",
+        "shared_landline",
+        "typo_first"
+       ]
+      },
+      "result": {
+       "customer_id": "494a2071-2dc6-4e61-8cc8-c4af71d09c08",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0011845",
+      "title": "Mr",
+      "first_name": "Jsmes",
+      "last_name": "Edwaards",
+      "date_of_birth": "20/06/1953",
+      "email": "jamesedwards64@outlook.com",
+      "mobile_phone": "+44 (0)7772 804711",
+      "address": {
+       "town": "Bristol",
+       "county": "Avon",
+       "line1": "45 Green Rd",
+       "postcode": "bs32 0ht",
+       "uprn": "845456852788"
+      },
+      "previous_addresses": [
+       {
+        "town": "Bristol",
+        "line1": "182 Springfield Walk",
+        "postcode": "BS33 3AX"
+       }
+      ]
+     },
+     "truth": {
+      "person_id": 25650,
+      "household_id": 10164,
+      "tags": [
+       "household",
+       "moved",
+       "moved_new_address",
+       "previous_address_supplied",
+       "typo_first",
+       "typo_last"
+      ]
+     },
+     "result": {
+      "customer_id": "028c6c4d-2918-473a-ade4-a9348be51b08",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0011844",
+       "title": "Mr",
+       "first_name": "Jammes",
+       "last_name": "Edwards",
+       "date_of_birth": "20/06/1953",
+       "email": "jamesedwards64@outlook.com",
+       "mobile_phone": "07772 804711",
+       "address": {
+        "town": "BRISTOL",
+        "line1": "182 SPRINGFIELD WALK",
+        "postcode": "BS33 3AX"
+       },
+       "home_phone": "0113 243 0000"
+      },
+      "truth": {
+       "person_id": 25650,
+       "household_id": 10164,
+       "tags": [
+        "household",
+        "moved",
+        "typo_first",
+        "hot_phone"
+       ]
+      },
+      "result": {
+       "customer_id": "644a327a-91aa-4569-b5ce-3d5242305cbe",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     },
+     {
+      "record": {
+       "source_system": "LOYALTY",
+       "source_record_id": "LOY-0008602",
+       "title": "Mr",
+       "first_name": "Jim",
+       "last_name": "Edwards",
+       "email": "JAMESEDWARDS64@OUTLOOK.COM",
+       "phone": "+44 (0)7772 804711",
+       "address": {
+        "town": "Bristol",
+        "line1": "45 Green Road",
+        "postcode": "BS320HT"
+       }
+      },
+      "truth": {
+       "person_id": 25650,
+       "household_id": 10164,
+       "tags": [
+        "dob_missing",
+        "household",
+        "moved",
+        "moved_new_address",
+        "nickname"
+       ]
+      },
+      "result": {
+       "customer_id": "72abd022-6c89-4c67-82c8-9edc2ffcfa24",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "ECOMMERCE",
+      "source_record_id": "ECO-0048916",
+      "full_name": "Mr Michael Spejcer",
+      "phone": "07259 019134",
+      "address": {
+       "town": "Cambridge",
+       "line1": "41 River St",
+       "line2": "Clifton",
+       "postcode": "CB78QG"
+      }
+     },
+     "truth": {
+      "person_id": 105352,
+      "household_id": 41814,
+      "tags": [
+       "dob_missing",
+       "email_missing",
+       "typo_last"
+      ]
+     },
+     "result": {
+      "customer_id": "efb6fa3c-79f3-4650-a728-6a61cfd37a3e",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0023448",
+       "full_name": "SPENCER, MICHAEL",
+       "address": {
+        "town": "CAMBRIDGE",
+        "line1": "41 RIVER ST",
+        "line2": "CLIFTON",
+        "postcode": "CB78QG",
+        "uprn": "413215046044"
+       }
+      },
+      "truth": {
+       "person_id": 105352,
+       "household_id": 41814,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "mobile_missing"
+       ]
+      },
+      "result": {
+       "customer_id": "f13ed0c2-9b87-4b1c-be33-fa339eb3c992",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     },
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0023450",
+       "full_name": "SOENCER, MICHAEL",
+       "gender": "male",
+       "address": {
+        "town": "CAMBRIDGE",
+        "line1": "41 RIVER ST",
+        "line2": "CLIFTON",
+        "postcode": "CB78QG",
+        "uprn": "413215046044"
+       }
+      },
+      "truth": {
+       "person_id": 105352,
+       "household_id": 41814,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "mobile_missing",
+        "typo_last"
+       ]
+      },
+      "result": {
+       "customer_id": "bfa74265-79e8-4e70-ab89-862d7deae4b0",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0021369",
+      "full_name": "ROGERS, ANGELA",
+      "date_of_birth": "08-04-2002",
+      "home_phone": "01727 560553",
+      "address": {
+       "town": "BELFAST",
+       "line1": "61 GREEN ST",
+       "line2": "MORNINGSIDE",
+       "postcode": "BT5 5HY",
+       "uprn": "494038923677"
+      }
+     },
+     "truth": {
+      "person_id": 95894,
+      "household_id": 38049,
+      "tags": [
+       "email_missing",
+       "household",
+       "mobile_missing",
+       "shared_landline"
+      ]
+     },
+     "result": {
+      "customer_id": "a0042762-91cb-4f80-ad1e-9d7f190cfc7b",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "MARKETING",
+       "source_record_id": "MAR-0014366",
+       "first_name": "Angela",
+       "middle_names": "Joan",
+       "last_name": "Rogers",
+       "date_of_birth": "2002-04-08",
+       "email": "angela.rogers@yahoo.co.uk"
+      },
+      "truth": {
+       "person_id": 95894,
+       "household_id": 38049,
+       "tags": [
+        "address_missing",
+        "household",
+        "mobile_missing",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "cbb515b3-a8c8-410b-9b62-0468b10748bd",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0019414",
+      "full_name": "TAYLOR, KAREN",
+      "email": "karentaylor29@gmail.com",
+      "mobile_phone": "07487 362221",
+      "address": {
+       "town": "CAMBRIDGE",
+       "line1": "83 NORTH CL",
+       "postcode": "CB66FB",
+       "uprn": "997507464886"
+      }
+     },
+     "truth": {
+      "person_id": 87314,
+      "household_id": 34644,
+      "tags": [
+       "dob_missing",
+       "household",
+       "old_email",
+       "postcode_typo"
+      ]
+     },
+     "result": {
+      "customer_id": "81b2411a-86a3-4f82-bba7-426a4e81753f",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0040476",
+       "title": "Miss",
+       "first_name": "KAREN",
+       "last_name": "TAYLOR",
+       "date_of_birth": "2009-02-28",
+       "email": "kareny8788@yahoo.co.uk",
+       "address": {
+        "town": "Cambridge",
+        "lines": [
+         "83 North Close"
+        ],
+        "postcode": "CB66FF"
+       }
+      },
+      "truth": {
+       "person_id": 87314,
+       "household_id": 34644,
+       "tags": [
+        "household",
+        "mobile_missing"
+       ]
+      },
+      "result": {
+       "customer_id": "56422dcc-1e5e-4766-88b6-99ed2c45f51a",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0017504",
+      "full_name": "MOSS, PATRICIA MARY",
+      "gender": "female",
+      "date_of_birth": "08/11/1984",
+      "address": {
+       "town": "NOTTINGHAM",
+       "line1": "FLAT 21 CEDAR COURT",
+       "line2": "18 ROWAN TERR",
+       "postcode": "ng11 4tx",
+       "uprn": "495418510519"
+      }
+     },
+     "truth": {
+      "person_id": 78639,
+      "household_id": 31223,
+      "tags": [
+       "email_missing",
+       "household",
+       "mobile_missing"
+      ]
+     },
+     "result": {
+      "customer_id": "9255540c-5352-4eae-806c-44ae234a70bb",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0036485",
+       "first_name": "Patricia",
+       "last_name": "Moss",
+       "gender": "female",
+       "date_of_birth": "08/11/1984",
+       "email": "PATRICIAZ5134@ICLOUD.COM",
+       "mobile_phone": "+44 (0)7898 613949"
+      },
+      "truth": {
+       "person_id": 78639,
+       "household_id": 31223,
+       "tags": [
+        "address_missing",
+        "household"
+       ]
+      },
+      "result": {
+       "customer_id": "a0e57987-6390-412d-8344-9defe092fb54",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0022702",
+      "title": "Miss",
+      "first_name": "Trish",
+      "last_name": "Mensah",
+      "gender": "Female",
+      "date_of_birth": "07/08/1953",
+      "email": "patricia_mensah71@icloud.com",
+      "address": {
+       "town": "EDINBURGH",
+       "line1": "38 WOOD PL",
+       "postcode": "EH15 6QG"
+      }
+     },
+     "truth": {
+      "person_id": 49059,
+      "household_id": 19484,
+      "tags": [
+       "household",
+       "mobile_missing",
+       "nickname"
+      ]
+     },
+     "result": {
+      "customer_id": "adbeef5e-1f8d-4caa-9672-f00b90a7cbda",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0022771",
+       "first_name": "PATROCIA",
+       "last_name": "MENSAH",
+       "date_of_birth": "1953-08-07",
+       "email": "patricia_mensah71@icloud.com",
+       "mobile_phone": "07293 526550",
+       "address": {
+        "town": "Edinburgh",
+        "lines": [
+         "38 Wood Place"
+        ],
+        "postcode": "EH15 6QG"
+       }
+      },
+      "truth": {
+       "person_id": 49059,
+       "household_id": 19484,
+       "tags": [
+        "household",
+        "typo_first"
+       ]
+      },
+      "result": {
+       "customer_id": "4416ba10-bbe3-4ee4-b719-bdd2772e9455",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CALLCENTRE",
+      "source_record_id": "CAL-0005959",
+      "first_name": "Shron",
+      "last_name": "Arnokd",
+      "email": "sharonx2416@gmail.com",
+      "phone": "07891 017324",
+      "address": {
+       "town": "London",
+       "line1": "30 Warwick Rd",
+       "postcode": "NW35YQ"
+      }
+     },
+     "truth": {
+      "person_id": 26863,
+      "household_id": 10622,
+      "tags": [
+       "dob_missing",
+       "household",
+       "typo_first",
+       "typo_last"
+      ]
+     },
+     "result": {
+      "customer_id": "7117fbf3-5beb-4aba-a8ee-ab1653f20145",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "MARKETING",
+       "source_record_id": "MAR-0004065",
+       "title": "Ms",
+       "first_name": "Sharon",
+       "last_name": "Arnold",
+       "date_of_birth": "30/07/1959",
+       "email": "sharonx2416@gmail.com",
+       "address": {
+        "postcode": "NW3 5YQ"
+       }
+      },
+      "truth": {
+       "person_id": 26863,
+       "household_id": 10622,
+       "tags": [
+        "household",
+        "mobile_missing"
+       ]
+      },
+      "result": {
+       "customer_id": "e5c90ea3-39ae-4c0d-abfa-428dd217c50c",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0034590",
+      "first_name": "Patricia",
+      "last_name": "Baker",
+      "date_of_birth": "1994-12-02",
+      "email": " patriciax2280@outlook.com ",
+      "mobile_phone": "+44 7589 397056",
+      "address": {
+       "town": "EDINBURGH",
+       "line1": "198 RICHMOND RD",
+       "postcode": "EH273GB"
+      }
+     },
+     "truth": {
+      "person_id": 74662,
+      "household_id": 29663,
+      "tags": [
+       "household"
+      ]
+     },
+     "result": {
+      "customer_id": "91e05f1d-c23b-4ff0-9016-8132c9e20f62",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CALLCENTRE",
+       "source_record_id": "CAL-0016759",
+       "first_name": "Ttish",
+       "last_name": "Labe",
+       "date_of_birth": "02/12/1994",
+       "email": "patriciax2280@outlook.com",
+       "mobile_phone": "+44 (0)7589 397056",
+       "address": {
+        "town": "London",
+        "line1": "5 Castle Ln",
+        "line2": "Chapel Allerton",
+        "postcode": "SW3 3EL"
+       }
+      },
+      "truth": {
+       "person_id": 74662,
+       "household_id": 29663,
+       "tags": [
+        "household",
+        "nickname",
+        "old_address_unlinked",
+        "surname_change",
+        "typo_first",
+        "typo_last"
+       ]
+      },
+      "result": {
+       "customer_id": "8433a562-53e7-4a98-8b4c-93daf094a2e7",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0012938",
+      "full_name": "MORRIS, NELL",
+      "address": {
+       "town": "NORWICH",
+       "line1": "202 MARLBOROUGH PL",
+       "postcode": "NR6 5FX",
+       "uprn": "617025629051"
+      }
+     },
+     "truth": {
+      "person_id": 57998,
+      "household_id": 23077,
+      "tags": [
+       "dob_missing",
+       "email_missing",
+       "household",
+       "mobile_missing",
+       "nickname"
+      ]
+     },
+     "result": {
+      "customer_id": "3ba183a9-417c-48f1-a596-2fc78005aa06",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CALLCENTRE",
+       "source_record_id": "CAL-0013024",
+       "title": "Ms",
+       "first_name": "Helen",
+       "last_name": "Lloyd",
+       "date_of_birth": "05/02/1967",
+       "address": {
+        "town": "Norwich",
+        "line1": "202 Marlborough Pl",
+        "postcode": "nr6 5fx"
+       }
+      },
+      "truth": {
+       "person_id": 57998,
+       "household_id": 23077,
+       "tags": [
+        "email_missing",
+        "household",
+        "mobile_missing",
+        "surname_change"
+       ]
+      },
+      "result": {
+       "customer_id": "672ed95f-dc77-4975-b061-a3058b31f530",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     },
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0027064",
+       "full_name": "Helen Lloyd",
+       "date_of_birth": "1967-02-05",
+       "email": "HELEN.MORRIS@ICLOUD.COM",
+       "address": {
+        "town": "London",
+        "lines": [
+         "Ivy Cottage",
+         "Castle Close",
+         "Kirkstall"
+        ],
+        "postcode": "e2 3jx"
+       }
+      },
+      "truth": {
+       "person_id": 57998,
+       "household_id": 23077,
+       "tags": [
+        "household",
+        "mobile_missing",
+        "old_address_unlinked",
+        "surname_change"
+       ]
+      },
+      "result": {
+       "customer_id": "9e482a52-8c3e-4f10-912d-675665c5e108",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CALLCENTRE",
+      "source_record_id": "CAL-0019404",
+      "first_name": "Larry",
+      "last_name": "Robinson",
+      "date_of_birth": "04/02/1994",
+      "phone": "07132 367254"
+     },
+     "truth": {
+      "person_id": 86669,
+      "household_id": 34373,
+      "tags": [
+       "address_missing",
+       "email_missing",
+       "household"
+      ]
+     },
+     "result": {
+      "customer_id": "c8900c97-2ea5-4812-8651-391bab70188e",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "MARKETING",
+       "source_record_id": "MAR-0013040",
+       "first_name": "Larry",
+       "middle_names": "Charles",
+       "last_name": "Robinson",
+       "date_of_birth": "04/02/1994"
+      },
+      "truth": {
+       "person_id": 86669,
+       "household_id": 34373,
+       "tags": [
+        "address_missing",
+        "email_missing",
+        "household",
+        "mobile_missing"
+       ]
+      },
+      "result": {
+       "customer_id": "7b2ed9fe-be38-4f4e-939e-4632b1bca58a",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0017242",
+      "full_name": "SMITH, SINEAD",
+      "date_of_birth": "23/01/1996",
+      "email": "sinead_taylor87@icloud.com",
+      "phone": "00447769025864",
+      "address": {
+       "town": "LONDON",
+       "line1": "17 ABBEY RD",
+       "postcode": "E11 9HA",
+       "uprn": "896276893921"
+      }
+     },
+     "truth": {
+      "person_id": 77568,
+      "household_id": 30798,
+      "tags": [
+       "household",
+       "postcode_typo"
+      ]
+     },
+     "result": {
+      "customer_id": "67cf2117-69e2-4fcb-b4d4-ec6fe0f1de01",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0017241",
+       "full_name": "SMITH, SINEAD",
+       "address": {
+        "town": "LONDON",
+        "line1": "17 ABBEY RD",
+        "postcode": "E119HR"
+       }
+      },
+      "truth": {
+       "person_id": 77568,
+       "household_id": 30798,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household",
+        "mobile_missing"
+       ]
+      },
+      "result": {
+       "customer_id": "c2a8db5d-4894-436b-a6ca-7db5bae2bc0c",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "MARKETING",
+      "source_record_id": "MAR-0003511",
+      "first_name": "STU",
+      "last_name": "WILLIAMS",
+      "date_of_birth": "24/01/1986",
+      "email": "swilliams@virginmedia.com"
+     },
+     "truth": {
+      "person_id": 23275,
+      "household_id": 9253,
+      "tags": [
+       "address_missing",
+       "household",
+       "mobile_missing",
+       "nickname"
+      ]
+     },
+     "result": {
+      "customer_id": "bc46eaaf-49e1-4861-bc22-a671fab5f400",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CALLCENTRE",
+       "source_record_id": "CAL-0005145",
+       "title": "Mr",
+       "first_name": "Stuart",
+       "last_name": "Williams",
+       "gender": "M",
+       "date_of_birth": "24/01/1986",
+       "email": "noemail@noemail.com"
+      },
+      "truth": {
+       "person_id": 23275,
+       "household_id": 9253,
+       "tags": [
+        "address_missing",
+        "household",
+        "mobile_missing",
+        "old_email",
+        "placeholder_email"
+       ]
+      },
+      "result": {
+       "customer_id": "bd34d422-3a93-4122-a869-48ccd63c803e",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0017713",
+      "title": "Ms",
+      "first_name": "Elizabeth",
+      "last_name": "Smith",
+      "gender": "Female",
+      "date_of_birth": "1970-05-23",
+      "email": "thepearsons126@btinternet.com",
+      "mobile_phone": "07119176882"
+     },
+     "truth": {
+      "person_id": 38506,
+      "household_id": 15240,
+      "tags": [
+       "address_missing",
+       "household",
+       "moved",
+       "old_address_unlinked",
+       "shared_family_email",
+       "shared_landline",
+       "surname_change"
+      ]
+     },
+     "result": {
+      "customer_id": "e33773c5-de94-479a-bd72-01dff0cd760d",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0017954",
+       "full_name": "MS ELIZBETH PEARSON",
+       "email": "elizabethx2993@gmail.com",
+       "mobile_phone": "(07119) 176882"
+      },
+      "truth": {
+       "person_id": 38506,
+       "household_id": 15240,
+       "tags": [
+        "address_missing",
+        "dob_missing",
+        "household",
+        "moved",
+        "old_email",
+        "shared_family_email",
+        "shared_landline",
+        "typo_first"
+       ]
+      },
+      "result": {
+       "customer_id": "5e721630-44d4-4925-81d4-e3644199b1a7",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CALLCENTRE",
+      "source_record_id": "CAL-0015387",
+      "title": "Mr",
+      "first_name": "Jonathan",
+      "last_name": "Thompson",
+      "date_of_birth": "1961-04-15"
+     },
+     "truth": {
+      "person_id": 68672,
+      "household_id": 27285,
+      "tags": [
+       "address_missing",
+       "email_missing",
+       "household",
+       "mobile_missing"
+      ]
+     },
+     "result": {
+      "customer_id": "88472c2a-d5e8-41ed-adda-055fbc974785",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0031829",
+       "title": "Mr",
+       "first_name": "Jonathan",
+       "last_name": "Thompson",
+       "gender": "male",
+       "date_of_birth": "15/04/1961",
+       "email": "jonathan3224@hotmail.co.uk",
+       "address": {
+        "town": "London",
+        "line1": "Flat 25, Kingsley Court",
+        "line2": "41 Devonshire Walk",
+        "postcode": "n5 3pu"
+       }
+      },
+      "truth": {
+       "person_id": 68672,
+       "household_id": 27285,
+       "tags": [
+        "household",
+        "mobile_missing"
+       ]
+      },
+      "result": {
+       "customer_id": "6e2d4b29-0839-4cd2-9615-a2800a98e8a5",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     },
+     {
+      "record": {
+       "source_system": "LOYALTY",
+       "source_record_id": "LOY-0022863",
+       "title": "Mr",
+       "first_name": "Jonathan",
+       "last_name": "Thompson",
+       "date_of_birth": "15 Apr 1961",
+       "email": "jonathan3224@hotmail.co.uk"
+      },
+      "truth": {
+       "person_id": 68672,
+       "household_id": 27285,
+       "tags": [
+        "address_missing",
+        "household",
+        "mobile_missing"
+       ]
+      },
+      "result": {
+       "customer_id": "6e2d4b29-0839-4cd2-9615-a2800a98e8a5",
+       "outcome": "matched",
+       "rule": "EMAIL_NAME_DOB",
+       "matched_record_ids": [
+        7342
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "LOYALTY",
+      "source_record_id": "LOY-0033617",
+      "title": "Mr",
+      "first_name": "MICHAEL",
+      "last_name": "WOOD",
+      "date_of_birth": "14/04/1999",
+      "email": "michael.wood@yahoo.co.uk",
+      "mobile_phone": "07519 265863",
+      "address": {
+       "town": "NEWCASTLE UPON TYNE",
+       "line1": "HILLSIDE",
+       "line2": "VICTORIA LANE",
+       "postcode": "NE165HU"
+      }
+     },
+     "truth": {
+      "person_id": 100123,
+      "household_id": 39740,
+      "tags": [
+       "dob_typo",
+       "household",
+       "mobile_digit_typo",
+       "shared_landline"
+      ]
+     },
+     "result": {
+      "customer_id": "7a2d2157-b07b-4209-8bd5-63045711cea5",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CALLCENTRE",
+       "source_record_id": "CAL-0022486",
+       "title": "Mr",
+       "first_name": "Michael",
+       "last_name": "Wood",
+       "date_of_birth": "14 Apr 2000",
+       "address": {
+        "town": "Newcastle Upon Tyne",
+        "line1": "Hillside",
+        "line2": "Victoria Ln",
+        "postcode": "NE16 5HU"
+       }
+      },
+      "truth": {
+       "person_id": 100123,
+       "household_id": 39740,
+       "tags": [
+        "email_missing",
+        "household",
+        "mobile_missing",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "90c43e5c-0f2b-4d3f-8c32-2cd7b3a6b70a",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0018040",
+      "full_name": "MOORRIS, FREDDIE",
+      "address": {
+       "town": "LONDON",
+       "line1": "157B TENNYSON DR",
+       "uprn": "50428442061"
+      },
+      "home_phone": "0113 243 0000"
+     },
+     "truth": {
+      "person_id": 81025,
+      "household_id": 32154,
+      "tags": [
+       "dob_missing",
+       "email_missing",
+       "household",
+       "mobile_missing",
+       "postcode_missing",
+       "typo_last",
+       "hot_phone"
+      ]
+     },
+     "result": {
+      "customer_id": "1bf440e9-d72a-4378-81cd-f1e9bd567e2c",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0037584",
+       "first_name": "Freddie",
+       "last_name": "Morris",
+       "email": "freddie_morris71@yahoo.co.uk",
+       "mobile_phone": "07558 113731",
+       "address": {
+        "town": "London",
+        "line1": "157B Tennyson Drive",
+        "postcode": "N6 1AE"
+       }
+      },
+      "truth": {
+       "person_id": 81025,
+       "household_id": 32154,
+       "tags": [
+        "dob_missing",
+        "household"
+       ]
+      },
+      "result": {
+       "customer_id": "f1e45a11-3bbf-4130-9e6e-835644de0d39",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0010323",
+      "full_name": "BROWN, DOROTHY DOROTHY",
+      "gender": "female",
+      "date_of_birth": "05/06/1999",
+      "address": {
+       "town": "EXETER",
+       "line1": "181 ORCHARD WAY",
+       "postcode": "ex30 9gf",
+       "uprn": "377990366886"
+      }
+     },
+     "truth": {
+      "person_id": 46291,
+      "household_id": 18353,
+      "tags": [
+       "email_missing",
+       "household",
+       "mobile_missing",
+       "moved",
+       "moved_new_address",
+       "old_email"
+      ]
+     },
+     "result": {
+      "customer_id": "ba70ffdc-dc65-49f4-affb-a740fa61666c",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CALLCENTRE",
+       "source_record_id": "CAL-0010379",
+       "first_name": "Dorothy",
+       "last_name": "Brown",
+       "date_of_birth": "5th June 1999",
+       "email": "dorothybrown16@outlook.com",
+       "mobile_phone": "(07329) 872421"
+      },
+      "truth": {
+       "person_id": 46291,
+       "household_id": 18353,
+       "tags": [
+        "address_missing",
+        "household",
+        "moved"
+       ]
+      },
+      "result": {
+       "customer_id": "7d6469e1-3282-46ce-a45c-af8f1a45696d",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "BILLING",
+      "source_record_id": "BIL-0005824",
+      "full_name": "SMITH, BARRBARA",
+      "gender": "female",
+      "date_of_birth": "23/12/1996",
+      "email": "barbara_smith88@icloud.com",
+      "mobile_phone": "07575 731344",
+      "home_phone": "0193-816-6868",
+      "address": {
+       "town": "SHEFFIELD",
+       "county": "SOUTH YORKSHIRE",
+       "line1": "142 ABBEY RD",
+       "postcode": "S348FU",
+       "uprn": "413415907351"
+      }
+     },
+     "truth": {
+      "person_id": 26064,
+      "household_id": 10334,
+      "tags": [
+       "household",
+       "shared_landline",
+       "typo_first"
+      ]
+     },
+     "result": {
+      "customer_id": "173d0b34-61f2-406a-b936-ead2501b3537",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "BILLING",
+       "source_record_id": "BIL-0005823",
+       "full_name": "SMITH, BARBARA LAUREN",
+       "gender": "female",
+       "address": {
+        "town": "SHEFFIELD",
+        "line1": "142 ABBEY RD",
+        "postcode": "LS2 9ZZ"
+       }
+      },
+      "truth": {
+       "person_id": 26064,
+       "household_id": 10334,
+       "tags": [
+        "dob_missing",
+        "email_missing",
+        "household",
+        "mobile_missing",
+        "shared_landline",
+        "hot_postcode"
+       ]
+      },
+      "result": {
+       "customer_id": "8f6c0506-a51f-495f-ba13-3d076ffae0e0",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0024444",
+      "title": "Mr",
+      "first_name": "Brian",
+      "last_name": "Shaw",
+      "gender": "male",
+      "date_of_birth": "1999-12-07",
+      "phone": "07191821410"
+     },
+     "truth": {
+      "person_id": 52756,
+      "household_id": 20952,
+      "tags": [
+       "address_missing",
+       "email_missing"
+      ]
+     },
+     "result": {
+      "customer_id": "ac9458fc-82e5-4aea-9cfc-6e371e5bcb3e",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CALLCENTRE",
+       "source_record_id": "CAL-0011811",
+       "title": "Mr",
+       "first_name": "Brian",
+       "last_name": "Shaw",
+       "date_of_birth": "07 Dec 1999",
+       "address": {
+        "town": "London",
+        "line1": "75 Grosvenor Way"
+       }
+      },
+      "truth": {
+       "person_id": 52756,
+       "household_id": 20952,
+       "tags": [
+        "email_missing",
+        "mobile_missing",
+        "postcode_missing"
+       ]
+      },
+      "result": {
+       "customer_id": "68ff53b7-2be9-424d-a4d4-c3e2a3beeeab",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "CRM",
+      "source_record_id": "CRM-0010159",
+      "title": "Mr",
+      "first_name": "ROBERT",
+      "last_name": "KAUR",
+      "date_of_birth": "1999-08-10",
+      "email": "robertkaur17@outlook.com",
+      "address": {
+       "town": "Cambridge",
+       "line1": "112 Russell Lane",
+       "line2": "Moseley",
+       "postcode": "CB1 4PG"
+      },
+      "home_phone": "0113 243 0000"
+     },
+     "truth": {
+      "person_id": 22118,
+      "household_id": 8797,
+      "tags": [
+       "house_share",
+       "household",
+       "mobile_missing",
+       "old_email",
+       "hot_phone"
+      ]
+     },
+     "result": {
+      "customer_id": "e1c35e57-6007-4715-941d-e6bfd9294e1d",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "ECOMMERCE",
+       "source_record_id": "ECO-0010279",
+       "full_name": "Mr Robert Kaur",
+       "email": "robert.kaur@hotmail.co.uk",
+       "phone": "+44 (0)7523 876743"
+      },
+      "truth": {
+       "person_id": 22118,
+       "household_id": 8797,
+       "tags": [
+        "address_missing",
+        "dob_missing",
+        "house_share",
+        "household"
+       ]
+      },
+      "result": {
+       "customer_id": "37615164-3fa5-46c8-a290-85e4641e9394",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     },
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0010160",
+       "first_name": "Robert",
+       "last_name": "Kaur",
+       "date_of_birth": "10/08/1999",
+       "email": "robert.kaur@hotmail.co.uk",
+       "phone": "07523876743"
+      },
+      "truth": {
+       "person_id": 22118,
+       "household_id": 8797,
+       "tags": [
+        "address_missing",
+        "house_share",
+        "household"
+       ]
+      },
+      "result": {
+       "customer_id": "37615164-3fa5-46c8-a290-85e4641e9394",
+       "outcome": "matched",
+       "rule": "EMAIL_MOBILE_FIRST",
+       "matched_record_ids": [
+        72443
+       ]
+      }
+     },
+     {
+      "record": {
+       "source_system": "MARKETING",
+       "source_record_id": "MAR-0003341",
+       "title": "Mr",
+       "first_name": "Robert",
+       "last_name": "Kaur",
+       "email": "robert.kaur@hotmail.co.uk",
+       "mobile_phone": "+44 7523 876743",
+       "address": {
+        "postcode": "CB1 4PG",
+        "line1": "112 Russell Lane"
+       }
+      },
+      "truth": {
+       "person_id": 22118,
+       "household_id": 8797,
+       "tags": [
+        "dob_missing",
+        "house_share",
+        "household"
+       ]
+      },
+      "result": {
+       "customer_id": "37615164-3fa5-46c8-a290-85e4641e9394",
+       "outcome": "matched",
+       "rule": "EMAIL_MOBILE_FIRST",
+       "matched_record_ids": [
+        72443,
+        73819
+       ]
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "LOYALTY",
+      "source_record_id": "LOY-0001463",
+      "title": "Mr",
+      "first_name": "Joseph",
+      "last_name": "Cooke",
+      "gender": "Male",
+      "date_of_birth": "9/11/45",
+      "phone": "07351 032687"
+     },
+     "truth": {
+      "person_id": 4251,
+      "household_id": 1705,
+      "tags": [
+       "address_missing",
+       "email_missing",
+       "household",
+       "shared_landline"
+      ]
+     },
+     "result": {
+      "customer_id": "525767a3-3209-4452-b310-d2e5e7a7daf7",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0001938",
+       "first_name": "Joseph",
+       "last_name": "Cooke",
+       "date_of_birth": "09/11/1945",
+       "email": "joseph.cooke@gmail.com",
+       "address": {
+        "town": "PLYMOUTH",
+        "line1": "167 BEECH CL",
+        "postcode": "PL34 5SY"
+       }
+      },
+      "truth": {
+       "person_id": 4251,
+       "household_id": 1705,
+       "tags": [
+        "household",
+        "mobile_missing",
+        "shared_landline"
+       ]
+      },
+      "result": {
+       "customer_id": "989a1083-a50c-4fb0-994b-f9eb6a9eff32",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "LOYALTY",
+      "source_record_id": "LOY-0023368",
+      "title": "Mr",
+      "first_name": "JOHN",
+      "last_name": "HAMILTON",
+      "date_of_birth": "1990-10-27",
+      "address": {
+       "town": "Sheffield",
+       "line1": "Ivy Cottage",
+       "line2": "Russell Walk",
+       "postcode": "S18 3YD"
+      }
+     },
+     "truth": {
+      "person_id": 70170,
+      "household_id": 27873,
+      "tags": [
+       "dob_typo",
+       "email_missing",
+       "household",
+       "mobile_missing"
+      ]
+     },
+     "result": {
+      "customer_id": "ea1fec4d-70b7-41e2-bc54-ae950db874e7",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "LOYALTY",
+       "source_record_id": "LOY-0023369",
+       "title": "Mr",
+       "first_name": "Jonh",
+       "last_name": "Hamilton",
+       "date_of_birth": "27/10/89",
+       "email": "john.hamilton@yahoo.co.uk",
+       "address": {
+        "town": "Sheffield",
+        "line1": "Ivy Cottage",
+        "line2": "Russell Walk",
+        "postcode": "S183YD"
+       }
+      },
+      "truth": {
+       "person_id": 70170,
+       "household_id": 27873,
+       "tags": [
+        "household",
+        "mobile_missing",
+        "typo_first"
+       ]
+      },
+      "result": {
+       "customer_id": "90411464-475b-47aa-88f8-6dc61c2172c3",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     }
+    ]
+   },
+   {
+    "incoming": {
+     "record": {
+      "source_system": "LOYALTY",
+      "source_record_id": "LOY-0020989",
+      "first_name": "Catherine",
+      "last_name": "Jones",
+      "date_of_birth": "6/12/06"
+     },
+     "truth": {
+      "person_id": 63046,
+      "household_id": 25085,
+      "tags": [
+       "address_missing",
+       "email_missing",
+       "house_share",
+       "household",
+       "mobile_missing"
+      ]
+     },
+     "result": {
+      "customer_id": "deed6220-c35b-4631-8071-e9afd1e01364",
+      "outcome": "new_customer",
+      "rule": null,
+      "matched_record_ids": []
+     }
+    },
+    "earlier_records_of_same_person": [
+     {
+      "record": {
+       "source_system": "LOYALTY",
+       "source_record_id": "LOY-0020987",
+       "title": "Mrs",
+       "first_name": "Catherine",
+       "last_name": "Jones",
+       "date_of_birth": "6/12/06",
+       "email": "catherinez7164@gmail.com",
+       "address": {
+        "town": "Norwich",
+        "county": "Norfolk",
+        "line1": "Woodlands",
+        "line2": "High Terrace",
+        "postcode": "NR3 9RN"
+       }
+      },
+      "truth": {
+       "person_id": 63046,
+       "household_id": 25085,
+       "tags": [
+        "house_share",
+        "household",
+        "mobile_missing"
+       ]
+      },
+      "result": {
+       "customer_id": "c369c752-75e8-4025-9e7b-6a0abecd0895",
+       "outcome": "new_customer",
+       "rule": null,
+       "matched_record_ids": []
+      }
+     },
+     {
+      "record": {
+       "source_system": "CRM",
+       "source_record_id": "CRM-0029243",
+       "first_name": "Cathy",
+       "last_name": "Jones",
+       "date_of_birth": "06/12/2006",
+       "email": "catherinez7164@gmail.com",
+       "address": {
+        "town": "NORWICH",
+        "line1": "WOODLANDS",
+        "line2": "HIGH TERR",
+        "postcode": "NR39RN",
+        "uprn": "360032391774"
+       }
+      },
+      "truth": {
+       "person_id": 63046,
+       "household_id": 25085,
+       "tags": [
+        "house_share",
+        "household",
+        "mobile_missing",
+        "nickname"
+       ]
+      },
+      "result": {
+       "customer_id": "c369c752-75e8-4025-9e7b-6a0abecd0895",
+       "outcome": "matched",
+       "rule": "EMAIL_NAME_DOB",
+       "matched_record_ids": [
+        4515
+       ]
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "errors_sample": []
+}

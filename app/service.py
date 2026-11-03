@@ -72,6 +72,7 @@ class Found:
     decision: Decision
     auto_link: bool
     ms: float  # time spent finding and scoring candidates
+    shared_identifiers: list[str]  # identifier kinds too widely held to match on
 
 
 class ResolutionService:
@@ -200,6 +201,7 @@ class ResolutionService:
                 "pool_size": len(found.pool),
                 "candidates_sharing_keys": found.candidates,
                 "skipped_blocks": found.skipped,
+                "shared_identifiers": found.shared_identifiers,
                 "competing_customer_ids": [str(x) for x in competing],
                 "evaluations": [
                     {"record_id": e.record_id, "customer_id": str(e.customer_id), "rule": e.rule,
@@ -214,7 +216,8 @@ class ResolutionService:
 
         return ResolveResponse(
             customer_id=customer_id, outcome=outcome, record_id=record_id, match=match,  # type: ignore[arg-type]
-            candidates_considered=len(found.pool), skipped_blocks=found.skipped, matching_ms=round(found.ms, 2),
+            candidates_considered=len(found.pool), skipped_blocks=found.skipped,
+            shared_identifiers=found.shared_identifiers, matching_ms=round(found.ms, 2),
             match_keys_generated=n_keys, data_quality=p.issues, cleansed=c,  # type: ignore[arg-type]
             processing_ms=round((time.perf_counter() - started) * 1000, 2), lock_wait_ms=lock_ms,
         )
@@ -232,6 +235,7 @@ class ResolutionService:
                 else:
                     usable.setdefault(ktype, set()).add(v)
         pool = repo.candidate_pool(usable, self.settings.max_candidates, exclude_record_id)
+        mine, shared_ids = self._personal_components(repo, p, sizes)
 
         # ---- matching: which rules' keys each pooled record shares with the inbound one
         candidates: list[Candidate] = []
@@ -239,7 +243,7 @@ class ResolutionService:
             comps = r["match_components"]
             if comps is None:  # stored before components were kept
                 comps = extract_components(CleansedRecord.model_validate(r["cleansed"]))
-            shared = shared_match_keys(p.components, comps)
+            shared = shared_match_keys(mine, comps)
             if shared:
                 candidates.append(Candidate(r["record_id"], r["customer_id"], shared, r["match_profile"],
                                             r["created_at"]))
@@ -247,7 +251,39 @@ class ResolutionService:
         auto_link = (decision.customer_id is not None and decision.rule is not None
                      and decision.rule.tier in self.settings.auto_link_tiers)
         return Found(pool, sorted(set(skipped)), len(candidates), decision, auto_link,
-                     (time.perf_counter() - started) * 1000)
+                     (time.perf_counter() - started) * 1000, shared_ids)
+
+    def _personal_components(self, repo: Repository, p: Prepared,
+                             sizes: dict[tuple[str, bytes], int]) -> tuple[Components, list[str]]:
+        """The inbound components without identifiers held by too many customers
+        to be personal (a company order email, a switchboard, a big-user
+        postcode). Those still gather candidates through blocking, but match on
+        nothing. Returns the components and the kinds of identifier dropped."""
+        limits = {"email": self.settings.shared_contact_customers, "phone": self.settings.shared_contact_customers,
+                  "postcode": self.settings.shared_postcode_customers}
+        block_of = {"email": "B_EMAIL", "phone": "B_PHONE", "postcode": "B_POSTCODE"}
+        to_count: dict[tuple[str, bytes], tuple[str, str]] = {}
+        dropped: dict[str, set[str]] = {}
+        for comp, ktype in block_of.items():
+            for value in p.components[comp]:
+                key = (ktype, blocking_key_value(ktype, value, self.settings.key_secret))
+                records = sizes.get(key, 0)
+                if records > self.settings.max_block_size:
+                    dropped.setdefault(comp, set()).add(value)  # too big even to count
+                elif records > limits[comp]:  # every customer has a record, so fewer records rules it out
+                    to_count[key] = (comp, value)
+        held = repo.block_customers(list(to_count), max(limits.values()))
+        for key, (comp, value) in to_count.items():
+            if held.get(key, 0) > limits[comp]:
+                dropped.setdefault(comp, set()).add(value)
+        if not dropped:
+            return p.components, []
+        mine = dict(p.components)
+        for comp, values in dropped.items():
+            mine[comp] = mine[comp] - values
+        if "phone" in dropped:
+            mine["mobile"] = mine["mobile"] - dropped["phone"]
+        return mine, sorted(dropped)
 
     # ------------------------------------------------------------------ merge
     def merge(self, conn: psycopg.Connection, req: MergeRequest) -> MergeResponse:

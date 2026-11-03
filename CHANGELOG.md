@@ -10,6 +10,11 @@ because they run automatically on start-up.
 - A candidate pool truncated at `MAX_CANDIDATES` kept the oldest records and
   could miss the real match. Candidates are now ranked by the number of
   blocking keys they share with the inbound record.
+- Emails, phone numbers and postcodes shared by many unrelated people (a
+  retailer's order address, a switchboard, a big-user postcode) linked
+  strangers. A value held by more than `SHARED_CONTACT_CUSTOMERS` (default 10)
+  customers, or `SHARED_POSTCODE_CUSTOMERS` (default 250) for postcodes, is no
+  longer matched on, and the resolve response lists it in `shared_identifiers`.
 
 ### Changed
 - Block sizes are counted only up to `MAX_BLOCK_SIZE + 1`, so an oversized
