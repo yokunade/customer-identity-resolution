@@ -49,7 +49,7 @@ jobs:
       - name: Smoke test
         run: |
           curl --fail --silent --show-error http://127.0.0.1:8000/ready
-          curl --fail --silent --show-error --dump-header - --output /dev/null http://127.0.0.1:8000/review \
+          curl --fail --silent --show-error --dump-header - --output /dev/null http://127.0.0.1:8000/app \
             | grep -i "^content-security-policy:"
       - name: API logs
         if: failure()

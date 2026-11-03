@@ -175,7 +175,7 @@ def test_demo_seed_labels_cases_with_ground_truth(clean_db, monkeypatch):
         gold = conn.execute("SELECT decision, reviewer_id FROM review_example WHERE label_source = 'synthetic_truth'").fetchall()
         open_cases = conn.execute("SELECT count(*) AS n FROM merge_candidate WHERE status = 'open'").fetchone()["n"]
         users = conn.execute("SELECT count(*) AS n FROM review_user").fetchone()["n"]
-    assert users == 2 and open_cases >= len(gold) > 0
+    assert users == 3 and open_cases >= len(gold) > 0
     assert all(g["reviewer_id"] is None for g in gold)
     seed.main()  # second run changes nothing
     with psycopg.connect(clean_db, row_factory=dict_row) as conn:

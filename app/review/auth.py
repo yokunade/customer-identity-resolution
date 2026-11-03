@@ -30,6 +30,12 @@ class User:
     def is_admin(self) -> bool:
         return self.role == "admin"
 
+    @property
+    def can_lookup(self) -> bool:
+        """Customer lookup shows everything held about a person, so only managers
+        (and admins, who already export full-PII data) may use it."""
+        return self.role in ("manager", "admin")
+
 
 def hash_password(password: str) -> str:
     salt = secrets.token_bytes(16)

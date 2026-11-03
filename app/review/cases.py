@@ -177,6 +177,29 @@ def take_next(conn: psycopg.Connection, user: User) -> int | None:
     return None
 
 
+def claim(conn: psycopg.Connection, user: User, case_id: int) -> int:
+    """Claim one chosen case (opened from a customer's page rather than the queue).
+    Fails if another reviewer holds it or there is nothing left to decide."""
+    with conn.transaction():
+        case = conn.execute(
+            "SELECT case_id, customer_a, customer_b, status, claimed_by,"
+            " claimed_at > now() - make_interval(mins => %s) AS live"
+            " FROM merge_candidate WHERE case_id = %s FOR UPDATE",
+            (CLAIM_MINUTES, case_id),
+        ).fetchone()
+        if case is None:
+            raise CaseError(404, "No such case.")
+        if case["status"] != "open":
+            raise CaseError(409, "This case has already been decided.")
+        if case["claimed_by"] not in (None, user.user_id) and case["live"]:
+            raise CaseError(409, "Another reviewer is working on this case.")
+        if _reconcile(conn, case) == "obsolete":
+            raise CaseError(409, "Merges since this case was raised left nothing to decide.")
+        conn.execute("UPDATE merge_candidate SET claimed_by = %s, claimed_at = now() WHERE case_id = %s",
+                     (user.user_id, case_id))
+    return case_id
+
+
 def release(conn: psycopg.Connection, user: User, case_id: int) -> None:
     with conn.transaction():
         n = conn.execute(

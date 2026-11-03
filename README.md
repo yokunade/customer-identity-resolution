@@ -37,14 +37,14 @@ Demo ready.
   20,040 source records resolved to 10,487 customers; 1,136 cases waiting for review.
   The first 18 cases in the queue are curated hard cases; every case has a known answer.
 
-  Review app   http://localhost:8000/review
-               ana@demo.local (admin) or tom@demo.local, password: review-demo-2026
+  custIDR      http://localhost:8000/app
+               ana@demo.local (admin), mo@demo.local (manager) or tom@demo.local, password: review-demo-2026
   API docs     http://localhost:8000/docs   (X-API-Key: demo-key)
 ```
 
 Then:
 
-- **Review cases:** open http://localhost:8000/review, sign in, and take a case.
+- **Look up and review:** open http://localhost:8000/app and sign in. As mo@demo.local (manager), search for a customer by email or phone; as tom@demo.local, take a case from the review queue.
   The demo sends name + address matches that lack a DOB or personal identifier
   to review (`AUTO_LINK_TIERS=exact,strong,probable`), so the queue has plenty in it.
   In demo mode (`DEMO_MODE=true`) the app shows the known answer and why
@@ -125,7 +125,7 @@ All `/v1` endpoints require `X-API-Key` when `API_KEYS` is set.
 | GET | `/v1/source-records/{system}/{id}` | Customer ID for a source record |
 | POST | `/v1/customers/merge` | Merge two customers |
 | GET | `/health`, `/ready` | Liveness / database readiness |
-| GET | `/review` | Review app for merge decisions (see below) |
+| GET | `/app` | custIDR: customer lookup and merge review (see below); `/review` redirects here |
 
 ### Example
 
@@ -187,6 +187,7 @@ A pair a reviewer kept apart is never re-linked.
 | `MAX_CANDIDATES` | 2000 | Candidate pool ceiling per record; candidates sharing the most blocking keys are kept. |
 | `SHARED_CONTACT_CUSTOMERS` | 10 | An email or phone held by more customers than this is shared (a company inbox, a switchboard) and not matched on. |
 | `SHARED_POSTCODE_CUSTOMERS` | 250 | The same for a postcode (a big-user postcode); the dwelling still matches. |
+| `LOOKUP_MAX_PER_HOUR` | 300 | Customer lookups (searches and views) one manager may make per hour. |
 | `LOCK_WAIT_WARN_MS` | 200 | Log a warning when a resolve waits longer than this for its advisory locks. |
 | `MAX_BATCH_SIZE` | 500 | |
 | `MAX_REQUEST_BYTES` | 2000000 | Larger request bodies are refused with 413 before parsing. Every field also has a length limit. |
@@ -195,18 +196,22 @@ A pair a reviewer kept apart is never re-linked.
 | `REVIEW_COOKIE_SECURE` | true | Review session cookie only over HTTPS (http://localhost still works in browsers). |
 | `DB_POOL_MIN` / `DB_POOL_MAX` | 1 / 10 | |
 
-## Review app
+## custIDR app
 
-`/review` is a web app where data stewards decide merge cases: pairs of
+`/app` (custIDR) is the web app for people. Managers look customers up; reviewers
+and managers decide merge cases: pairs of
 customers that both matched an incoming record equally well, plus any matches
 in tiers left out of `AUTO_LINK_TIERS`.
 
 1. **Sign in.** Accounts are created from the command line:
 
    ```bash
-   docker compose exec api python -m app.review.users add --email you@example.com --name "Your Name" --admin
+   docker compose exec api python -m app.review.users add --email you@example.com --name "Your Name" --role admin
    docker compose exec api python -m app.review.users password --email ana@demo.local
    ```
+
+   Roles: `reviewer` decides cases; `manager` can also look up customers;
+   `admin` can also export training data.
 
 2. **Take next case.** Cases are handed out oldest first. A claimed case is
    held for one reviewer for 30 minutes, then returns to the queue; two
@@ -228,6 +233,26 @@ in tiers left out of `AUTO_LINK_TIERS`.
    - Both save a labelled training example for a future AI reviewer, with a
      snapshot of the case as shown (see [docs/AI_REVIEWER.md](docs/AI_REVIEWER.md)).
 
+### Customer lookup (managers)
+
+Managers (and admins) can find a customer by email, phone number (any
+format, landlines included), postcode, name with date of birth, source record
+(`CRM/C-1042`) or customer ID. The value is cleansed as an inbound record
+would be and found through the matcher's own blocking keys, so
+`Bill.Smith+promo@googlemail.com` finds `billsmith@gmail.com`. A search on an
+email, phone or postcode held by more customers than the shared limits (see
+`docs/MATCHING.md`) is flagged `shared`.
+
+The customer view shows everything held: names, dates of birth, emails and
+phones (each with the sources that gave it, and whether it is shared),
+addresses, every source record as received and as cleansed with how it was
+linked, resolution history, merged-in customers, open review cases, and who
+has looked the customer up recently.
+
+Every search and every customer view is logged to `lookup_access` (user, time,
+cleansed value searched, customers shown, optional reason), and each manager
+is limited to `LOOKUP_MAX_PER_HOUR` lookups.
+
 Security: scrypt password hashes, revocable server-side sessions in an
 HttpOnly, SameSite=Strict cookie, a custom-header check on every change
 (CSRF), a strict Content-Security-Policy, and sign-in throttling (5 failures
@@ -241,8 +266,12 @@ per email per 5 minutes, counted in the database so it holds across workers).
 | POST | `/review/api/cases/next` | Claim (or resume) a case |
 | GET | `/review/api/cases/{id}` | Case with side-by-side comparison |
 | POST | `/review/api/cases/{id}/decision` | `{decision: merge \| keep_apart, notes, survivor_customer_id}` |
+| POST | `/review/api/cases/{id}/claim` | Claim a chosen case (opened from a customer's page) |
 | POST | `/review/api/cases/{id}/release` | Return a case to the queue |
 | GET | `/review/api/history` | Your decisions (`?everyone=true` for admins) |
+| GET | `/review/api/lookup?q=&type=&dob=&reason=` | Customer search (managers); `type` defaults to `auto` |
+| GET | `/review/api/lookup/recent` | Your latest distinct searches (managers; not itself logged) |
+| GET | `/review/api/customers/{id}?reason=` | Everything held about one customer (managers) |
 | GET | `/review/api/examples/summary`, `/examples/export` | Training data counts and downloads (admins) |
 
 ## AI reviewer data

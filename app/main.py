@@ -33,7 +33,7 @@ from app.service import MergeError, ResolutionService, SearchError
 log = logging.getLogger("identity")
 
 # The review app needs nothing but its own files and Google Fonts. Swagger UI at /docs
-# loads from a CDN, so the strict policy applies to /review only.
+# loads from a CDN, so the strict policy applies to /app and /review only.
 REVIEW_CSP = (
     "default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; "
     "font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; "
@@ -119,7 +119,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         resp = await call_next(request)
         resp.headers.setdefault("X-Content-Type-Options", "nosniff")
         resp.headers.setdefault("Referrer-Policy", "no-referrer")
-        if request.url.path == "/review" or request.url.path.startswith("/review/"):
+        path = request.url.path
+        if path in ("/review", "/app") or path.startswith(("/review/", "/app/")):
             resp.headers["Content-Security-Policy"] = REVIEW_CSP
             resp.headers["X-Frame-Options"] = "DENY"
         return resp
