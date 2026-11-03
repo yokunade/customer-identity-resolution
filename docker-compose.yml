@@ -2,7 +2,7 @@
 # loads synthetic customers through the real matching pipeline.
 #
 #   docker compose up --build
-#   open http://localhost:8000/review
+#   open http://localhost:8000/app
 #
 # Every setting has a demo default; override any of them in a .env file.
 # The defaults are for a laptop demo only, not for production.

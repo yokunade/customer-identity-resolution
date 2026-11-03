@@ -33,6 +33,7 @@ from benchmark.generate import generate
 
 REVIEWERS = [
     ("ana@demo.local", "Ana Silva", "admin"),
+    ("mo@demo.local", "Mo Patel", "manager"),
     ("tom@demo.local", "Tom Reed", "reviewer"),
 ]
 
@@ -135,8 +136,8 @@ Demo ready.
   {s['records']:,} source records resolved to {s['customers']:,} customers; {s['cases']:,} cases waiting for review.
   The first {s['curated']} cases in the queue are curated hard cases; every case has a known answer.
 
-  Review app   http://localhost:{port}/review
-               {REVIEWERS[0][0]} (admin) or {REVIEWERS[1][0]}, password: {password}
+  custIDR      http://localhost:{port}/app
+               {REVIEWERS[0][0]} (admin), {REVIEWERS[1][0]} (manager) or {REVIEWERS[2][0]}, password: {password}
   API docs     http://localhost:{port}/docs   (X-API-Key: demo-key)
 """, flush=True)
 

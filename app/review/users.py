@@ -1,6 +1,6 @@
 """Manage reviewer accounts.
 
-    python -m app.review.users add --email ana@example.co.uk --name "Ana Silva" [--admin]
+    python -m app.review.users add --email ana@example.co.uk --name "Ana Silva" [--role reviewer|manager|admin]
     python -m app.review.users list
     python -m app.review.users disable --email ana@example.co.uk
     python -m app.review.users password --email ana@example.co.uk
@@ -34,7 +34,9 @@ def main() -> None:
     a = sub.add_parser("add")
     a.add_argument("--email", required=True)
     a.add_argument("--name", required=True)
-    a.add_argument("--admin", action="store_true")
+    a.add_argument("--role", choices=["reviewer", "manager", "admin"], default="reviewer",
+                   help="manager: may also look up customers; admin: also exports training data")
+    a.add_argument("--admin", action="store_true", help="same as --role admin")
     sub.add_parser("list")
     d = sub.add_parser("disable")
     d.add_argument("--email", required=True)
@@ -46,7 +48,8 @@ def main() -> None:
         migrate(conn)
         if args.cmd == "add":
             try:
-                uid = create_user(conn, args.email, args.name, _password(args), "admin" if args.admin else "reviewer")
+                uid = create_user(conn, args.email, args.name, _password(args),
+                                  "admin" if args.admin else args.role)
             except (ValueError, psycopg.errors.UniqueViolation) as exc:
                 sys.exit(f"Not created: {exc}")
             print(f"Created user {uid} ({args.email})")
