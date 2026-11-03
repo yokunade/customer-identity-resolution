@@ -102,6 +102,20 @@ class ResolutionService:
             blocking_keys={k: len(v) for k, v in p.blocking_keys.items()},
         )
 
+    def preview(self, conn: psycopg.Connection, inbound: InboundCustomer) -> tuple[Prepared, Found, list[UUID]]:
+        """What resolve would do with this record now, storing nothing: the
+        prepared record, the match found, and the customers a review case would
+        be raised against (the same choice resolve makes for a new record)."""
+        p = self.prepare(inbound)
+        found = self._match(Repository(conn), p)
+        conn.rollback()
+        decision = found.decision
+        review = list(decision.competing_customer_ids)
+        if decision.customer_id is not None and not found.auto_link:
+            review.append(decision.customer_id)
+        review += [cid for cid, r in decision.runners_up if r.tier in self.settings.auto_link_tiers]
+        return p, found, list(dict.fromkeys(review))
+
     # ------------------------------------------------------------------ resolve
     def resolve(self, conn: psycopg.Connection, inbound: InboundCustomer) -> ResolveResponse:
         started = time.perf_counter()

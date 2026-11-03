@@ -25,7 +25,7 @@ function linkedBy(l) {
   return h("span", { class: "linked" }, l.tier ? tag(l.tier, "tag-tier tag-" + l.tier) : null, h("span", { class: "mono small", text: l.rule }));
 }
 
-function cleansedLines(c) {
+export function cleansedLines(c) {
   const n = c.name || {};
   const a = c.address || {};
   return [
@@ -40,7 +40,10 @@ function cleansedLines(c) {
 }
 
 function recordDetail(r) {
+  const a = r.added_by;
   return h("div", { class: "rec-detail" },
+    a ? h("p", { class: "added-by" }, h("b", { text: `Added in custIDR by ${a.name}` }), `, ${fmtDateTime(a.at)}`,
+      a.note ? h("span", { class: "note", text: `: ${a.note}` }) : ".") : null,
     h("div", { class: "rec-cols" },
       h("div", { class: "rec-box" }, h("h4", { text: "As received" }),
         h("pre", { class: "mono", text: JSON.stringify(r.raw, null, 2) })),
@@ -65,7 +68,8 @@ function recordsTable(v) {
       } });
     tbody.append(
       h("tr", {},
-        h("td", { class: "strong", text: r.source_system }),
+        h("td", {}, h("div", { class: "strong", text: r.source_system }),
+          r.added_by ? h("div", { class: "muted small", text: `Added by ${r.added_by.name}` }) : null),
         h("td", { class: "mono small", text: r.source_record_id }),
         h("td", {}, linkedBy(r.linked_by)),
         h("td", { class: "muted nowrap", text: fmtDate(r.received_at), title: `Received ${fmtDateTime(r.received_at)}, updated ${fmtDateTime(r.updated_at)}` }),

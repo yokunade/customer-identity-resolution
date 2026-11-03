@@ -362,6 +362,31 @@ th:last-child, td:last-child { padding-right: 1.5rem; }
 .reason { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1rem; }
 .reason label { font-weight: 600; font-size: .875rem; }
 .optional { font-weight: 400; color: var(--ink-3); }
+.find-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem 1rem; }
+.actions { display: flex; flex-wrap: wrap; gap: .75rem; }
+
+/* ---------- add a record */
+.add { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.add-form { display: grid; gap: 1rem; }
+.add-form fieldset { margin: 0; min-width: 0; }
+.add-form .field { align-content: start; }
+.add-form legend { float: left; width: 100%; padding: 0; font-weight: 600; font-size: 1.05rem; }
+.add-form legend + * { clear: both; }
+.grid-name { display: grid; grid-template-columns: 8rem repeat(3, minmax(0, 1fr)); gap: 1rem; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.multi { display: grid; gap: .5rem; }
+.field > .link { justify-self: start; font-size: var(--step--1); }
+.input-postcode { max-width: 10rem; text-transform: uppercase; }
+.req { font-weight: 400; color: var(--ink-3); }
+.add-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem 1.25rem; }
+.add-result { position: sticky; top: 88px; }
+.add-result-body { display: grid; gap: 1rem; }
+.add-result-body .callout { margin: 0; }
+.callout-ok { background: var(--match-soft); border-color: transparent; color: var(--match-ink); }
+.pick { display: grid; gap: .1rem; margin-top: .6rem; padding: .6rem .8rem; border-radius: var(--r-control); background: var(--sheet); border: 1px solid var(--line); color: var(--ink); text-decoration: none; }
+.pick:hover { border-color: var(--accent); color: var(--ink); }
+.added-by { margin-bottom: .75rem; font-size: var(--step--1); color: var(--ink-2); }
+.added-by b { color: var(--ink); }
 .lookup-cols { display: grid; grid-template-columns: minmax(0, 2fr) minmax(16rem, 1fr); gap: 1.5rem; align-items: start; }
 .recent-lookups { list-style: none; margin: 0; padding: 0; }
 .recent-lookups a { display: flex; flex-wrap: wrap; gap: .25rem 1rem; align-items: center; padding: .9rem 1.5rem; color: var(--ink); text-decoration: none; border-bottom: 1px solid var(--line-soft); }
@@ -555,12 +580,15 @@ details.recs[open] summary { border-bottom: 1px solid var(--line); }
 
 /* ---------- narrow screens */
 @media (max-width: 1080px) {
+  .add { grid-template-columns: minmax(0, 1fr); }
+  .add-result { position: static; }
   .case { grid-template-columns: minmax(0, 1fr); }
   .queue { grid-template-columns: minmax(0, 1fr); }
   .lookup-cols { grid-template-columns: minmax(0, 1fr); }
   .rail { position: static; max-height: none; }
 }
 @media (max-width: 760px) {
+  .grid-name, .grid-2 { grid-template-columns: minmax(0, 1fr); }
   .tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .tile-value { font-size: 1.5rem; }
   .records { grid-template-columns: 1fr; }

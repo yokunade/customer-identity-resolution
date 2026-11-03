@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, R
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
-from app.review import auth, cases, lookup
+from app.review import auth, cases, lookup, manual
 from app.review import export as review_export
 from app.review.auth import LoginThrottle, User
 
@@ -141,6 +141,23 @@ def build_router(cookie_secure: bool) -> APIRouter:
     def lookup_customer(customer_id: UUID, request: Request, user: Manager, conn: Conn,
                         reason: Reason = None) -> dict:
         return lookup_call(lookup.customer_view, request, user, conn, customer_id, reason=reason)
+
+    # ------------------------------------------------------------------ records added by hand (managers)
+    @router.post("/review/api/records/check", dependencies=write, tags=["review"])
+    def check_record(body: manual.ManualRecord, request: Request, user: Manager, conn: Conn) -> dict:
+        svc = request.app.state.service
+        try:
+            return manual.check(conn, svc.settings, svc, user, body)
+        except lookup.LookupFailed as exc:
+            raise HTTPException(exc.status, exc.message) from exc
+
+    @router.post("/review/api/records", dependencies=write, tags=["review"])
+    def add_record(body: manual.ManualSave, request: Request, user: Manager, conn: Conn) -> dict:
+        svc = request.app.state.service
+        try:
+            return manual.save(conn, svc.settings, svc, user, body)
+        except lookup.LookupFailed as exc:
+            raise HTTPException(exc.status, exc.message) from exc
 
     # ------------------------------------------------------------------ cases
     @router.get("/review/api/stats", tags=["review"])
