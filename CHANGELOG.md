@@ -13,6 +13,13 @@ because they run automatically on start-up.
   logged to `lookup_access`; `LOOKUP_MAX_PER_HOUR` limits each manager.
   Migration `007_lookup` adds the role and the log.
 - `python -m app.review.users add --role reviewer|manager|admin`.
+- Managers can add a customer record by hand in custIDR ("Add a record" on
+  the lookup page, or from a search that found nobody). Check shows the
+  cleansed values and whether it joins an existing customer, creates a new one
+  or raises a review case; nothing is stored until Save. Saved records use the
+  reserved source system `MANUAL` (`M-000001`, ...), record who added them and
+  why (migration `008_manual_records`), and appear on the customer's page.
+  Feeds can no longer send `MANUAL` records.
 - Dark mode in custIDR: follows the system setting, or pick light or dark
   with the button in the top bar or on the sign-in page (kept per browser).
 - The review app is now **custIDR**, at `/app` (`/review` redirects). New

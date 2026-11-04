@@ -235,8 +235,10 @@ def customer_view(conn: psycopg.Connection, settings: Settings, user: User, cust
     log_access(conn, user, "view_customer", [cid], reason=reason)
 
     records = conn.execute(
-        "SELECT record_id, source_system, source_record_id, raw, cleansed, data_quality, received_at, updated_at"
-        " FROM source_record WHERE customer_id = %s ORDER BY record_id", (cid,),
+        "SELECT sr.record_id, sr.source_system, sr.source_record_id, sr.raw, sr.cleansed, sr.data_quality,"
+        " sr.received_at, sr.updated_at, u.display_name AS added_by, m.added_at, m.note"
+        " FROM source_record sr LEFT JOIN manual_record m USING (record_id)"
+        " LEFT JOIN review_user u ON u.user_id = m.added_by WHERE sr.customer_id = %s ORDER BY sr.record_id", (cid,),
     ).fetchall()
     rids = [r["record_id"] for r in records]
     first_events = {e["record_id"]: e for e in conn.execute(
@@ -319,6 +321,7 @@ def customer_view(conn: psycopg.Connection, settings: Settings, user: User, cust
             "source_record_id": r["source_record_id"], "received_at": r["received_at"],
             "updated_at": r["updated_at"], "raw": r["raw"], "cleansed": r["cleansed"],
             "data_quality": r["data_quality"], "linked_by": linked_by(r["record_id"]),
+            "added_by": {"name": r["added_by"], "at": r["added_at"], "note": r["note"]} if r["added_at"] else None,
         } for r in records],
         "history": [dict(h) for h in history],
         "open_cases": [{"case_id": c["case_id"], "rule": c["rule"], "created_at": c["created_at"],

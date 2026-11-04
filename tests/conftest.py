@@ -40,6 +40,7 @@ def clean_db(db_url):
         migrate(conn)
         conn.execute("TRUNCATE customer, source_record, blocking_key, resolution_event,"
                      " merge_candidate, login_failure, lookup_access RESTART IDENTITY CASCADE")
+        conn.execute("ALTER SEQUENCE manual_record_seq RESTART")
         conn.commit()
     return db_url
 

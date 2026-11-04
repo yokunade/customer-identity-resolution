@@ -272,6 +272,8 @@ per email per 5 minutes, counted in the database so it holds across workers).
 | GET | `/review/api/lookup?q=&type=&dob=&reason=` | Customer search (managers); `type` defaults to `auto` |
 | GET | `/review/api/lookup/recent` | Your latest distinct searches (managers; not itself logged) |
 | GET | `/review/api/customers/{id}?reason=` | Everything held about one customer (managers) |
+| POST | `/review/api/records/check` | What adding a record would do: cleansed values and the customer it would join (managers; stores nothing) |
+| POST | `/review/api/records` | Add a record by hand as `MANUAL/M-000001`, matched like any other; `submit_token` makes a repeat save a no-op (managers) |
 | GET | `/review/api/examples/summary`, `/examples/export` | Training data counts and downloads (admins) |
 
 ## AI reviewer data

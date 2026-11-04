@@ -16,6 +16,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, sta
 from app.config import Settings, get_settings
 from app.db import Database, migrate
 from app.repository import Repository
+from app.review.manual import SOURCE as MANUAL_SOURCE
 from app.review.routes import build_router as build_review_router
 from app.schemas import (
     BatchResponse,
@@ -154,9 +155,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         conn.rollback()
         return {"status": "ready"}
 
+    # Records added by hand in custIDR use this source system; a feed must not overwrite them.
+    RESERVED = f"Source system {MANUAL_SOURCE} is reserved for records added in custIDR."
+
+    def reserved(rec: InboundCustomer) -> bool:
+        return rec.source_system.strip().upper() == MANUAL_SOURCE
+
     @app.post("/v1/resolve", response_model=ResolveResponse, dependencies=auth, tags=["resolution"],
               summary="Cleanse a customer record and return its customer ID")
     def resolve(record: InboundCustomer, conn: Conn, svc: Service) -> ResolveResponse:
+        if reserved(record):
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, RESERVED)
         return svc.resolve(conn, record)
 
     @app.post("/v1/resolve/batch", response_model=BatchResponse, dependencies=auth, tags=["resolution"],
@@ -167,6 +176,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                                 f"batch limit is {settings.max_batch_size} records")
         results: list = []
         for rec in records:
+            if reserved(rec):
+                results.append({"source_system": rec.source_system, "source_record_id": rec.source_record_id,
+                                "error": RESERVED})
+                continue
             try:
                 results.append(svc.resolve(conn, rec))
             except Exception as exc:  # one bad record must not sink the batch

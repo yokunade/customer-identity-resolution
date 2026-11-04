@@ -71,7 +71,8 @@ export async function viewLookup() {
   const recentList = h("div", {}, loading("Loading your recent lookups"));
   const queueBox = h("div", {}, loading("Loading the queue"));
   show(h("div", { class: "lookup" },
-    h("section", { class: "find", "aria-labelledby": "find-h" }, h("h1", { id: "find-h", text: "Find a customer" }), form),
+    h("section", { class: "find", "aria-labelledby": "find-h" },
+      h("h1", { id: "find-h", text: "Find a customer" }), form),
     h("div", { class: "lookup-cols" },
       h("section", { class: "panel", "aria-labelledby": "recent-h" },
         h("div", { class: "panel-head" }, h("h2", { id: "recent-h", text: "Your recent lookups" })), recentList),
@@ -99,6 +100,12 @@ export async function viewLookup() {
 }
 
 /* ------------------------------------------------------------------ results */
+
+/** The add-a-record form, starting from the value that found nobody. */
+function addHash(res) {
+  const field = { email: "email", phone: "phone", postcode: "postcode" }[res.searched_by];
+  return field ? "#/add?" + new URLSearchParams({ [field]: res.normalised_value }) : "#/add";
+}
 
 const tag = (text, cls = "") => h("span", { class: "tag " + cls, text });
 
@@ -133,8 +140,10 @@ export async function viewSearch() {
     body.replaceChildren(h("div", { class: "empty-state" },
       h("h1", { text: "No customer found" }),
       h("p", {}, `Nothing is held for ${what.toLowerCase()} `, h("span", { class: "mono", text: res.normalised_value }), "."),
-      h("p", { class: "hint", text: "Try another identifier: an old email, a landline, or the postcode." }),
-      h("a", { class: "btn", href: "#/lookup", text: "Back to lookup" })));
+      h("p", { class: "hint", text: "Try another identifier: an old email, a landline, or the postcode. If they are new to us, add their details." }),
+      h("div", { class: "actions" },
+        h("a", { class: "btn btn-primary", href: addHash(res), text: "Add a record" }),
+        h("a", { class: "btn", href: "#/lookup", text: "Back to lookup" }))));
     return;
   }
 
