@@ -63,6 +63,12 @@ function outcome(res) {
         h("p", { text: res.review_with.length ? "No customer matches strongly enough to join automatically."
           : "No existing customer matches these details." }))));
   }
+  if (res.merges_with?.length) {
+    parts.push(h("div", { class: "callout callout-ok" }, icon(ICONS.pair, 22),
+      h("div", {}, h("b", { text: `Also merges ${plural(res.merges_with.length, "customer")} into it` }),
+        h("p", { text: "These details match them too, and nothing in their records conflicts, so they are the same person." }),
+        res.merges_with.map(customerCard))));
+  }
   if (res.review_with.length) {
     parts.push(h("div", { class: "callout callout-warn" }, icon(ICONS.warn, 22),
       h("div", {}, h("b", { text: `A review case will be raised with ${plural(res.review_with.length, "customer")}` }),

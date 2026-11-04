@@ -136,13 +136,28 @@ email, and fathers and sons share names.
    corroborating records, then oldest customer, then customer ID. Priorities
    follow the tiers (exact, strong, probable, possible), so a weaker tier never
    outranks a stronger one; an import-time check enforces this.
-4. Other customers tied at the winning rule, and customers that matched lower
-   down at a rule in an auto-linkable tier, are returned as
-   `competing_customer_ids` and written to `merge_candidate` for review (each
-   under the rule it matched). A customer the record would have linked to on
-   its own is likely a duplicate of the winner.
+4. The winner is then checked as a whole: if any of its records conflicts
+   with the inbound one on DOB (leniently: one wrong part or a day/month swap
+   is a slip), gender or Jr/Sr, it is passed over and step 3 is repeated
+   without it. Without this a record with no DOB can chain a father and son
+   together: each links to the no-DOB record and never meets the other. Passed
+   over customers are logged as `blocked_customers` on the event.
+5. Customers that matched lower down at a rule in an auto-linkable tier are
+   the same person as the winner, so they are **merged into it**
+   (`match.merged_customer_ids`, and a `merge` event with `auto: true`),
+   provided no record of either conflicts with any record of the other on
+   the same three checks, together they hold at most 50 records, and the pair
+   was not kept apart before. Otherwise they go to review.
+6. Other customers tied at the winning rule, and runners-up that could not be
+   merged, are returned as `competing_customer_ids` and written to
+   `merge_candidate` for review (each under the rule it matched).
    `POST /v1/customers/merge` resolves them. Either ID may already have been
    merged; the merge applies to the customers they now resolve to.
+
+On the 50,000-record benchmark (seed 7, all tiers auto-linked) steps 4 and 5
+raised pairwise precision from 99.80% to 99.87% and recall from 91.7% to
+94.4%, cut over-merged customers from 21 to 15 and the review queue from 450
+cases to 28, at about 8% lower throughput.
 
 ## Blocking
 

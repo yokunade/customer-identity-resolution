@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, R
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
-from app.review import auth, cases, lookup, manual
+from app.review import auth, cases, checks, lookup, manual
 from app.review import export as review_export
 from app.review.auth import LoginThrottle, User
 from app.schemas import SplitRequest
@@ -165,6 +165,16 @@ def build_router(cookie_secure: bool) -> APIRouter:
             return manual.save(conn, svc.settings, svc, user, body)
         except lookup.LookupFailed as exc:
             raise HTTPException(exc.status, exc.message) from exc
+
+    # ------------------------------------------------------------------ engine checks (managers)
+    @router.get("/review/api/checks", tags=["review"])
+    def engine_checks(request: Request, user: Manager, conn: Conn) -> dict:
+        settings = request.app.state.service.settings
+        try:
+            lookup.check_rate(conn, user, settings)
+        except lookup.LookupFailed as exc:
+            raise HTTPException(exc.status, exc.message) from exc
+        return checks.run(conn, settings, user)
 
     # ------------------------------------------------------------------ moving records out (managers)
     @router.post("/review/api/customers/{customer_id}/split", dependencies=write, tags=["review"])

@@ -26,6 +26,14 @@ because they run automatically on start-up.
   under its old ID; otherwise a new one is created. The pair is kept apart, so
   a re-sent record is not linked back. Both customers' history shows the move.
 - Add record is its own item in the custIDR menu.
+- **Checks** in custIDR (managers): evidence that matching links the right
+  records. Inside one customer it looks for more than one DOB, forename or
+  surname, male and female records, Jr and Sr, and very large customers;
+  across customers, emails and mobiles on more than one customer and the same
+  name and DOB on more than one. Each finding is explained where the rules
+  account for it (a nickname, a day/month swap, a family email, a pair kept
+  apart, a case waiting); the rest are listed first. Loading it is logged
+  (migration `009_checks`).
 - Dark mode in custIDR: follows the system setting, or pick light or dark
   with the button in the top bar or on the sign-in page (kept per browser).
 - The review app is now **custIDR**, at `/app` (`/review` redirects). New
@@ -37,6 +45,9 @@ because they run automatically on start-up.
 - Demo data adds a manager account, `mo@demo.local`.
 
 ### Fixed
+- A record with no DOB could chain different people into one customer (a
+  father and son, each linked to it). A customer holding any record that
+  conflicts with the inbound one on DOB, gender or Jr/Sr is now passed over.
 - A candidate pool truncated at `MAX_CANDIDATES` kept the oldest records and
   could miss the real match. Candidates are now ranked by the number of
   blocking keys they share with the inbound record.
@@ -56,6 +67,12 @@ because they run automatically on start-up.
   `AUTO_LINK_TIERS=exact,strong,probable` to send them to review instead.
 - A customer's page shows how each record is linked now; a later re-link or
   move replaces how it first arrived.
+- A record that also matches a second customer lower down, at a rule that
+  links automatically, now merges that customer in instead of raising a
+  review case, unless a record of one conflicts with a record of the other on
+  DOB, gender or Jr/Sr. `match.merged_customer_ids` lists them.
+- Manager checks show what saving a hand-added record would merge.
+
 
 ### Added
 - `python -m benchmark.generate --hot-blocks`: a switchboard number, a company

@@ -286,6 +286,7 @@ per email per 5 minutes, counted in the database so it holds across workers).
 | POST | `/review/api/records/check` | What adding a record would do: cleansed values and the customer it would join (managers; stores nothing) |
 | POST | `/review/api/records` | Add a record by hand as `MANUAL/M-000001`, matched like any other; `submit_token` makes a repeat save a no-op (managers) |
 | POST | `/review/api/customers/{id}/split` | `{record_ids, reason}`: move records out of a customer (managers) |
+| GET | `/review/api/checks` | Engine checks: signs of wrong links inside customers and missed links across them, each explained where the rules account for it (managers; logged) |
 | GET | `/review/api/examples/summary`, `/examples/export` | Training data counts and downloads (admins) |
 
 ## AI reviewer data

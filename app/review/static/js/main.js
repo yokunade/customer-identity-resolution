@@ -3,6 +3,7 @@
 import { api, state, toast } from "./core.js";
 import { viewAddRecord } from "./addrecord.js";
 import { viewCase } from "./case.js";
+import { viewChecks } from "./checks.js";
 import { viewCustomer } from "./customer.js";
 import { viewHistory } from "./history.js";
 import { viewLookup, viewSearch } from "./lookup.js";
@@ -10,7 +11,7 @@ import { viewQueue } from "./queue.js";
 import { initShell } from "./shell.js";
 import { viewSignIn } from "./signin.js";
 
-const LOOKUP_ONLY = /^#\/(lookup|search|customer|add)/;
+const LOOKUP_ONLY = /^#\/(lookup|search|customer|add|checks)/;
 
 async function route() {
   const hash = location.hash || "#/";
@@ -32,6 +33,7 @@ async function route() {
     if (hash.startsWith("#/lookup")) return await viewLookup();
     if (hash.startsWith("#/search")) return await viewSearch();
     if (hash.startsWith("#/add")) return viewAddRecord();
+    if (hash.startsWith("#/checks")) return await viewChecks();
     if ((m = hash.match(/^#\/customer\/([0-9a-f-]{36})/i))) return await viewCustomer(m[1]);
     if ((m = hash.match(/^#\/case\/(\d+)/))) return await viewCase(m[1]);
     if (hash.startsWith("#/history")) return await viewHistory();
