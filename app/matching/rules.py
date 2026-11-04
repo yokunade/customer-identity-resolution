@@ -137,6 +137,23 @@ def veto_reasons(rule: Rule, a: dict, b: dict) -> list[str]:
 
 # What makes two people different, whichever rule linked them.
 PERSON_VETOES: frozenset[str] = frozenset({"dob", "gender", "generation"})
+# Vetoes about where someone lives, not who they are.
+PLACE_VETOES: frozenset[str] = frozenset({"postcode"})
+
+
+def matched_records_conflict(rule: Rule, a: list[dict], b: list[dict]) -> list[str]:
+    """The rule's vetoes, except those about place, between the records an
+    inbound record matched in one customer and those it matched in another.
+    A record that says less than both (an initial, no forename) matches twins
+    equally, and their own records show the difference. A record that bridges
+    two customers on different evidence (a current and a previous address)
+    passes, because their records agree on who the person is."""
+    named = Rule(rule.priority, rule.key, rule.tier, rule.vetoes - PLACE_VETOES, rule.dob_mode)
+    out: set[str] = set()
+    for pa in a:
+        for pb in b:
+            out.update(veto_reasons(named, pa, pb))
+    return sorted(out)
 
 
 def customers_conflict(rule: Rule, a: list[dict], b: list[dict]) -> list[str]:

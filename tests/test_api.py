@@ -198,17 +198,35 @@ def test_runner_up_outside_auto_link_tiers_is_not_queued(clean_db):
     assert r.customer_id == married.customer_id and r.match.competing_customer_ids == [] and n == 0
 
 
-def test_tie_at_same_rule_logs_merge_candidate(client, clean_db):
-    post(client, {"source_system": "s1", "source_record_id": "1", "first_name": "Chris", "last_name": "Hall",
-                  "email": "chall@gmail.com"})
+def test_a_record_bridging_two_customers_at_one_rule_merges_them(client, clean_db):
+    """Each customer holds one of the record's emails: it matches both equally,
+    on different evidence, so they are one person."""
+    a = post(client, {"source_system": "s1", "source_record_id": "1", "first_name": "Chris", "last_name": "Hall",
+                      "email": "chall@gmail.com"})
     b = post(client, {"source_system": "s2", "source_record_id": "2", "first_name": "Chris", "last_name": "Hall",
                       "email": "chris.hall@yahoo.co.uk"})
     c = post(client, {"source_system": "s3", "source_record_id": "3", "first_name": "Chris", "last_name": "Hall",
                       "emails": ["chall@gmail.com", "chris.hall@yahoo.co.uk"]})
-    assert c["match"]["competing_customer_ids"] == [b["customer_id"]]
+    assert c["customer_id"] == a["customer_id"]
+    assert c["match"]["merged_customer_ids"] == [b["customer_id"]] and c["match"]["competing_customer_ids"] == []
+    with psycopg.connect(clean_db, row_factory=dict_row) as conn:
+        assert conn.execute("SELECT count(*) AS n FROM merge_candidate").fetchone()["n"] == 0
+
+
+def test_a_record_vaguer_than_two_customers_raises_a_case(client, clean_db):
+    """Twins: O Grant matches Oliver and Owen equally, but their own records
+    have different forenames, so they are not merged."""
+    home = {"line1": "16 Linden Avenue", "town": "Nottingham", "postcode": "NG11 6AB"}
+    post(client, {"source_system": "s1", "source_record_id": "1", "first_name": "Oliver", "last_name": "Grant",
+                  "date_of_birth": "2004-05-11", "address": home})
+    b = post(client, {"source_system": "s2", "source_record_id": "2", "first_name": "Owen", "last_name": "Grant",
+                      "date_of_birth": "2004-05-11", "address": home})
+    c = post(client, {"source_system": "s3", "source_record_id": "3", "first_name": "O", "last_name": "Grant",
+                      "date_of_birth": "2004-05-11", "address": home})
+    assert c["match"]["competing_customer_ids"] == [b["customer_id"]] and c["match"]["merged_customer_ids"] == []
     with psycopg.connect(clean_db, row_factory=dict_row) as conn:
         rows = conn.execute("SELECT * FROM merge_candidate").fetchall()
-    assert len(rows) == 1 and rows[0]["rule"] == "EMAIL_NAME"
+    assert len(rows) == 1 and rows[0]["rule"] == "INITIAL_DOB_PREMISE_POSTCODE"
 
 
 def test_oversized_fields_are_rejected(client):

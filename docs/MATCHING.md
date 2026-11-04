@@ -142,15 +142,24 @@ email, and fathers and sons share names.
    without it. Without this a record with no DOB can chain a father and son
    together: each links to the no-DOB record and never meets the other. Passed
    over customers are logged as `blocked_customers` on the event.
-5. Customers that matched lower down at a rule in an auto-linkable tier are
-   the same person as the winner, so they are **merged into it**
-   (`match.merged_customer_ids`, and a `merge` event with `auto: true`),
-   provided no record of either conflicts with any record of the other on
-   the same three checks, together they hold at most 50 records, and the pair
-   was not kept apart before. Otherwise they go to review.
-6. Other customers tied at the winning rule, and runners-up that could not be
-   merged, are returned as `competing_customer_ids` and written to
-   `merge_candidate` for review (each under the rule it matched).
+5. Customers tied at the winning rule, or that matched lower down at a rule
+   in an auto-linkable tier, are the same person as the winner, so they are
+   **merged into it** (`match.merged_customer_ids`, and a `merge` event with
+   `auto: true`), provided:
+   - the records the inbound one matched in each customer pass that rule's
+     vetoes against each other, leaving out the postcode veto. A record that
+     says less than both (O Grant, matching twins Oliver and Owen at one
+     address) fails here; one that bridges them on different evidence (a
+     current and a previous address, or two emails) passes;
+   - no record of either conflicts with any record of the other on the same
+     three checks as step 4;
+   - together they hold at most 50 records, and the pair was not kept apart
+     before.
+
+   Otherwise they go to review.
+6. Customers that could not be merged are returned as
+   `competing_customer_ids` and written to `merge_candidate` for review (each
+   under the rule it matched).
    `POST /v1/customers/merge` resolves them. Either ID may already have been
    merged; the merge applies to the customers they now resolve to.
 

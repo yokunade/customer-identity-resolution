@@ -161,12 +161,13 @@ class MatchDetail(BaseModel):
     competing_customer_ids: list[UUID] = Field(
         default_factory=list,
         description="Other customers that matched at the same rule, or at a lower rule in an auto-linkable "
-                    "tier but could not be merged in. Logged as merge candidates.",
+                    "tier, and could not be merged in. Logged as merge candidates.",
     )
     merged_customer_ids: list[UUID] = Field(
         default_factory=list,
-        description="Customers that matched at a lower rule in an auto-linkable tier and were merged into this "
-                    "one, because no record of either conflicts with the other on DOB, gender or Jr/Sr.",
+        description="Customers that matched at the same rule or a lower one, in an auto-linkable tier, and were "
+                    "merged into this one, because no record of either conflicts with the other on DOB, gender "
+                    "or Jr/Sr.",
     )
 
 

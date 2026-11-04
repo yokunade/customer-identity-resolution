@@ -28,7 +28,7 @@ from app.matching.keys import (
     shared_match_keys,
     stored_components,
 )
-from app.matching.rules import Rule, customers_conflict
+from app.matching.rules import Rule, customers_conflict, matched_records_conflict
 from app.repository import Repository, lock_id
 from app.schemas import (
     CleansedRecord,
@@ -91,6 +91,8 @@ class Found:
     shared_identifiers: list[str]  # identifier kinds too widely held to match on
     # Customers passed over because another of their records conflicts: customer -> vetoes.
     blocked: dict[UUID, list[str]] = field(default_factory=dict)
+    # The match profile of each candidate record, by record ID.
+    profiles: dict[int, dict] = field(default_factory=dict)
 
 
 class ResolutionService:
@@ -130,28 +132,40 @@ class ResolutionService:
         repo = Repository(conn)
         found = self._match(repo, p)
         decision = found.decision
-        review = list(decision.competing_customer_ids)
+        review: list[UUID] = []
         if decision.customer_id is not None and not found.auto_link:
             review.append(decision.customer_id)
         merges: list[UUID] = []
-        for cid, rule in self._runners_up(decision):
+        for cid, rule in self._others(decision):
             if not found.auto_link:
                 review.append(cid)
             elif not repo.pair_rejected(decision.customer_id, cid):  # type: ignore[arg-type]
                 into = [decision.customer_id, *merges]
-                ok = self._can_merge(repo, into, cid, rule, extra=[p.profile])  # type: ignore[list-item]
+                ok = self._can_merge(repo, found, into, cid, cid, rule, extra=[p.profile])  # type: ignore[list-item]
                 (merges if ok else review).append(cid)
         conn.rollback()
         return p, found, list(dict.fromkeys(review)), merges
 
-    def _runners_up(self, decision: Decision) -> list[tuple[UUID, Rule]]:
-        """Customers that lost only on rank, at a rule that would have linked automatically."""
-        return [(cid, r) for cid, r in decision.runners_up if r.tier in self.settings.auto_link_tiers]
+    def _others(self, decision: Decision) -> list[tuple[UUID, Rule]]:
+        """The other customers the record matched that could be the same person
+        as the winner: those tied at the winning rule, and those that lost only
+        on rank at a rule that would have linked automatically."""
+        if decision.rule is None:
+            return []
+        ties = [(cid, decision.rule) for cid in decision.competing_customer_ids]
+        return [*ties, *((cid, r) for cid, r in decision.runners_up if r.tier in self.settings.auto_link_tiers)]
 
-    def _can_merge(self, repo: Repository, into: list[UUID], other: UUID, rule: Rule,
-                   extra: list[dict] | None = None) -> bool:
-        """Whether other can be merged into the customers in into without any
-        record of one conflicting with any record of the other."""
+    def _can_merge(self, repo: Repository, found: Found, into: list[UUID], matched: UUID, other: UUID,
+                   rule: Rule, extra: list[dict] | None = None) -> bool:
+        """Whether other can be merged into the customers in into: the records the
+        inbound one matched in the winner and in other (as the decision knew it,
+        matched) are the same person by the rule, and no record of one
+        conflicts with any record of the other."""
+        d = found.decision
+        bridged = [found.profiles[e.record_id] for e in d.evaluations
+                   if e.customer_id == matched and e.rule == rule.key]
+        if matched_records_conflict(rule, [found.profiles[i] for i in d.matched_record_ids], bridged):
+            return False
         cap = MAX_AUTO_MERGE_RECORDS + 1
         mine = [*(extra or []), *(pr for cid in into for pr in repo.customer_profiles(cid, cap))]
         theirs = repo.customer_profiles(other, cap)
@@ -233,13 +247,14 @@ class ResolutionService:
                 )
                 repo.insert_blocking_keys(record_id, p.blocking_keys)
 
-            # A customer that lost only on rank but would have been auto-linked on
-            # its own is the same person as the winner, so it is merged in, unless
-            # a record of one conflicts with a record of the other (the father's
-            # DOB on a record this one did not match): that goes to review.
+            # Another customer this record would have been auto-linked to on its
+            # own (a tie, or one that lost only on rank) is the same person as the
+            # winner, so it is merged in, unless a record of one conflicts with a
+            # record of the other (the father's DOB on a record this one did not
+            # match): that goes to review.
             merged: list[UUID] = []
             held: list[tuple[UUID, Rule]] = []
-            for cid, r in self._runners_up(decision):
+            for cid, r in self._others(decision):
                 other = repo.survivor(cid)
                 if other == customer_id:
                     continue
@@ -247,7 +262,7 @@ class ResolutionService:
                     held.append((other, r))
                     continue
                 repo.advisory_locks([lock_id(customer_id.bytes), lock_id(other.bytes)])
-                if not self._can_merge(repo, [customer_id], other, r):
+                if not self._can_merge(repo, found, [customer_id], cid, other, r):
                     held.append((other, r))
                     continue
                 moved = repo.merge_customers(customer_id, other)
@@ -257,7 +272,7 @@ class ResolutionService:
                     "via_record_id": record_id,
                     "reason": f"{c.source_system}/{c.source_record_id} matched both customers",  # type: ignore[attr-defined]
                 })
-            competing = [*decision.competing_customer_ids, *(cid for cid, _ in held)]
+            competing = [cid for cid, _ in held]
             match = None
             if decision.rule is not None:
                 match = MatchDetail(
@@ -266,11 +281,9 @@ class ResolutionService:
                     suggested_customer_id=decision.customer_id, competing_customer_ids=competing,
                     merged_customer_ids=merged,
                 )
-                review = list(decision.competing_customer_ids)
                 if not auto_link:
-                    review.append(decision.customer_id)  # type: ignore[arg-type]
-                if review:
-                    repo.add_merge_candidates(customer_id, review, decision.rule.key, record_id)
+                    repo.add_merge_candidates(customer_id, [decision.customer_id],  # type: ignore[list-item]
+                                              decision.rule.key, record_id)
                 for cid, r in held:
                     repo.add_merge_candidates(customer_id, [cid], r.key, record_id)
 
@@ -344,7 +357,8 @@ class ResolutionService:
         auto_link = (decision.customer_id is not None and decision.rule is not None
                      and decision.rule.tier in self.settings.auto_link_tiers)
         return Found(pool, sorted(set(skipped)), len(candidates), decision, auto_link,
-                     (time.perf_counter() - started) * 1000, shared_ids, blocked)
+                     (time.perf_counter() - started) * 1000, shared_ids, blocked,
+                     {x.record_id: x.profile for x in candidates})
 
     def _personal_components(self, repo: Repository, p: Prepared,
                              sizes: dict[tuple[str, bytes], int]) -> tuple[Components, list[str]]:
