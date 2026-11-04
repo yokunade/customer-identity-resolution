@@ -34,13 +34,16 @@ def client_for(settings, email):
 
 
 def make_case(db_url, settings, tag):
-    """Two customers that can't be linked to each other, then a record that ties them."""
+    """Two customers that can't be linked to each other, then a record with no DOB
+    that matches both equally. Their DOBs differ, so they are not merged: a case."""
     svc = ResolutionService(settings)
     with psycopg.connect(db_url, row_factory=dict_row) as conn:
         a = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id=f"{tag}1", first_name="Chris",
-                                              last_name=f"Hall{tag}", email=f"chall{tag}@gmail.com"))
+                                              last_name=f"Hall{tag}", email=f"chall{tag}@gmail.com",
+                                              date_of_birth="1970-03-12"))
         b = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id=f"{tag}2", first_name="Chris",
-                                              last_name=f"Hall{tag}", email=f"chris.hall{tag}@yahoo.co.uk"))
+                                              last_name=f"Hall{tag}", email=f"chris.hall{tag}@yahoo.co.uk",
+                                              date_of_birth="1988-11-05"))
         c = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id=f"{tag}3", first_name="Chris",
                                               last_name=f"Hall{tag}",
                                               emails=[f"chall{tag}@gmail.com", f"chris.hall{tag}@yahoo.co.uk"]))
@@ -255,15 +258,17 @@ def test_expired_claim_can_be_taken(app_settings, clean_db):
 
 def test_merge_makes_overlapping_case_obsolete(app_settings, clean_db):
     """A, B and C are one person split three ways; cases A~B and B~C. Merging A~B
-    repoints B~C to A~C; merging that leaves nothing else to decide."""
+    repoints B~C to A~C; merging that leaves nothing else to decide. Their DOBs
+    are keyed differently, so the records that tie them raise cases rather
+    than merging them."""
     svc = ResolutionService(app_settings)
     with psycopg.connect(clean_db, row_factory=dict_row) as conn:
         def rec(i, **kw):
             return svc.resolve(conn, InboundCustomer(source_system="s", source_record_id=str(i), first_name="Dana",
                                                      last_name="Ross", **kw))
-        a = rec(1, email="dana@gmail.com")
-        b = rec(2, mobile_phone="07801 234567")
-        c = rec(3, email="dross@yahoo.co.uk")
+        a = rec(1, email="dana@gmail.com", date_of_birth="1980-01-02")
+        b = rec(2, mobile_phone="07801 234567", date_of_birth="1975-06-07")
+        c = rec(3, email="dross@yahoo.co.uk", date_of_birth="1991-10-11")
         rec(4, email="dana@gmail.com", emails=["dross@yahoo.co.uk"])            # ties A and C
         rec(5, mobile_phone="07801 234567", emails=["dross@yahoo.co.uk"])       # B (mobile) vs C (email)
         cases = conn.execute("SELECT case_id, customer_a, customer_b, status FROM merge_candidate ORDER BY case_id").fetchall()

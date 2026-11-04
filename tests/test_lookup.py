@@ -186,9 +186,9 @@ def test_customer_view_shows_every_record_and_how_it_was_linked(settings):
 
 def test_customer_view_follows_a_merge_and_lists_open_cases(settings):
     a = resolve(settings, source_system="s", source_record_id="1", first_name="Chris", last_name="Hall",
-                email="chall@gmail.com")
+                email="chall@gmail.com", date_of_birth="1970-03-12")
     b = resolve(settings, source_system="s", source_record_id="2", first_name="Chris", last_name="Hall",
-                email="chris.hall@yahoo.co.uk")
+                email="chris.hall@yahoo.co.uk", date_of_birth="1988-11-05")
     c = resolve(settings, source_system="s", source_record_id="3", first_name="Chris", last_name="Hall",
                 emails=["chall@gmail.com", "chris.hall@yahoo.co.uk"])
     assert c.match.competing_customer_ids

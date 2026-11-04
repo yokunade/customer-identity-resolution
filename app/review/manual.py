@@ -93,10 +93,10 @@ def check(conn: psycopg.Connection, settings: Settings, svc: ResolutionService, 
     would join or which review cases it would raise. Nothing is stored."""
     _require(body)
     check_rate(conn, user, settings)
-    p, found, review = svc.preview(conn, to_inbound(body, "M-CHECK"))
+    p, found, review, merges = svc.preview(conn, to_inbound(body, "M-CHECK"))
     d = found.decision
     joins = d.customer_id if found.auto_link else None
-    shown = [x for x in [joins, *review] if x is not None]
+    shown = [x for x in [joins, *merges, *review] if x is not None]
     log_access(conn, user, "add_record_check", shown)
     people = {s["customer_id"]: s for s in summaries(conn, shown)}
     conn.rollback()
@@ -109,6 +109,7 @@ def check(conn: psycopg.Connection, settings: Settings, svc: ResolutionService, 
         "tier": d.rule.tier if d.rule else None,
         "customer": people.get(str(joins)) if joins else None,
         "review_with": [people[str(x)] for x in review if str(x) in people],
+        "merges_with": [people[str(x)] for x in merges if str(x) in people],
         "shared_identifiers": found.shared_identifiers,
     }
 

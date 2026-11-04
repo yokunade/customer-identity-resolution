@@ -203,6 +203,12 @@ class Repository:
             (a, b),
         ).fetchone() is not None
 
+    def customer_profiles(self, customer_id: UUID, limit: int) -> list[dict]:
+        return [r["match_profile"] for r in self.conn.execute(
+            "SELECT match_profile FROM source_record WHERE customer_id = %s ORDER BY record_id LIMIT %s",
+            (customer_id, limit),
+        ).fetchall()]
+
     def customer_records(self, customer_id: UUID) -> list[dict]:
         return self.conn.execute(
             "SELECT record_id, source_system, source_record_id, received_at, updated_at, cleansed"

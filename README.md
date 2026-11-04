@@ -46,7 +46,8 @@ Then:
 
 - **Look up and review:** open http://localhost:8000/app and sign in. As mo@demo.local (manager), search for a customer by email or phone; as tom@demo.local, take a case from the review queue.
   Name + address matches that lack a DOB or personal identifier link
-  automatically; the queue holds ties between customers and runners-up. If a
+  automatically; the queue holds records that match two customers that may
+  be different people (twins, or a DOB that conflicts). If a
   link is wrong, open the customer and use **Move records out** to undo it.
   Start the demo with `AUTO_LINK_TIERS=exact,strong,probable` to send those
   matches to review instead.
@@ -286,6 +287,7 @@ per email per 5 minutes, counted in the database so it holds across workers).
 | POST | `/review/api/records/check` | What adding a record would do: cleansed values and the customer it would join (managers; stores nothing) |
 | POST | `/review/api/records` | Add a record by hand as `MANUAL/M-000001`, matched like any other; `submit_token` makes a repeat save a no-op (managers) |
 | POST | `/review/api/customers/{id}/split` | `{record_ids, reason}`: move records out of a customer (managers) |
+| GET | `/review/api/checks` | Engine checks: signs of wrong links inside customers and missed links across them, each explained where the rules account for it (managers; logged) |
 | GET | `/review/api/examples/summary`, `/examples/export` | Training data counts and downloads (admins) |
 
 ## AI reviewer data

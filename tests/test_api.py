@@ -76,23 +76,20 @@ def test_surname_change_matches_probable(client):
     assert b["match"]["rule"] == "FIRST_DOB_PREMISE_POSTCODE" and b["match"]["tier"] == "probable"
 
 
-def test_ambiguous_match_records_merge_candidate_and_merge(client, clean_db):
+def test_a_record_matching_two_customers_merges_them(client, clean_db):
     # Two customers that could not be linked to each other...
     a = post(client, {"source_system": "s1", "source_record_id": "1", "first_name": "Alex", "last_name": "Green",
                       "email": "alex.green@gmail.com"})
     b = post(client, {"source_system": "s2", "source_record_id": "2", "first_name": "Alex", "last_name": "Green",
                       "mobile_phone": "07801 234567"})
     assert a["customer_id"] != b["customer_id"]
-    # ...then a record that bridges both at the same tier.
+    # ...then a record that bridges both. EMAIL_NAME (60) outranks MOBILE_NAME (70),
+    # so it links to A, and B, which it would have linked to on its own, is merged in.
     c = post(client, {"source_system": "s3", "source_record_id": "3", "first_name": "Alex", "last_name": "Green",
                       "email": "alex.green@gmail.com", "mobile_phone": "07801234567"})
     assert c["outcome"] == "matched" and c["match"]["tier"] == "strong"
-    # EMAIL_NAME (60) outranks MOBILE_NAME (70), so customer A wins outright.
     assert c["customer_id"] == a["customer_id"]
-
-    r = client.post("/v1/customers/merge", json={"survivor_customer_id": a["customer_id"],
-                                                 "merged_customer_id": b["customer_id"], "reason": "test"})
-    assert r.status_code == 200 and r.json()["source_records_moved"] == 1
+    assert c["match"]["merged_customer_ids"] == [b["customer_id"]] and c["match"]["competing_customer_ids"] == []
     merged_view = client.get(f"/v1/customers/{b['customer_id']}").json()
     assert merged_view["customer_id"] == a["customer_id"] and len(merged_view["source_records"]) == 3
     # New records matching only the merged customer's data resolve to the survivor.
@@ -129,9 +126,9 @@ def test_merging_an_already_merged_customer_follows_it_to_its_survivor(client, c
     assert r.status_code == 409
 
 
-def test_auto_linkable_runner_up_is_queued_for_review(clean_db):
+def test_auto_linkable_runner_up_is_merged_in(clean_db):
     """The record links to the DOB-and-email customer; the same-house customer
-    it also matched (possible tier, auto-linkable by default) goes to review."""
+    it also matched (possible tier, auto-linkable by default) is merged in."""
     svc = ResolutionService(Settings(database_url=clean_db, key_secret="test-secret"))
     home = {"line1": "4 Elm Road", "town": "Leeds", "postcode": "LS6 2AB"}
     with psycopg.connect(clean_db, row_factory=dict_row) as conn:
@@ -145,9 +142,40 @@ def test_auto_linkable_runner_up_is_queued_for_review(clean_db):
         r = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id="3", first_name="Sarah",
                                               last_name="Jones", date_of_birth="1985-03-02",
                                               email="sarah.jones85@gmail.com", address=home))
+        cases = conn.execute("SELECT count(*) AS n FROM merge_candidate").fetchone()["n"]
+        event = conn.execute("SELECT customer_id, rule, details FROM resolution_event"
+                             " WHERE outcome = 'merge'").fetchone()
+        survivor = svc.get_customer(conn, household.customer_id)
+    assert r.customer_id == married.customer_id and r.match.rule == "EMAIL_DOB"
+    assert r.match.merged_customer_ids == [household.customer_id] and r.match.competing_customer_ids == []
+    assert cases == 0
+    assert survivor.customer_id == married.customer_id and len(survivor.source_records) == 3
+    assert event["customer_id"] == married.customer_id and event["rule"] == "NAME_PREMISE_POSTCODE"
+    assert event["details"]["auto"] is True and event["details"]["merged_customer_id"] == str(household.customer_id)
+
+
+def test_runner_up_with_a_conflicting_record_is_queued_not_merged(clean_db):
+    """The same-house customer also holds her mother's record (same name, DOB
+    1960). The record that matched agrees, but the mother's does not, so the
+    customers are not merged; a reviewer decides."""
+    svc = ResolutionService(Settings(database_url=clean_db, key_secret="test-secret"))
+    home = {"line1": "4 Elm Road", "town": "Leeds", "postcode": "LS6 2AB"}
+    with psycopg.connect(clean_db, row_factory=dict_row) as conn:
+        household = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id="1", first_name="Sarah",
+                                                      last_name="Jones", address=home))
+        mother = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id="M", first_name="Sarah",
+                                                   last_name="Jones", date_of_birth="1960-07-11", address=home))
+        assert mother.customer_id == household.customer_id
+        married = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id="2", first_name="S",
+                                                    last_name="Jones-Smith", date_of_birth="1985-03-02",
+                                                    email="sarah.jones85@gmail.com",
+                                                    address={"line1": "9 Oak Lane", "postcode": "YO1 7HH"}))
+        r = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id="3", first_name="Sarah",
+                                              last_name="Jones", date_of_birth="1985-03-02",
+                                              email="sarah.jones85@gmail.com", address=home))
         rows = conn.execute("SELECT customer_a, customer_b, rule FROM merge_candidate").fetchall()
     assert r.customer_id == married.customer_id and r.match.rule == "EMAIL_DOB"
-    assert r.match.competing_customer_ids == [household.customer_id]
+    assert r.match.merged_customer_ids == [] and r.match.competing_customer_ids == [household.customer_id]
     assert [(x["rule"], {x["customer_a"], x["customer_b"]}) for x in rows] == [
         ("NAME_PREMISE_POSTCODE", {household.customer_id, married.customer_id})]
 
@@ -170,17 +198,35 @@ def test_runner_up_outside_auto_link_tiers_is_not_queued(clean_db):
     assert r.customer_id == married.customer_id and r.match.competing_customer_ids == [] and n == 0
 
 
-def test_tie_at_same_rule_logs_merge_candidate(client, clean_db):
-    post(client, {"source_system": "s1", "source_record_id": "1", "first_name": "Chris", "last_name": "Hall",
-                  "email": "chall@gmail.com"})
+def test_a_record_bridging_two_customers_at_one_rule_merges_them(client, clean_db):
+    """Each customer holds one of the record's emails: it matches both equally,
+    on different evidence, so they are one person."""
+    a = post(client, {"source_system": "s1", "source_record_id": "1", "first_name": "Chris", "last_name": "Hall",
+                      "email": "chall@gmail.com"})
     b = post(client, {"source_system": "s2", "source_record_id": "2", "first_name": "Chris", "last_name": "Hall",
                       "email": "chris.hall@yahoo.co.uk"})
     c = post(client, {"source_system": "s3", "source_record_id": "3", "first_name": "Chris", "last_name": "Hall",
                       "emails": ["chall@gmail.com", "chris.hall@yahoo.co.uk"]})
-    assert c["match"]["competing_customer_ids"] == [b["customer_id"]]
+    assert c["customer_id"] == a["customer_id"]
+    assert c["match"]["merged_customer_ids"] == [b["customer_id"]] and c["match"]["competing_customer_ids"] == []
+    with psycopg.connect(clean_db, row_factory=dict_row) as conn:
+        assert conn.execute("SELECT count(*) AS n FROM merge_candidate").fetchone()["n"] == 0
+
+
+def test_a_record_vaguer_than_two_customers_raises_a_case(client, clean_db):
+    """Twins: O Grant matches Oliver and Owen equally, but their own records
+    have different forenames, so they are not merged."""
+    home = {"line1": "16 Linden Avenue", "town": "Nottingham", "postcode": "NG11 6AB"}
+    post(client, {"source_system": "s1", "source_record_id": "1", "first_name": "Oliver", "last_name": "Grant",
+                  "date_of_birth": "2004-05-11", "address": home})
+    b = post(client, {"source_system": "s2", "source_record_id": "2", "first_name": "Owen", "last_name": "Grant",
+                      "date_of_birth": "2004-05-11", "address": home})
+    c = post(client, {"source_system": "s3", "source_record_id": "3", "first_name": "O", "last_name": "Grant",
+                      "date_of_birth": "2004-05-11", "address": home})
+    assert c["match"]["competing_customer_ids"] == [b["customer_id"]] and c["match"]["merged_customer_ids"] == []
     with psycopg.connect(clean_db, row_factory=dict_row) as conn:
         rows = conn.execute("SELECT * FROM merge_candidate").fetchall()
-    assert len(rows) == 1 and rows[0]["rule"] == "EMAIL_NAME"
+    assert len(rows) == 1 and rows[0]["rule"] == "INITIAL_DOB_PREMISE_POSTCODE"
 
 
 def test_oversized_fields_are_rejected(client):
@@ -472,3 +518,24 @@ def test_relink_respects_a_keep_apart_decision(client, clean_db):
     fixed = post(client, {**YEMI, "source_record_id": "Y-2"})
     assert fixed["outcome"] == "existing_source_record" and fixed["customer_id"] == typo["customer_id"]
     assert fixed["match"]["auto_linked"] is False
+
+
+def test_a_customer_is_passed_over_when_another_of_its_records_conflicts(clean_db):
+    """The son's record (Jr, DOB 1995) joined a no-DOB record by email. The
+    father's record (DOB 1978) matches that no-DOB record on name + house, but
+    the customer also holds the son's DOB, so the father gets his own customer."""
+    svc = ResolutionService(Settings(database_url=clean_db, key_secret="test-secret"))
+    home = {"line1": "7 Mill Lane", "town": "York", "postcode": "YO10 3BT"}
+    with psycopg.connect(clean_db, row_factory=dict_row) as conn:
+        first = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id="1", first_name="James",
+                                                  last_name="Brown", email="jbrown@gmail.com", address=home))
+        son = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id="2", first_name="James",
+                                                last_name="Brown", suffix="Jr", date_of_birth="1995-03-07",
+                                                email="jbrown@gmail.com"))
+        assert son.customer_id == first.customer_id
+        father = svc.resolve(conn, InboundCustomer(source_system="s", source_record_id="3", first_name="James",
+                                                   last_name="Brown", date_of_birth="1978-05-17", address=home))
+        details = conn.execute("SELECT details FROM resolution_event WHERE record_id = %s",
+                               (father.record_id,)).fetchone()["details"]
+    assert father.outcome == "new_customer" and father.customer_id != first.customer_id
+    assert details["blocked_customers"] == {str(first.customer_id): ["dob"]}

@@ -135,6 +135,33 @@ def veto_reasons(rule: Rule, a: dict, b: dict) -> list[str]:
     return out
 
 
+# What makes two people different, whichever rule linked them.
+PERSON_VETOES: frozenset[str] = frozenset({"dob", "gender", "generation"})
+def forenames_split(inbound: dict, a: list[dict], b: list[dict]) -> bool:
+    """Whether a record with no full forename (an initial, or none) matched
+    records in one customer and in another whose forenames conflict: O Grant
+    matches twins Oliver and Owen, and cannot say which one it is. A record
+    with a full forename matched each on its own name, so it passes even when
+    the two differ (Patty, Patricia and the typo Patrcia)."""
+    if len(inbound.get("first_key") or "") > 1:
+        return False
+    return any(first_names_conflict(pa, pb) for pa in a for pb in b)
+
+
+def customers_conflict(rule: Rule, a: list[dict], b: list[dict]) -> list[str]:
+    """Person vetoes between any record of one customer and any record of the
+    other. Linking to a customer and merging two need this: the records that
+    matched may agree while another one (the father's, with his DOB) does not.
+    DOBs are compared leniently, so a customer's own one-digit slip in a DOB
+    does not keep the right records out."""
+    person = Rule(rule.priority, rule.key, rule.tier, rule.vetoes & PERSON_VETOES, "lenient")
+    out: set[str] = set()
+    for pa in a:
+        for pb in b:
+            out.update(veto_reasons(person, pa, pb))
+    return sorted(out)
+
+
 def _dobs_conflict(a: str | None, b: str | None, mode: DobMode) -> bool:
     if not a or not b or a == b:
         return False
