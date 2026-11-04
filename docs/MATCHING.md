@@ -146,11 +146,11 @@ email, and fathers and sons share names.
    in an auto-linkable tier, are the same person as the winner, so they are
    **merged into it** (`match.merged_customer_ids`, and a `merge` event with
    `auto: true`), provided:
-   - the records the inbound one matched in each customer pass that rule's
-     vetoes against each other, leaving out the postcode veto. A record that
-     says less than both (O Grant, matching twins Oliver and Owen at one
-     address) fails here; one that bridges them on different evidence (a
-     current and a previous address, or two emails) passes;
+   - the inbound record has a full forename, or the records it matched in
+     each customer have compatible forenames. O Grant matches twins Oliver
+     and Owen at one address equally and cannot say which one it is; a record
+     with a full forename that bridges two customers (a current and a
+     previous address, or two emails) matched each on its own name;
    - no record of either conflicts with any record of the other on the same
      three checks as step 4;
    - together they hold at most 50 records, and the pair was not kept apart

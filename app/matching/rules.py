@@ -137,23 +137,15 @@ def veto_reasons(rule: Rule, a: dict, b: dict) -> list[str]:
 
 # What makes two people different, whichever rule linked them.
 PERSON_VETOES: frozenset[str] = frozenset({"dob", "gender", "generation"})
-# Vetoes about where someone lives, not who they are.
-PLACE_VETOES: frozenset[str] = frozenset({"postcode"})
-
-
-def matched_records_conflict(rule: Rule, a: list[dict], b: list[dict]) -> list[str]:
-    """The rule's vetoes, except those about place, between the records an
-    inbound record matched in one customer and those it matched in another.
-    A record that says less than both (an initial, no forename) matches twins
-    equally, and their own records show the difference. A record that bridges
-    two customers on different evidence (a current and a previous address)
-    passes, because their records agree on who the person is."""
-    named = Rule(rule.priority, rule.key, rule.tier, rule.vetoes - PLACE_VETOES, rule.dob_mode)
-    out: set[str] = set()
-    for pa in a:
-        for pb in b:
-            out.update(veto_reasons(named, pa, pb))
-    return sorted(out)
+def forenames_split(inbound: dict, a: list[dict], b: list[dict]) -> bool:
+    """Whether a record with no full forename (an initial, or none) matched
+    records in one customer and in another whose forenames conflict: O Grant
+    matches twins Oliver and Owen, and cannot say which one it is. A record
+    with a full forename matched each on its own name, so it passes even when
+    the two differ (Patty, Patricia and the typo Patrcia)."""
+    if len(inbound.get("first_key") or "") > 1:
+        return False
+    return any(first_names_conflict(pa, pb) for pa in a for pb in b)
 
 
 def customers_conflict(rule: Rule, a: list[dict], b: list[dict]) -> list[str]:

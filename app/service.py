@@ -28,7 +28,7 @@ from app.matching.keys import (
     shared_match_keys,
     stored_components,
 )
-from app.matching.rules import Rule, customers_conflict, matched_records_conflict
+from app.matching.rules import Rule, customers_conflict, forenames_split
 from app.repository import Repository, lock_id
 from app.schemas import (
     CleansedRecord,
@@ -141,7 +141,8 @@ class ResolutionService:
                 review.append(cid)
             elif not repo.pair_rejected(decision.customer_id, cid):  # type: ignore[arg-type]
                 into = [decision.customer_id, *merges]
-                ok = self._can_merge(repo, found, into, cid, cid, rule, extra=[p.profile])  # type: ignore[list-item]
+                ok = self._can_merge(repo, found, p.profile, into, cid, cid, rule,  # type: ignore[arg-type]
+                                     extra=[p.profile])
                 (merges if ok else review).append(cid)
         conn.rollback()
         return p, found, list(dict.fromkeys(review)), merges
@@ -155,16 +156,15 @@ class ResolutionService:
         ties = [(cid, decision.rule) for cid in decision.competing_customer_ids]
         return [*ties, *((cid, r) for cid, r in decision.runners_up if r.tier in self.settings.auto_link_tiers)]
 
-    def _can_merge(self, repo: Repository, found: Found, into: list[UUID], matched: UUID, other: UUID,
-                   rule: Rule, extra: list[dict] | None = None) -> bool:
-        """Whether other can be merged into the customers in into: the records the
-        inbound one matched in the winner and in other (as the decision knew it,
-        matched) are the same person by the rule, and no record of one
-        conflicts with any record of the other."""
+    def _can_merge(self, repo: Repository, found: Found, inbound: dict, into: list[UUID], matched: UUID,
+                   other: UUID, rule: Rule, extra: list[dict] | None = None) -> bool:
+        """Whether other can be merged into the customers in into: the inbound
+        record does not match two different forenames for want of its own, and
+        no record of one conflicts with any record of the other. matched is
+        other as the decision knew it, before any merge."""
         d = found.decision
-        bridged = [found.profiles[e.record_id] for e in d.evaluations
-                   if e.customer_id == matched and e.rule == rule.key]
-        if matched_records_conflict(rule, [found.profiles[i] for i in d.matched_record_ids], bridged):
+        bridged = [found.profiles[e.record_id] for e in d.evaluations if e.customer_id == matched]
+        if forenames_split(inbound, [found.profiles[i] for i in d.matched_record_ids], bridged):
             return False
         cap = MAX_AUTO_MERGE_RECORDS + 1
         mine = [*(extra or []), *(pr for cid in into for pr in repo.customer_profiles(cid, cap))]
@@ -262,7 +262,7 @@ class ResolutionService:
                     held.append((other, r))
                     continue
                 repo.advisory_locks([lock_id(customer_id.bytes), lock_id(other.bytes)])
-                if not self._can_merge(repo, found, [customer_id], cid, other, r):
+                if not self._can_merge(repo, found, p.profile, [customer_id], cid, other, r):
                     held.append((other, r))
                     continue
                 moved = repo.merge_customers(customer_id, other)

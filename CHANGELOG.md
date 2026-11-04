@@ -70,8 +70,9 @@ because they run automatically on start-up.
 - A record that also matches a second customer, at the same rule or lower
   down at a rule that links automatically, now merges that customer in
   instead of raising a review case, unless a record of one conflicts with a
-  record of the other on DOB, gender or Jr/Sr, or the records it matched in
-  each differ by that rule (twins Oliver and Owen, both matched by O Grant).
+  record of the other on DOB, gender or Jr/Sr, or a record with only an
+  initial matched different forenames (twins Oliver and Owen, both matched by
+  O Grant).
   `match.merged_customer_ids` lists them.
 - Manager checks show what saving a hand-added record would merge.
 
