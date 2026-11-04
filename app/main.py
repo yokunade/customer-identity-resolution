@@ -28,8 +28,10 @@ from app.schemas import (
     MergeResponse,
     ResolveResponse,
     SourceLookupResponse,
+    SplitRequest,
+    SplitResponse,
 )
-from app.service import MergeError, ResolutionService, SearchError
+from app.service import MergeError, ResolutionService, SearchError, SplitError
 
 log = logging.getLogger("identity")
 
@@ -239,6 +241,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         try:
             return svc.merge(conn, req)
         except MergeError as exc:
+            raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+
+    @app.post("/v1/customers/split", response_model=SplitResponse, dependencies=auth, tags=["customers"],
+              summary="Move source records out of a customer (undo a wrong link or merge)")
+    def split(req: SplitRequest, conn: Conn, svc: Service) -> SplitResponse:
+        try:
+            return svc.split(conn, req, by="API")
+        except SplitError as exc:
             raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
 
     app.include_router(build_review_router(settings.review_cookie_secure))

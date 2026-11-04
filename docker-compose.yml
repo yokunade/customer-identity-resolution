@@ -13,9 +13,10 @@ x-app-env: &app-env
   DATABASE_URL: postgresql://identity:identity@db:5432/identity
   KEY_SECRET: ${KEY_SECRET:-demo-only-key-secret-change-me}
   API_KEYS: ${API_KEYS:-demo-key}
-  # Name + address matches without DOB or a personal identifier go to review,
-  # so the demo queue has cases in it.
-  AUTO_LINK_TIERS: ${AUTO_LINK_TIERS:-exact,strong,probable}
+  # Every tier links automatically, name + address matches included; a wrong
+  # link is undone from the customer's page ("Move records out"). Set
+  # exact,strong,probable to send those matches to review instead.
+  AUTO_LINK_TIERS: ${AUTO_LINK_TIERS:-exact,strong,probable,possible}
   # The demo is served over plain http; set true behind HTTPS.
   REVIEW_COOKIE_SECURE: ${REVIEW_COOKIE_SECURE:-false}
   # After each decision, show the known answer for synthetic demo cases.

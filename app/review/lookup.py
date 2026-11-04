@@ -242,14 +242,17 @@ def customer_view(conn: psycopg.Connection, settings: Settings, user: User, cust
     ).fetchall()
     rids = [r["record_id"] for r in records]
     first_events = {e["record_id"]: e for e in conn.execute(
-        "SELECT DISTINCT ON (record_id) record_id, outcome, rule, created_at FROM resolution_event"
-        " WHERE record_id = ANY(%s) ORDER BY record_id, event_id", (rids,),
+        "SELECT DISTINCT ON (record_id) record_id, outcome, rule, created_at, details FROM resolution_event"
+        " WHERE record_id = ANY(%s) AND outcome IN ('new_customer', 'matched', 'relinked', 'split')"
+        " ORDER BY record_id, event_id DESC", (rids,),
     ).fetchall()}
     merged_from = [r["customer_id"] for r in conn.execute(
         "SELECT customer_id FROM customer WHERE merged_into = %s ORDER BY updated_at", (cid,)).fetchall()]
     history = conn.execute(
         "SELECT event_id, record_id, outcome, rule, created_at, details->>'relinked_from' AS relinked_from,"
-        " details->>'merged_customer_id' AS merged_customer_id, details->>'reason' AS reason"
+        " details->>'merged_customer_id' AS merged_customer_id, details->>'reason' AS reason,"
+        " details->>'by' AS done_by, details->>'moved_to' AS moved_to, details->>'split_from' AS split_from,"
+        " (details->>'records_moved')::int AS records_moved, (details->>'restored')::bool AS restored"
         " FROM resolution_event WHERE record_id = ANY(%s) OR (record_id IS NULL AND customer_id = ANY(%s))"
         " ORDER BY event_id DESC LIMIT 100", (rids, [cid, *merged_from]),
     ).fetchall()
@@ -305,8 +308,12 @@ def customer_view(conn: psycopg.Connection, settings: Settings, user: User, cust
         if e is None:
             return None
         rule = RULES_BY_KEY.get(e["rule"]) if e["rule"] else None
-        return {"outcome": e["outcome"], "rule": e["rule"], "tier": rule.tier if rule else None,
+        link = {"outcome": e["outcome"], "rule": e["rule"], "tier": rule.tier if rule else None,
                 "at": e["created_at"]}
+        if e["outcome"] == "split":
+            link |= {"by": e["details"].get("by"), "reason": e["details"].get("reason"),
+                     "split_from": e["details"].get("split_from")}
+        return link
 
     return {
         "customer_id": str(cid), "requested_customer_id": str(customer_id), "status": cust["status"],

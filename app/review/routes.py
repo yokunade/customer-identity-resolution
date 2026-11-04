@@ -14,6 +14,8 @@ from pydantic import BaseModel, Field
 from app.review import auth, cases, lookup, manual
 from app.review import export as review_export
 from app.review.auth import LoginThrottle, User
+from app.schemas import SplitRequest
+from app.service import SplitError
 
 STATIC = Path(__file__).parent / "static"
 COOKIE = "cir_review_session"
@@ -31,6 +33,11 @@ class DecisionBody(BaseModel):
     survivor_customer_id: UUID | None = None
     reason_codes: list[str] = Field(default_factory=list, max_length=20)
     confidence: Literal["certain", "likely", "unsure"] | None = None
+
+
+class SplitBody(BaseModel):
+    record_ids: list[int] = Field(min_length=1, max_length=100)
+    reason: str = Field(max_length=1000)
 
 
 def build_router(cookie_secure: bool) -> APIRouter:
@@ -158,6 +165,19 @@ def build_router(cookie_secure: bool) -> APIRouter:
             return manual.save(conn, svc.settings, svc, user, body)
         except lookup.LookupFailed as exc:
             raise HTTPException(exc.status, exc.message) from exc
+
+    # ------------------------------------------------------------------ moving records out (managers)
+    @router.post("/review/api/customers/{customer_id}/split", dependencies=write, tags=["review"])
+    def split_customer(customer_id: UUID, body: SplitBody, request: Request, user: Manager, conn: Conn) -> dict:
+        reason = body.reason.strip()
+        if len(reason) < 3:
+            raise HTTPException(status.HTTP_422_UNPROCESSABLE_ENTITY, "Say why these records belong to someone else.")
+        req = SplitRequest(customer_id=customer_id, record_ids=body.record_ids, reason=reason)
+        try:
+            res = request.app.state.service.split(conn, req, by=user.display_name)
+        except SplitError as exc:
+            raise HTTPException(status.HTTP_409_CONFLICT, str(exc)) from exc
+        return res.model_dump(mode="json")
 
     # ------------------------------------------------------------------ cases
     @router.get("/review/api/stats", tags=["review"])

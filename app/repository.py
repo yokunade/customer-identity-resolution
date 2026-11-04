@@ -210,6 +210,43 @@ class Repository:
             (customer_id,),
         ).fetchall()
 
+    def records_by_id(self, record_ids: list[int]) -> list[dict]:
+        return self.conn.execute(
+            "SELECT record_id, source_system, source_record_id, customer_id FROM source_record"
+            " WHERE record_id = ANY(%s) ORDER BY record_id", (record_ids,),
+        ).fetchall()
+
+    def record_origins(self, record_ids: list[int]) -> dict[int, UUID]:
+        """The customer each record joined or created when it first arrived."""
+        rows = self.conn.execute(
+            "SELECT DISTINCT ON (record_id) record_id, customer_id FROM resolution_event"
+            " WHERE record_id = ANY(%s) ORDER BY record_id, event_id", (record_ids,),
+        ).fetchall()
+        return {r["record_id"]: r["customer_id"] for r in rows}
+
+    def move_records(self, record_ids: list[int], customer_id: UUID) -> int:
+        return self.conn.execute(
+            "UPDATE source_record SET customer_id = %s, updated_at = now() WHERE record_id = ANY(%s)",
+            (customer_id, record_ids),
+        ).rowcount
+
+    def restore_customer(self, customer_id: UUID) -> None:
+        self.conn.execute(
+            "UPDATE customer SET status = 'active', merged_into = NULL, updated_at = now() WHERE customer_id = %s",
+            (customer_id,),
+        )
+
+    def keep_apart(self, a: UUID, b: UUID, *, rule: str, record_id: int, notes: str) -> None:
+        """Record that a and b are different people, so a re-sent record is not
+        linked back and review does not suggest them again (see pair_rejected)."""
+        a, b = sorted([a, b], key=str)
+        self.conn.execute(
+            "INSERT INTO merge_candidate (customer_a, customer_b, rule, record_id, status, decision, notes)"
+            " VALUES (%s, %s, %s, %s, 'rejected', 'keep_apart', %s)"
+            " ON CONFLICT (customer_a, customer_b) DO UPDATE SET status = 'rejected', claimed_by = NULL",
+            (a, b, rule, record_id, notes),
+        )
+
     def merge_customers(self, survivor: UUID, merged: UUID) -> int:
         moved = self.conn.execute(
             "UPDATE source_record SET customer_id = %s, updated_at = now() WHERE customer_id = %s",

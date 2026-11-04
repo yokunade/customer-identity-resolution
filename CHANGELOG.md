@@ -20,6 +20,12 @@ because they run automatically on start-up.
   reserved source system `MANUAL` (`M-000001`, ...), record who added them and
   why (migration `008_manual_records`), and appear on the customer's page.
   Feeds can no longer send `MANUAL` records.
+- Undo a wrong link: `POST /v1/customers/split` and **Move records out** on
+  a customer's page in custIDR (managers, with a reason) move source records
+  to a customer of their own. A customer merged in earlier is brought back
+  under its old ID; otherwise a new one is created. The pair is kept apart, so
+  a re-sent record is not linked back. Both customers' history shows the move.
+- Add record is its own item in the custIDR menu.
 - Dark mode in custIDR: follows the system setting, or pick light or dark
   with the button in the top bar or on the sign-in page (kept per browser).
 - The review app is now **custIDR**, at `/app` (`/review` redirects). New
@@ -45,6 +51,11 @@ because they run automatically on start-up.
   block costs no more to skip than a small one.
 - Every resolve reports `lock_wait_ms` (response and event log) and logs a
   warning above `LOCK_WAIT_WARN_MS` (default 200).
+- The demo (`docker-compose.yml`, `.env.example`) now links `possible`-tier
+  matches automatically, like the service default. Set
+  `AUTO_LINK_TIERS=exact,strong,probable` to send them to review instead.
+- A customer's page shows how each record is linked now; a later re-link or
+  move replaces how it first arrived.
 
 ### Added
 - `python -m benchmark.generate --hot-blocks`: a switchboard number, a company
