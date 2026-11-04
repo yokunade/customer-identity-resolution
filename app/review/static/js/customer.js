@@ -14,6 +14,11 @@ function outcomeText(e) {
     case "existing_source_record": return `${rec[0].toUpperCase() + rec.slice(1)} re-sent by its source; link kept`;
     case "relinked": return `${rec[0].toUpperCase() + rec.slice(1)} re-sent and moved here${e.relinked_from ? ` from ${shortId(e.relinked_from)}` : ""} by ${e.rule}`;
     case "merge": return `Customer ${shortId(e.merged_customer_id)} merged in${e.reason ? `: ${e.reason}` : ""}`;
+    case "split": {
+      const by = e.done_by ? ` by ${e.done_by}` : "";
+      if (e.record_id) return `${rec[0].toUpperCase() + rec.slice(1)} moved here from ${shortId(e.split_from)}${by}: ${e.reason}`;
+      return `${plural(e.records_moved, "record")} moved out to ${e.restored ? "restored" : "new"} customer ${shortId(e.moved_to)}${by}: ${e.reason}`;
+    }
     default: return e.outcome.replace(/_/g, " ");
   }
 }
@@ -21,6 +26,8 @@ function outcomeText(e) {
 function linkedBy(l) {
   if (!l) return h("span", { class: "muted", text: "Unknown" });
   if (l.outcome === "new_customer") return h("span", {}, "First record ", h("span", { class: "muted small", text: "created the customer" }));
+  if (l.outcome === "split") return h("span", {}, `Moved here by ${l.by || "hand"} `,
+    h("span", { class: "muted small", text: `from ${shortId(l.split_from)}` }));
   if (l.outcome === "merge" || !l.rule) return h("span", { text: l.outcome.replace(/_/g, " ") });
   return h("span", { class: "linked" }, l.tier ? tag(l.tier, "tag-tier tag-" + l.tier) : null, h("span", { class: "mono small", text: l.rule }));
 }
@@ -54,10 +61,58 @@ function recordDetail(r) {
       : h("p", { class: "hint", text: "No data quality notes." }));
 }
 
-function recordsTable(v) {
+function splitPanel(v, picked, boxes, onDone, onCancel) {
+  const reason = h("textarea", { id: "split-reason", rows: 2, maxlength: 1000,
+    placeholder: "For example: billing record is his father, same name and address" });
+  const count = h("span", { class: "split-count" });
+  const err = h("p", { class: "error", role: "alert", hidden: true });
+  const go = h("button", { type: "button", class: "btn btn-primary", onclick: async () => {
+    go.disabled = true;
+    err.hidden = true;
+    try {
+      const r = await api(`/customers/${v.customer_id}/split`, { method: "POST",
+        body: { record_ids: [...picked], reason: reason.value } });
+      toast(`${plural(r.source_records_moved, "record")} moved to ${r.restored ? "restored" : "new"} customer ${shortId(r.moved_to_customer_id)}.`);
+      onDone(r);
+    } catch (ex) {
+      err.textContent = ex.message;
+      err.hidden = false;
+      go.disabled = false;
+    }
+  } });
+  function refresh() {
+    const n = picked.size;
+    const all = n === v.records.length;
+    count.textContent = all ? "At least one record must stay with this customer."
+      : n ? `${plural(n, "record")} selected` : "Select the records that belong to someone else.";
+    go.textContent = n > 1 ? `Move ${n} records out` : "Move record out";
+    go.disabled = !n || all || reason.value.trim().length < 3;
+  }
+  reason.addEventListener("input", refresh);
+  boxes.forEach((b) => b.addEventListener("change", refresh));
+  refresh();
+  const panel = h("div", { class: "split-panel" },
+    h("p", {}, h("b", { text: "Move records to a separate customer. " }),
+      "Use this when records were linked to the wrong person. If they came from a customer merged in earlier, that customer is brought back; otherwise a new one is created. They will not be linked here again."),
+    count,
+    h("div", { class: "field" }, h("label", { for: "split-reason", text: "Why don't they belong here?" }), reason),
+    err,
+    h("div", { class: "actions" }, go, h("button", { type: "button", class: "btn", text: "Cancel", onclick: onCancel })));
+  return { panel, reset: () => { reason.value = ""; err.hidden = true; refresh(); boxes[0]?.focus(); } };
+}
+
+function recordsTable(v, onSplit) {
   const tbody = h("tbody");
+  const picked = new Set();
+  const boxes = [];
+  const pickCells = [];
   for (const r of v.records) {
-    const detail = h("tr", { class: "detail-row", hidden: true }, h("td", { colspan: 5 }, recordDetail(r)));
+    const box = h("input", { type: "checkbox", "aria-label": `Move ${r.source_system} ${r.source_record_id} out`,
+      onchange: () => { box.checked ? picked.add(r.record_id) : picked.delete(r.record_id); } });
+    boxes.push(box);
+    const pickCell = h("td", { class: "pick-cell", hidden: true }, box);
+    pickCells.push(pickCell);
+    const detail = h("tr", { class: "detail-row", hidden: true }, h("td", { colspan: 6 }, recordDetail(r)));
     const btn = h("button", { type: "button", class: "btn btn-sm", "aria-expanded": "false",
       "aria-label": `Show ${r.source_system} ${r.source_record_id}`, text: "Show",
       onclick: () => {
@@ -67,7 +122,7 @@ function recordsTable(v) {
         btn.setAttribute("aria-expanded", String(open));
       } });
     tbody.append(
-      h("tr", {},
+      h("tr", {}, pickCell,
         h("td", {}, h("div", { class: "strong", text: r.source_system }),
           r.added_by ? h("div", { class: "muted small", text: `Added by ${r.added_by.name}` }) : null),
         h("td", { class: "mono small", text: r.source_record_id }),
@@ -76,11 +131,28 @@ function recordsTable(v) {
         h("td", { class: "right" }, btn)),
       detail);
   }
+  const pickHead = h("th", { scope: "col", class: "pick-cell", hidden: true }, h("span", { class: "sr-only", text: "Move out" }));
+  const slot = h("div", { hidden: true });
+  let split = null;
+  const moveBtn = h("button", { type: "button", class: "btn btn-sm", text: "Move records out",
+    hidden: v.records.length < 2, onclick: () => setPicking(true) });
+  function setPicking(on) {
+    picked.clear();
+    boxes.forEach((b) => { b.checked = false; });
+    [pickHead, ...pickCells].forEach((c) => { c.hidden = !on; });
+    moveBtn.hidden = on || v.records.length < 2;
+    slot.hidden = !on;
+    if (!on) return;
+    split ||= splitPanel(v, picked, boxes, onSplit, () => { setPicking(false); moveBtn.focus(); });
+    slot.replaceChildren(split.panel);
+    split.reset();
+  }
   return h("section", { class: "panel", "aria-labelledby": "src-h" },
     h("div", { class: "panel-head" }, h("h2", { id: "src-h", text: "Source records" }),
-      h("span", { class: "hint", text: "How each record joined this customer" })),
+      h("span", { class: "hint", text: "How each record joined this customer" }), moveBtn),
+    slot,
     h("div", { class: "table-scroll" }, h("table", { class: "records-table" },
-      h("thead", {}, h("tr", {}, ["Source", "Record ID", "Linked by", "Received", ""].map((t) =>
+      h("thead", {}, h("tr", {}, pickHead, ["Source", "Record ID", "Linked by", "Received", ""].map((t) =>
         h("th", { scope: "col" }, t || h("span", { class: "sr-only", text: "Details" }))))),
       tbody)));
 }
@@ -184,5 +256,5 @@ export async function viewCustomer(id) {
     head, ...notices,
     h("div", { class: "c360-cols" },
       profilePanels(v),
-      h("div", { class: "c360-main" }, recordsTable(v), history, access))));
+      h("div", { class: "c360-main" }, recordsTable(v, () => viewCustomer(v.customer_id)), history, access))));
 }

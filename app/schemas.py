@@ -240,3 +240,18 @@ class MergeResponse(BaseModel):
     survivor_customer_id: UUID
     merged_customer_id: UUID
     source_records_moved: int
+
+
+class SplitRequest(BaseModel):
+    customer_id: UUID
+    record_ids: list[int] = Field(min_length=1, max_length=100,
+                                  description="Source records that belong to someone else.")
+    reason: str = Field(min_length=3, max_length=1000)
+
+
+class SplitResponse(BaseModel):
+    customer_id: UUID = Field(description="The customer the records were moved out of.")
+    moved_to_customer_id: UUID
+    restored: bool = Field(description="True if moved_to_customer_id is a customer merged in earlier, brought "
+                                       "back; false if it is a new customer.")
+    source_records_moved: int

@@ -45,8 +45,11 @@ Demo ready.
 Then:
 
 - **Look up and review:** open http://localhost:8000/app and sign in. As mo@demo.local (manager), search for a customer by email or phone; as tom@demo.local, take a case from the review queue.
-  The demo sends name + address matches that lack a DOB or personal identifier
-  to review (`AUTO_LINK_TIERS=exact,strong,probable`), so the queue has plenty in it.
+  Name + address matches that lack a DOB or personal identifier link
+  automatically; the queue holds ties between customers and runners-up. If a
+  link is wrong, open the customer and use **Move records out** to undo it.
+  Start the demo with `AUTO_LINK_TIERS=exact,strong,probable` to send those
+  matches to review instead.
   In demo mode (`DEMO_MODE=true`) the app shows the known answer and why
   **after** you submit each decision, never before.
 - **Try the API:** open http://localhost:8000/docs, click *Authorize*, enter
@@ -124,6 +127,7 @@ All `/v1` endpoints require `X-API-Key` when `API_KEYS` is set.
 | GET | `/v1/customers?email=` / `?mobile=` / `?postcode=` | Customers holding that value; the input is cleansed first, so formatting differences still match. Optional `limit` (default 20, max 100) |
 | GET | `/v1/source-records/{system}/{id}` | Customer ID for a source record |
 | POST | `/v1/customers/merge` | Merge two customers |
+| POST | `/v1/customers/split` | Move source records out of a customer: undo a wrong link or merge (a merged customer is brought back) |
 | GET | `/health`, `/ready` | Liveness / database readiness |
 | GET | `/app` | custIDR: customer lookup and merge review (see below); `/review` redirects here |
 
@@ -174,6 +178,13 @@ and its keys and returns the same customer (links are sticky). The exception is
 a record that is its customer's only one: it is matched again, so a corrected
 typo can join the right customer. If it auto-links, its old customer is merged
 into the new one (the old ID keeps resolving) and the outcome is `relinked`.
+
+A wrong link is undone by moving records out of the customer
+(`POST /v1/customers/split`, or **Move records out** on the customer's page in
+custIDR). If the records all arrived as one customer that was later merged in,
+that customer is brought back and its old ID finds them again; otherwise they
+get a new customer. Either way the two customers are kept apart, so re-sending
+a moved record does not link it back.
 A pair a reviewer kept apart is never re-linked.
 
 ## Configuration
@@ -274,6 +285,7 @@ per email per 5 minutes, counted in the database so it holds across workers).
 | GET | `/review/api/customers/{id}?reason=` | Everything held about one customer (managers) |
 | POST | `/review/api/records/check` | What adding a record would do: cleansed values and the customer it would join (managers; stores nothing) |
 | POST | `/review/api/records` | Add a record by hand as `MANUAL/M-000001`, matched like any other; `submit_token` makes a repeat save a no-op (managers) |
+| POST | `/review/api/customers/{id}/split` | `{record_ids, reason}`: move records out of a customer (managers) |
 | GET | `/review/api/examples/summary`, `/examples/export` | Training data counts and downloads (admins) |
 
 ## AI reviewer data

@@ -426,6 +426,13 @@ td .sub { font-size: .75rem; }
 .contact li { display: flex; flex-wrap: wrap; gap: .3rem .5rem; align-items: center; overflow-wrap: anywhere; }
 .contact li > div { flex-basis: 100%; }
 .records-table td { vertical-align: middle; }
+.records-table .pick-cell { width: 2.5rem; padding-right: 0; }
+.pick-cell input { accent-color: var(--accent); width: 18px; height: 18px; margin: 0; vertical-align: middle; }
+.panel-head .btn-sm { margin-left: auto; }
+.split-panel { display: grid; gap: .75rem; padding: 1rem 1.5rem; background: var(--warn-soft); border-bottom: 1px solid var(--warn-line); color: var(--warn-ink); font-size: .875rem; line-height: 1.5; }
+.split-panel b { color: var(--warn-strong); }
+.split-panel textarea { min-height: 4rem; color: var(--ink); }
+.split-count { font-weight: 600; }
 .linked { display: inline-flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
 .detail-row > td { background: var(--sheet-2); padding-top: .25rem; padding-bottom: 1.25rem; }
 .rec-detail { display: grid; gap: .75rem; }

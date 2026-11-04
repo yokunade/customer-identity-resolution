@@ -121,7 +121,9 @@ written to `merge_candidate` for review, with `match.auto_linked = false` and
 when over-merging is costlier than duplicates: the `possible` tier (name +
 address with no DOB or personal identifier) is where same-named relatives at
 one address get confused. The 200k benchmark
-(`docs/BENCHMARK.md`) quantifies the trade-off.
+(`docs/BENCHMARK.md`) quantifies the trade-off. A wrong link can be undone
+with `POST /v1/customers/split` (or **Move records out** in custIDR), which
+moves the records to a customer of their own and keeps the two apart.
 Vetoes exist because UK households share addresses, landlines and sometimes
 email, and fathers and sons share names.
 

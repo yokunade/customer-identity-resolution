@@ -21,6 +21,9 @@ SARAH = {"source_system": "crm", "source_record_id": "C-1", "first_name": "Sarah
                                                     "postcode": "LS6 2AB"}}
 
 
+_clients: list[TestClient] = []
+
+
 @pytest.fixture
 def settings(clean_db):
     with psycopg.connect(clean_db, row_factory=dict_row) as conn:
@@ -28,12 +31,15 @@ def settings(clean_db):
         conn.commit()
         create_user(conn, "mo@example.co.uk", "Mo Patel", PW, "manager")
         create_user(conn, "tom@example.co.uk", "Tom Reed", PW)
-    return Settings(database_url=clean_db, key_secret="test-secret")
+    yield Settings(database_url=clean_db, key_secret="test-secret")
+    while _clients:  # each signed-in client holds a connection pool open
+        _clients.pop().__exit__(None, None, None)
 
 
 def signed_in(settings, email="mo@example.co.uk"):
     c = TestClient(create_app(settings), base_url="https://testserver")
     c.__enter__()
+    _clients.append(c)
     r = c.post("/review/api/login", json={"email": email, "password": PW}, headers=HDR)
     assert r.status_code == 200, r.text
     return c

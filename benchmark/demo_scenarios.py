@@ -7,8 +7,9 @@ is tagged with the real person it belongs to, so each case has a known
 answer, and each scenario carries a one-line explanation for the demo's
 answer reveal and for evaluating an AI reviewer on hard cases.
 
-The demo runs with AUTO_LINK_TIERS=exact,strong,probable, so cases come from
-three places:
+The scenarios are written for AUTO_LINK_TIERS=exact,strong,probable (the
+demo links every tier by default; set that to see all of them), so cases come
+from three places:
   - a record whose best match is in the possible tier (name + address only),
   - a record that ties between two customers,
   - a record that also matched a second customer lower down, in an

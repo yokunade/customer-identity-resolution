@@ -40,6 +40,8 @@ from app.schemas import (
     MergeResponse,
     ResolveResponse,
     SourceRecordSummary,
+    SplitRequest,
+    SplitResponse,
 )
 
 log = logging.getLogger(__name__)
@@ -51,6 +53,15 @@ class MergeError(ValueError):
 
 class SearchError(ValueError):
     pass
+
+
+class SplitError(ValueError):
+    pass
+
+
+def source_lock(source_system: str, source_record_id: str) -> int:
+    """The advisory lock that serialises work on one source record."""
+    return lock_id(hashlib.sha256(f"{source_system}\x1f{source_record_id}".encode()).digest())
 
 
 @dataclass
@@ -132,9 +143,8 @@ class ResolutionService:
             # Any two records that could match share at least one blocking key
             # (proved in tests), so locking every blocking key serialises
             # concurrent arrivals of the same person without a global lock.
-            source_lock = lock_id(hashlib.sha256(f"{c.source_system}\x1f{c.source_record_id}".encode()).digest())
             lock_started = time.perf_counter()
-            repo.advisory_locks([source_lock, *(lock_id(v) for vals in p.blocking_keys.values() for v in vals)])
+            repo.advisory_locks([source_lock(c.source_system, c.source_record_id), *(lock_id(v) for vals in p.blocking_keys.values() for v in vals)])
             lock_ms = round((time.perf_counter() - lock_started) * 1000, 2)
             if lock_ms > self.settings.lock_wait_warn_ms:
                 # Usually a hot blocking key: many arrivals at one busy postcode or shared number.
@@ -323,6 +333,61 @@ class ResolutionService:
                 details["requested_merged_customer_id"] = str(req.merged_customer_id)
             repo.log_event(record_id=None, customer_id=survivor, outcome="merge", rule=None, details=details)
         return MergeResponse(survivor_customer_id=survivor, merged_customer_id=merged, source_records_moved=moved)
+
+    def split(self, conn: psycopg.Connection, req: SplitRequest, by: str | None = None) -> SplitResponse:
+        """Undo a wrong link: move some of a customer's source records to a
+        customer of their own. If they all arrived as one customer that was
+        later merged into this one, that customer is brought back, so its old
+        ID finds them again; otherwise a new customer is created. The two are
+        then kept apart: re-sending a moved record does not link it back."""
+        repo = Repository(conn)
+        rids = sorted(set(req.record_ids))
+        with conn.transaction():
+            if repo.get_customer(req.customer_id) is None:
+                raise SplitError("customer not found")
+            rows = repo.records_by_id(rids)
+            if len(rows) != len(rids):
+                raise SplitError("source record not found")
+            # Source records first, as resolve takes them, then customers as merge does.
+            repo.advisory_locks(source_lock(r["source_system"], r["source_record_id"]) for r in rows)
+            ids = {req.customer_id}
+            while True:
+                repo.advisory_locks(lock_id(i.bytes) for i in ids)
+                cid = repo.survivor(req.customer_id)
+                if cid in ids:
+                    break
+                ids.add(cid)
+            rows = repo.records_by_id(rids)
+            if any(r["customer_id"] != cid for r in rows):
+                raise SplitError("a source record does not belong to this customer")
+            if repo.record_count(cid) == len(rids):
+                raise SplitError("at least one source record must stay with the customer")
+
+            origins = repo.record_origins(rids)
+            first = set(origins.values())
+            origin = first.pop() if len(origins) == len(rids) and len(first) == 1 else None
+            restored = (origin is not None and origin != cid
+                        and repo.get_customer(origin)["status"] == "merged"  # type: ignore[index]
+                        and repo.survivor(origin) == cid)
+            if restored:
+                target: UUID = origin  # type: ignore[assignment]
+                repo.advisory_locks([lock_id(target.bytes)])
+                repo.restore_customer(target)
+            else:
+                target = repo.create_customer()
+            moved = repo.move_records(rids, target)
+            repo.keep_apart(cid, target, rule="SPLIT", record_id=rids[0], notes=req.reason)
+            repo.touch_customer(cid)
+
+            refs = [f"{r['source_system']}/{r['source_record_id']}" for r in rows]
+            common = {"reason": req.reason, "by": by, "restored": restored}
+            repo.log_event(record_id=None, customer_id=cid, outcome="split", rule=None,
+                           details={**common, "moved_to": str(target), "records_moved": moved, "records": refs})
+            for r in rows:
+                repo.log_event(record_id=r["record_id"], customer_id=target, outcome="split", rule=None,
+                               details={**common, "split_from": str(cid)})
+        return SplitResponse(customer_id=cid, moved_to_customer_id=target, restored=restored,
+                             source_records_moved=moved)
 
     # ------------------------------------------------------------------ lookups
     def get_customer(self, conn: psycopg.Connection, customer_id: UUID) -> CustomerResponse | None:
