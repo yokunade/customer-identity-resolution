@@ -17,12 +17,15 @@ from __future__ import annotations
 
 import os
 import time
+from collections.abc import Callable
 
 import psycopg
 from psycopg.rows import dict_row
 
+from app import engine_config
 from app.config import Settings
 from app.db import migrate
+from app.review import tuning
 from app.review.auth import create_user
 from app.review.cases import build_case, record_example, snapshot_of
 from app.schemas import InboundCustomer
@@ -58,25 +61,44 @@ def main() -> None:
             summary(conn, password)
             return
 
-        svc = ResolutionService(settings)
         order = ["exact", "strong", "probable", "possible"]
         tiers = ", ".join(t for t in order if t in settings.auto_link_tiers)
         print(f"Auto-linking {tiers}; other matches go to review.", flush=True)
-        print(f"Loading {len(SCENARIOS)} curated scenarios...", flush=True)
-        for sc in queue_order():
-            for _, record in sc.records:
-                svc.resolve(conn, InboundCustomer(**record))
-        print(f"Generating {n_records:,} synthetic customer records...", flush=True)
-        rows = generate(n_records, seed=7)
-        print("Resolving them through the matching pipeline...", flush=True)
-        t0 = time.time()
-        for i, row in enumerate(rows, 1):
-            svc.resolve(conn, InboundCustomer(**row["record"]))
-            if i % 2000 == 0 or i == len(rows):
-                rate = i / (time.time() - t0)
-                print(f"  {i:>7,} / {len(rows):,}  ({rate:,.0f} records/s)", flush=True)
-        label_cases(conn, rows)
+        started = time.time()
+        load(conn, ResolutionService(settings), n_records, _print_progress)
+        tuning.record_run(conn, engine_config.current(settings), "Initial seed", started)
         summary(conn, password)
+
+
+def _print_progress(done: int, total: int) -> None:
+    if done == 0:
+        print(f"Resolving {total:,} records through the matching pipeline...", flush=True)
+    elif done % 2000 == 0 or done == total:
+        print(f"  {done:>7,} / {total:,}", flush=True)
+
+
+def load(conn: psycopg.Connection, svc: ResolutionService, n_records: int,
+         progress: Callable[[int, int], None] | None = None) -> None:
+    """Resolve the curated scenarios, then n_records generated ones (always the
+    same records: seed 7), store who each record really is and label the open
+    cases with the true answer. progress(done, total) is called as it goes."""
+    rows = generate(n_records, seed=7)
+    curated = [record for sc in queue_order() for _, record in sc.records]
+    total = len(curated) + len(rows)
+    if progress:
+        progress(0, total)
+    for i, record in enumerate([*curated, *(r["record"] for r in rows)], 1):
+        svc.resolve(conn, InboundCustomer(**record))
+        if progress and (i % 250 == 0 or i == total):
+            progress(i, total)
+    person = {(r["record"]["source_system"].upper(), r["record"]["source_record_id"]): str(r["truth"]["person_id"])
+              for r in rows}
+    person.update(scenario_people())
+    with conn.transaction(), conn.cursor().copy(
+            "COPY demo_truth (source_system, source_record_id, person) FROM STDIN") as copy:
+        for (system, rid), p in person.items():
+            copy.write_row((system, rid, p))
+    label_cases(conn, rows)
 
 
 def label_cases(conn: psycopg.Connection, rows: list[dict]) -> None:

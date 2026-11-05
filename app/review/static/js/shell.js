@@ -16,6 +16,7 @@ export function setNav(active) {
   $("#nav-lookup").hidden = !u.can_lookup;
   $("#nav-add").hidden = !u.can_lookup;
   $("#nav-checks").hidden = !u.can_lookup;
+  $("#nav-tuning").hidden = !u.can_tune;
   $("#quick").hidden = !u.can_lookup || active === "lookup";
   document.querySelectorAll("[data-nav]").forEach((a) => {
     if (a.dataset.nav === active) a.setAttribute("aria-current", "page");

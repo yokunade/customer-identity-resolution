@@ -16,6 +16,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, sta
 from app.config import Settings, get_settings
 from app.db import Database, migrate
 from app.repository import Repository
+from app.review import tuning
 from app.review.manual import SOURCE as MANUAL_SOURCE
 from app.review.routes import build_router as build_review_router
 from app.schemas import (
@@ -105,7 +106,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 if applied:
                     log.info("migrations applied: %s", applied)
         app.state.db = db
-        app.state.service = ResolutionService(settings)
+        engine = settings
+        if settings.demo_mode:
+            with db.connection() as conn:
+                engine = tuning.on_start(conn, settings)
+        app.state.service = ResolutionService(engine)
         yield
         db.close()
 

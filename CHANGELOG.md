@@ -34,6 +34,13 @@ because they run automatically on start-up.
   account for it (a nickname, a day/month swap, a family email, a pair kept
   apart, a case waiting); the rest are listed first. Loading it is logged
   (migration `009_checks`).
+- **Tuning** in custIDR (admins, `DEMO_MODE` only): change each rule's mode
+  (links, review or off), vetoes and DOB leniency and the shared-identifier
+  and auto-merge limits, then re-run the same demo records and see precision,
+  recall, people resolved correctly and avoidable reviews against the known
+  answer, compared with the run before, person by person. Follow a source
+  record across runs to find its customer. A re-run replaces all demo data.
+  Migration `010_tuning` adds `demo_truth` and `tuning_run`.
 - Dark mode in custIDR: follows the system setting, or pick light or dark
   with the button in the top bar or on the sign-in page (kept per browser).
 - The review app is now **custIDR**, at `/app` (`/review` redirects). New

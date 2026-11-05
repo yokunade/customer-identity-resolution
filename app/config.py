@@ -5,6 +5,10 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from functools import lru_cache
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from app.matching.rules import Rule
 
 
 def _bool(name: str, default: bool) -> bool:
@@ -56,6 +60,15 @@ class Settings:
     # Tiers whose matches are linked automatically. A match in any other tier
     # creates a new customer and is queued in merge_candidate for review.
     auto_link_tiers: frozenset[str] = frozenset({"exact", "strong", "probable", "possible"})
+    # The match rules in force; None means app.matching.rules.RULES. The demo
+    # tuning page (app/review/tuning.py) turns rules off and changes vetoes.
+    rules: tuple[Rule, ...] | None = None
+    # Rules whose matches go to review whatever their tier.
+    review_rules: frozenset[str] = frozenset()
+    # Customers bigger than this together are not merged automatically:
+    # checking every pair of records costs too much, and a customer that big
+    # wants a person.
+    max_auto_merge_records: int = 50
     # Send the review app's session cookie only over HTTPS. Browsers treat
     # http://localhost as secure, so local development still works.
     review_cookie_secure: bool = True

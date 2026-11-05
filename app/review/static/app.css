@@ -632,3 +632,60 @@ details.recs[open] summary { border-bottom: 1px solid var(--line); }
   .cmp .row-note { grid-column: 1 / -1; }
   .rl-when { text-align: left; }
 }
+
+/* ---------- tuning (demo admins) */
+.tune-section { margin-bottom: 1.5rem; }
+.tune-section-head { display: grid; gap: .2rem; margin-bottom: 1rem; }
+.tune-section-head h2 { font-size: 1.15rem; font-weight: 600; }
+.tile-delta { font-size: var(--step--1); font-weight: 600; }
+.good { color: var(--match-ink); }
+.bad { color: var(--conflict); }
+.tune-grid { display: grid; grid-template-columns: minmax(0, 3fr) minmax(16rem, 2fr); gap: 1.5rem; align-items: start; margin-bottom: 1.5rem; }
+.tune-grid > :only-child { grid-column: 1 / -1; }
+.tune-group + .tune-group { border-top: 1px solid var(--line); }
+.tune-group .check-head { align-items: center; padding: .8rem 1.5rem; }
+.tune-group .check-head h3 { margin: 0; }
+.tune-state { display: flex; flex-wrap: wrap; gap: .4rem; align-items: center; }
+.tune-find-form { display: flex; gap: .5rem; }
+.tune-find-form .input { flex: 1; min-width: 0; }
+.tune-found:empty { display: none; }
+.tune-found p { margin-bottom: .5rem; }
+.tune-history { list-style: none; margin: 0; padding: 0; display: grid; gap: .4rem; }
+.tune-history li { display: grid; gap: .15rem; padding: .5rem .75rem; border-radius: 8px; border: 1px solid var(--line); border-left-width: 4px; }
+.tune-history li.good { border-left-color: var(--match); color: var(--ink); }
+.tune-history li.bad { border-left-color: var(--conflict); color: var(--ink); }
+.tune-intro { padding: 1rem 1.5rem 0; line-height: 1.5; }
+.tune-intro b { color: var(--ink-2); }
+.tune-rules { min-width: 62rem; margin-top: 1rem; }
+.tune-rules td { vertical-align: middle; padding-top: .6rem; padding-bottom: .6rem; }
+.tune-rules th.num, .tune-rules td.num, .tune-runs th.num, .tune-runs td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.tune-rules tr.changed td { background: var(--accent-soft); }
+.tune-rules tr.changed td:first-child { box-shadow: inset 4px 0 0 var(--accent); }
+.tune-rules .rule-key { font-weight: 600; font-size: .8rem; }
+.tune-rules .tier-row th { background: var(--sheet); padding-top: 1rem; }
+.tier-head { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+.tier-head .hint { margin-left: .5rem; font-weight: 400; }
+.input-sm { min-height: 34px; padding: .25rem .5rem; width: auto; }
+.btn-xs { min-height: 28px; padding: 0 .6rem; font-size: .75rem; font-weight: 500; }
+.veto-chips { display: flex; flex-wrap: wrap; gap: .3rem; max-width: 30rem; }
+.veto-chip { display: inline-flex; align-items: center; gap: .3rem; padding: .15rem .5rem; border: 1px solid var(--line); border-radius: 999px; font-size: .75rem; color: var(--ink-2); cursor: pointer; background: var(--sheet); }
+.veto-chip:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); color: var(--accent-hover); }
+.veto-chip input { margin: 0; accent-color: var(--accent); }
+.tune-numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1rem 1.5rem; padding: 1.25rem 1.5rem; border-top: 1px solid var(--line); }
+.tune-blocking { padding: 0 1.5rem 1.25rem; }
+.tune-blocking summary { cursor: pointer; font-weight: 600; font-size: var(--step--1); color: var(--ink-2); min-height: 32px; display: flex; align-items: center; }
+.tune-blocking ul { margin: .5rem 0 0; padding-left: 1.1rem; display: grid; gap: .2rem; font-size: var(--step--1); }
+.tune-run { display: grid; gap: .75rem; padding: 1.25rem 1.5rem 1.5rem; border-top: 1px solid var(--line); background: var(--sheet-2); }
+.tune-actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.tune-runs { min-width: 46rem; }
+.tune-runs tr.current td { background: var(--accent-soft); }
+.tune-runs td.notes { max-width: 34ch; }
+.tune-progress { align-items: stretch; }
+.tune-bar { height: 10px; border-radius: 999px; background: var(--sheet); border: 1px solid var(--callout-line); overflow: hidden; margin-top: .6rem; }
+.tune-bar span { display: block; height: 100%; background: var(--accent); transition: width .4s ease; }
+.tune-page > .panel { margin-bottom: 1.5rem; }
+@media (max-width: 900px) {
+  .tune-grid { grid-template-columns: minmax(0, 1fr); }
+}
+.tune-section .tiles { grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); }
+.tune-rules td:first-child { min-width: 17rem; }

@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, R
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from pydantic import BaseModel, Field
 
-from app.review import auth, cases, checks, lookup, manual
+from app.review import auth, cases, checks, lookup, manual, tuning
 from app.review import export as review_export
 from app.review.auth import LoginThrottle, User
 from app.schemas import SplitRequest
@@ -33,6 +33,11 @@ class DecisionBody(BaseModel):
     survivor_customer_id: UUID | None = None
     reason_codes: list[str] = Field(default_factory=list, max_length=20)
     confidence: Literal["certain", "likely", "unsure"] | None = None
+
+
+class TuningBody(BaseModel):
+    config: dict
+    note: str | None = Field(default=None, max_length=300)
 
 
 class SplitBody(BaseModel):
@@ -112,9 +117,10 @@ def build_router(cookie_secure: bool) -> APIRouter:
         return {"ok": True}
 
     @router.get("/review/api/me", tags=["review"])
-    def me(user: CurrentUser) -> dict:
+    def me(request: Request, user: CurrentUser) -> dict:
         return {"email": user.email, "display_name": user.display_name, "role": user.role,
-                "can_lookup": user.can_lookup}
+                "can_lookup": user.can_lookup,
+                "can_tune": user.is_admin and request.app.state.service.settings.demo_mode}
 
     # ------------------------------------------------------------------ customer lookup (managers)
     def require_lookup(user: CurrentUser) -> User:
@@ -175,6 +181,39 @@ def build_router(cookie_secure: bool) -> APIRouter:
         except lookup.LookupFailed as exc:
             raise HTTPException(exc.status, exc.message) from exc
         return checks.run(conn, settings, user)
+
+    # ------------------------------------------------------------------ demo tuning (admins, demo mode)
+    def require_tuning(request: Request, user: CurrentUser) -> User:
+        if not request.app.state.service.settings.demo_mode:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Tuning is only in the demo.")
+        if not user.is_admin:
+            raise HTTPException(status.HTTP_403_FORBIDDEN, "Tuning is for admins.")
+        return user
+
+    Tuner = Annotated[User, Depends(require_tuning)]
+
+    def tuning_call(fn, *args):
+        try:
+            return fn(*args)
+        except tuning.TuningError as exc:
+            raise HTTPException(exc.status, exc.message) from exc
+
+    @router.get("/review/api/tuning", tags=["review"])
+    def tuning_page(request: Request, user: Tuner, conn: Conn) -> dict:
+        return tuning.page(conn, request.app.state.service.settings)
+
+    @router.post("/review/api/tuning/runs", dependencies=write, tags=["review"])
+    def tuning_start(request: Request, user: Tuner, body: TuningBody) -> dict:
+        note = (body.note or "").strip() or None
+        return {"run_id": tuning_call(tuning.start, request.app, user, body.config, note)}
+
+    @router.get("/review/api/tuning/runs/{run_id}", tags=["review"])
+    def tuning_run(run_id: int, user: Tuner, conn: Conn) -> dict:
+        return tuning_call(tuning.run_detail, conn, run_id)
+
+    @router.get("/review/api/tuning/find", tags=["review"])
+    def tuning_find(user: Tuner, conn: Conn, record: Annotated[str, Query(min_length=1, max_length=200)]) -> dict:
+        return tuning_call(tuning.find, conn, record)
 
     # ------------------------------------------------------------------ moving records out (managers)
     @router.post("/review/api/customers/{customer_id}/split", dependencies=write, tags=["review"])

@@ -28,7 +28,7 @@ from app.matching.keys import (
     shared_match_keys,
     stored_components,
 )
-from app.matching.rules import Rule, customers_conflict, forenames_split
+from app.matching.rules import RULES, Rule, customers_conflict, forenames_split
 from app.repository import Repository, lock_id
 from app.schemas import (
     CleansedRecord,
@@ -46,10 +46,6 @@ from app.schemas import (
 )
 
 log = logging.getLogger(__name__)
-
-# Customers bigger than this together are not merged automatically: checking
-# every pair of records costs too much, and a customer that big wants a person.
-MAX_AUTO_MERGE_RECORDS = 50
 
 
 class MergeError(ValueError):
@@ -98,6 +94,10 @@ class Found:
 class ResolutionService:
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
+        self.rules = settings.rules if settings.rules is not None else RULES
+
+    def links_automatically(self, rule: Rule) -> bool:
+        return rule.tier in self.settings.auto_link_tiers and rule.key not in self.settings.review_rules
 
     # ------------------------------------------------------------------ pure steps
     def prepare(self, inbound: InboundCustomer) -> Prepared:
@@ -154,7 +154,7 @@ class ResolutionService:
         if decision.rule is None:
             return []
         ties = [(cid, decision.rule) for cid in decision.competing_customer_ids]
-        return [*ties, *((cid, r) for cid, r in decision.runners_up if r.tier in self.settings.auto_link_tiers)]
+        return [*ties, *((cid, r) for cid, r in decision.runners_up if self.links_automatically(r))]
 
     def _can_merge(self, repo: Repository, found: Found, inbound: dict, into: list[UUID], matched: UUID,
                    other: UUID, rule: Rule, extra: list[dict] | None = None) -> bool:
@@ -166,10 +166,10 @@ class ResolutionService:
         bridged = [found.profiles[e.record_id] for e in d.evaluations if e.customer_id == matched]
         if forenames_split(inbound, [found.profiles[i] for i in d.matched_record_ids], bridged):
             return False
-        cap = MAX_AUTO_MERGE_RECORDS + 1
+        cap = self.settings.max_auto_merge_records + 1
         mine = [*(extra or []), *(pr for cid in into for pr in repo.customer_profiles(cid, cap))]
         theirs = repo.customer_profiles(other, cap)
-        if len(mine) + len(theirs) > MAX_AUTO_MERGE_RECORDS:
+        if len(mine) + len(theirs) > self.settings.max_auto_merge_records:
             return False
         return not customers_conflict(rule, mine, theirs)
 
@@ -341,21 +341,21 @@ class ResolutionService:
             if shared:
                 candidates.append(Candidate(r["record_id"], r["customer_id"], shared, r["match_profile"],
                                             r["created_at"]))
-        decision = decide(p.profile, candidates)
+        decision = decide(p.profile, candidates, self.rules)
         # The records that matched agree, but the customer may hold another that
         # does not: a son's DOB, linked through a record with none. Pass over
         # such a customer and decide again among the rest.
         blocked: dict[UUID, list[str]] = {}
         while decision.customer_id is not None and decision.rule is not None:
-            profiles = repo.customer_profiles(decision.customer_id, MAX_AUTO_MERGE_RECORDS)
+            profiles = repo.customer_profiles(decision.customer_id, self.settings.max_auto_merge_records)
             clash = customers_conflict(decision.rule, [p.profile], profiles)
             if not clash:
                 break
             blocked[decision.customer_id] = clash
             candidates = [x for x in candidates if x.customer_id != decision.customer_id]
-            decision = decide(p.profile, candidates)
+            decision = decide(p.profile, candidates, self.rules)
         auto_link = (decision.customer_id is not None and decision.rule is not None
-                     and decision.rule.tier in self.settings.auto_link_tiers)
+                     and self.links_automatically(decision.rule))
         return Found(pool, sorted(set(skipped)), len(candidates), decision, auto_link,
                      (time.perf_counter() - started) * 1000, shared_ids, blocked,
                      {x.record_id: x.profile for x in candidates})
